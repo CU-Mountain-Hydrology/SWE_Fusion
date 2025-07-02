@@ -262,3 +262,77 @@ def download_snow_surveys(rundate, surveyWorkspace, resultsWorkspace, url_file, 
     gdf_stateSurvey.to_file(os.path.join(results_dir, f"{rundate}_surveys.shp"), driver="ESRI Shapefile")
 
     print(f"Snow Courses Downloaded")
+
+
+# code for downloading CDEC sensors
+def download_cdec_snow_surveys(rundate, base_workspace, results_workspace, cdec_shapefile, basin_list):
+    import requests
+    import pandas as pd
+    import os
+    import geopandas as gpd
+    from shapely.geometry import Point
+    from datetime import datetime
+
+    print("Starting CDEC snow survey download...")
+
+    # Parse date
+    date_obj = datetime.strptime(rundate, "%Y%m%d")
+    month = date_obj.strftime("%B")
+    year = date_obj.year
+    other_date = rundate[:-2]
+
+    # Set paths
+    snow_course_workspace = os.path.join(base_workspace, rundate)
+    os.makedirs(snow_course_workspace, exist_ok=True)
+
+    cdec_url = f"https://cdec.water.ca.gov/reportapp/javareports?name=COURSES.{other_date}"
+    original_csv = os.path.join(base_workspace, f"{rundate}_SnowCourseMeasurements_original.csv")
+    v1_csv = os.path.join(base_workspace, f"{rundate}_SnowCourseMeasurements_v1.csv")
+    clean_csv = os.path.join(base_workspace, f"{rundate}_SnowCourseMeasurements.csv")
+    shapefile_out = os.path.join(snow_course_workspace, f"{rundate}_surveys_cdec.shp")
+    merged_csv = os.path.join(base_workspace, rundate, f"{rundate}_surveys_cdec.csv")
+    final_shapefile = os.path.join(results_workspace, f"{rundate}_results", f"{rundate}_surveys.shp")
+
+    # Download HTML table from CDEC
+    print(f"Downloading survey from: {cdec_url}")
+    df_list = pd.read_html(cdec_url)
+    df = df_list[0]
+    df.to_csv(original_csv, index=False)
+    print(f"Original CSV saved: {original_csv}")
+
+    # Clean raw CSV
+    df = pd.read_csv(original_csv)
+    df.drop(columns=["Unnamed: 0", "Depth", "Density", "April 1", "Average"], inplace=True, errors="ignore")
+
+    # Remove unwanted rows
+    df = df[~df["Num"].astype(str).str.contains("Basin Average", na=False)]
+    df = df[~df["Num"].astype(str).isin(basin_list)]
+    df = df[~df["Date"].astype(str).str.contains("Scheduled", na=False)]
+    df.to_csv(v1_csv, index=False)
+
+    # Rename headers and drop bad rows
+    header_names = ["ID", "Num", "Station_Na", "Elev_Sur", "Date", "SWE_in"]
+    file = pd.read_csv(v1_csv, header=None, names=header_names)
+    file = file[~file["SWE_in"].astype(str).str.contains("Water Content", na=False)]
+    file.drop(columns=["ID", "Num"], inplace=True, errors="ignore")
+
+    # Convert SWE
+    file["SWE_in"] = pd.to_numeric(file["SWE_in"], errors="coerce")
+    file["SWE_m"] = file["SWE_in"] * 0.0254
+    file.to_csv(clean_csv, index=False)
+    print(f"Cleaned CSV saved: {clean_csv}")
+
+    # Read shapefile and attach survey data
+    gdf = gpd.read_file(cdec_shapefile)
+    gdf.to_file(shapefile_out)
+    df = pd.read_csv(clean_csv)
+
+    df_sub = df[["Station_Na", "Elev_Sur", "Date", "SWE_in", "SWE_m"]]
+    merged = gdf.merge(df_sub, on="Station_Na", how="left")
+    merged.to_csv(merged_csv, index=False)
+
+    # Drop empty values and save final shapefile
+    merged.dropna(subset=["SWE_in"], inplace=True)
+    os.makedirs(os.path.dirname(final_shapefile), exist_ok=True)
+    merged.to_file(final_shapefile)
+    print(f"Final shapefile saved: {final_shapefile}")
