@@ -13,7 +13,7 @@ import rasterio
 from rasterio.merge import merge
 from datetime import datetime, timedelta
 
-def process_fsca_for_date_range(start_date, end_date,
+def fsca_processing_tif(start_date, end_date,
                                  netCDF_WS,
                                  tile_list,
                                  output_fscaWS,
