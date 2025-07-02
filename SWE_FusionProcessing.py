@@ -13,14 +13,7 @@ import rasterio
 from rasterio.merge import merge
 from datetime import datetime, timedelta
 
-def fsca_processing_tif(start_date, end_date,
-                                 netCDF_WS,
-                                 tile_list,
-                                 output_fscaWS,
-                                 proj_in,
-                                 snap_raster,
-                                 extent,
-                                proj_out):
+def fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaWS, proj_in, snap_raster, extent, proj_out):
     proj_out = proj_out
     proj_in = proj_in
 
