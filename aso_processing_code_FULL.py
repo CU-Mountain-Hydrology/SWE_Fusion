@@ -1,6 +1,7 @@
 # import modules
 import sys
-import sys
+from ASO_Processing import *
+from SWE_FusionProcessing import *
 import arcpy
 import rasterio
 import matplotlib.pyplot as plt
@@ -24,7 +25,6 @@ search_tag = "swe_50m.tif"
 data_folder = r"M:/SWE/WestWide/Spatial_SWE/ASO/2025/data_testing/"
 basin_textFile = r"M:\SWE\WestWide\Spatial_SWE\ASO\SNM_basins.txt"
 basinList = ["BoulderCreek"]
-# domain = "WW" # this should be moved down and be automatic
 
 # open basin file for list
 with open(basin_textFile, "r") as f:
@@ -72,11 +72,13 @@ for file in asoSWE:
             process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspace, compareWS, snapRaster,
                                    projIn, zonalRaster)
 
-            # download snotel
+            # download snotel function
+            # load in shp
+            # isolate shapefile that are just within the ASO area
+            # determine the first value and the last value
+            # determine the % grade
+            # add that to the csv.
 
-
-## __FUNCTION: SNOTEL grade differencings
-## Download the SNOTEL for the past week
 ## Determine the percent difference in the two points
 ## fill csv with that information and create the csv if it doesn't already exists
 
