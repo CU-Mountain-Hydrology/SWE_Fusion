@@ -126,7 +126,7 @@ def calculate_dmfsca(
         try:
             date_str = os.path.splitext(f)[0]
             file_date = datetime.strptime(date_str, "%Y%m%d")
-            raster_dict[file_date] = os.path.join(original_folder, f)
+            raster_dict[file_date] = os.path.join(fSCA_folder, f)
         except ValueError:
             continue
 
@@ -359,8 +359,8 @@ import matplotlib.patches as mpatches
 import numpy as np
 from shapely.geometry import box
 import geopandas as gpd
-import fiona
-from matplotlib_scalebar.scalebar import ScaleBar
+# import fiona
+# from matplotlib_scalebar.scalebar import ScaleBar
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import numpy as np
@@ -457,3 +457,40 @@ def download_and_merge_snotel_data(id_list, state_list, start_date, end_date, ou
             os.remove(os.path.join(output_dir, file))
 
     return merged_df
+
+import shutil
+import os
+import zipfile
+def extract_zip(zip_path, ext, output_folder):
+    """
+    Extracts files with a specific tag from a zip archive and moves them to a new folder.
+
+    Parameters:
+        zip_path (str): Path to the .zip file.
+        tag (str): Substring to match in filenames (e.g., "maps_aso_bestpred2014").
+        destination_folder (str): Directory to move matching files to.
+    """
+    # Create the destination folder if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Create a temporary extraction folder
+    temp_extract_path = os.path.join(os.path.dirname(zip_path), "temp_extract")
+    os.makedirs(temp_extract_path, exist_ok=True)
+
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        # Extract all to temporary location
+        zip_ref.extractall(temp_extract_path)
+
+        # Iterate through extracted files
+        for root, _, files in os.walk(temp_extract_path):
+            for file in files:
+                if ext in file:
+                    src_file = os.path.join(root, file)
+                    dst_file = os.path.join(output_folder, file)
+
+                    # Move file to destination
+                    shutil.move(src_file, dst_file)
+                    print(f"Moved: {src_file} → {dst_file}")
+
+    # Clean up temp folder
+    shutil.rmtree(temp_extract_path)
