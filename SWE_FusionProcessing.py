@@ -502,3 +502,63 @@ import fiona
 def safe_read_shapefile(path):
         with fiona.open(path, 'r') as src:
             return gpd.GeoDataFrame.from_features(src, crs=src.crs)
+
+import geopandas
+import rasterio
+import numpy
+import os
+
+
+def get_points_within_raster(shapefile_path, raster_path, id_column="site_id"):
+    """
+    Find points from a shapefile that are within a raster and have actual data values.
+
+    Parameters:
+    shapefile_path (str): Path to the input shapefile
+    raster_path (str): Path to the input raster file
+    id_column (str): Name of the ID column to extract (default: "site_id")
+
+    Returns:
+    tuple: (gdf_final, site_id_list) - filtered GeoDataFrame and list of unique IDs
+    """
+    # read in shapefile
+    gdf = safe_read_shapefile(shapefile_path)
+
+    # Read the raster
+    with rasterio.open(raster_path) as src:
+        # Get raster bounds and CRS
+        raster_bounds = src.bounds
+        raster_crs = src.crs
+
+        # Create bounding box polygon from raster extent
+        raster_bbox = box(raster_bounds.left, raster_bounds.bottom,
+                          raster_bounds.right, raster_bounds.top)
+
+        # Ensure same CRS
+        if gdf.crs != raster_crs:
+            gdf = gdf.to_crs(raster_crs)
+
+        # Filter points within raster extent
+        gdf_within_extent = gdf[gdf.geometry.within(raster_bbox) | gdf.geometry.intersects(raster_bbox)]
+
+        # Optional: Further filter to only points with actual raster data (not NoData)
+        points_with_data = []
+
+        for idx, point in gdf_within_extent.iterrows():
+            # Sample raster at point location
+            coords = [(point.geometry.x, point.geometry.y)]
+            try:
+                sampled_values = list(src.sample(coords))
+                raster_value = sampled_values[0][0]  # Get first band value
+
+                # Check if value is not NoData
+                if not np.isnan(raster_value) and raster_value != src.nodata:
+                    points_with_data.append(idx)
+            except:
+                continue
+
+        # Filter to points with actual data
+        gdf_final = gdf_within_extent.loc[points_with_data]
+    site_id_list = gdf_final[id_column].unique().tolist()
+
+    return gdf_final, site_id_list

@@ -83,55 +83,12 @@ for file in asoSWE:
             modelRunWorkspace = rf"M:/SWE/{fullDomain}/Spatial_SWE/{domain}_regression/RT_report_data/{rundate}_results/{modelRun}/"
 
             # process ASO comparison
-            # process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspace, compareWS, snapRaster,
-            #                        projIn, zonalRaster)
+            process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspace, compareWS, snapRaster,
+                                   projIn, zonalRaster)
 
             # find the snotels that are within a raster file
-            # Read the shapefile using the safe function
-            gdf = safe_read_shapefile(pillow_shp)
-            print('read in shapefile')
+            gdf_final, site_id_list = get_points_within_raster(pillow_shp, data_folder + file, id_column="site_id")
 
-            # Read the raster
-            with rasterio.open(data_folder + file) as src:
-                # Get raster bounds and CRS
-                raster_bounds = src.bounds
-                raster_crs = src.crs
-
-                # Create bounding box polygon from raster extent
-                raster_bbox = box(raster_bounds.left, raster_bounds.bottom,
-                                  raster_bounds.right, raster_bounds.top)
-
-                # Ensure same CRS
-                if gdf.crs != raster_crs:
-                    gdf = gdf.to_crs(raster_crs)
-
-                # Filter points within raster extent
-                gdf_within_extent = gdf[gdf.geometry.within(raster_bbox) | gdf.geometry.intersects(raster_bbox)]
-
-                # Optional: Further filter to only points with actual raster data (not NoData)
-                points_with_data = []
-
-                for idx, point in gdf_within_extent.iterrows():
-                    # Sample raster at point location
-                    coords = [(point.geometry.x, point.geometry.y)]
-                    try:
-                        sampled_values = list(src.sample(coords))
-                        raster_value = sampled_values[0][0]  # Get first band value
-
-                        # Check if value is not NoData
-                        if not np.isnan(raster_value) and raster_value != src.nodata:
-                            points_with_data.append(idx)
-                    except:
-                        continue
-
-                # Filter to points with actual data
-                gdf_final = gdf_within_extent.loc[points_with_data]
-
-            print(f"Original points: {len(gdf)}")
-            print(f"Points within raster extent: {len(gdf_within_extent)}")
-            print(f"Points with raster data: {len(gdf_final)}")
-            print(gdf_final)
-            site_id_list = gdf_final["site_id"].unique().tolist()
             # download snotel function
             print(startDate)
             if domain =="WW":
@@ -141,46 +98,31 @@ for file in asoSWE:
                 start = start_snotel.strftime("%Y-%m-%d")
                 end = end_snotel.strftime("%Y-%m-%d")
                 snotel_df = pd.read_csv(pillowMeta)
-                if basin_state:
-                    filtered_snotel = snotel_df[snotel_df["state_id"] == basin_state]
+                if len(site_id_list) > 0:
+                    # Use the site IDs from points within raster
+                    filtered_snotel = snotel_df[snotel_df["site_id"].isin(site_id_list)]
                     id_list = filtered_snotel["site_id"].tolist()
-                    # Always get the actual state for each site from metadata
                     state_list = filtered_snotel["state_id"].tolist()
-                    unique_states = list(set(state_list))
-                    states_string = "_".join(sorted(unique_states))
-                    # filename = f"merged_snotel_{states_string}_{end}.csv"
-                    output_filename = f"merged_snotel_{states_string}_{end}.csv"
+                    output_filename = f"merged_snotel_{basinName}_{end}.csv"
+
+                    # Check if file already exists
                     if os.path.exists(snotelWS + output_filename):
                         print("sensor file already downloaded")
-                        continue
+
                     else:
-                        # start downloading snotel values
-                        merged_snotel_df = download_and_merge_snotel_data(id_list=id_list, state_list=state_list,
-                                                                          start_date=start, end_date=end,
-                                                                          output_dir=snotelWS,
-                                                                          output_filename=output_filename)
+                        print(f"Downloading SNOTEL data for {len(id_list)} sites within raster extent")
+                        # Download snotel values
+                        merged_snotel_df = download_and_merge_snotel_data(
+                            id_list=id_list,
+                            state_list=state_list,
+                            start_date=start,
+                            end_date=end,
+                            output_dir=snotelWS,
+                            output_filename=output_filename
+                        )
                 else:
-                    id_list = snotel_df["site_id"].tolist()
-                    state_list = snotel_df["state_id"].tolist()
-                    output_filename = f"merged_snotel_{end}.csv"
-                    if os.path.exists(snotelWS + output_filename):
-                        continue
-                    else:
-                        # start downloading snotel values
-                        merged_snotel_df = download_and_merge_snotel_data(id_list=id_list, state_list=state_list,
-                                                                          start_date=start, end_date=end,
-                                                                          output_dir=snotelWS,
-                                                                          output_filename=output_filename)
+                    print("No SNOTEL sites found within raster extent")
 
-
-                # load in shp
-                # isolate shapefile that are just within the ASO area
-                # determine the first value and the last value
-                # determine the % grade
-                # add that to the csv.
-
-## Determine the percent difference in the two points
-## fill csv with that information and create the csv if it doesn't already exists
 
 
 ## __FUNCTION: WW fractional error
