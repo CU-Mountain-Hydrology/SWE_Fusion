@@ -73,6 +73,7 @@ for file in asoSWE:
                                    projIn, zonalRaster)
 
             # download snotel function
+            print(startDate)
             # load in shp
             # isolate shapefile that are just within the ASO area
             # determine the first value and the last value

@@ -42,7 +42,6 @@ import os
 import arcpy
 from arcpy.sa import *
 
-
 def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspace, compareWS, snapRaster, projIn,
                            zonalRaster):
     """
@@ -76,7 +75,7 @@ def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspa
     )
 
     # Create mask where ASO >= 0
-    ASOmask = Con(Raster(aso_raster) >= 0, 1, NODATA)
+    ASOmask = Con(Raster(aso_raster) >= 0, 1, -9999)
     mask_path = os.path.join(output_dir, f"{file[:-4]}_albn83_msk.tif")
     ASOmask.save(mask_path)
 
