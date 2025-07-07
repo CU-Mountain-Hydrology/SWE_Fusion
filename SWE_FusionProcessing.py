@@ -366,8 +366,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 
-def download_and_merge_snotel_data(id_list, state_list, start_date, end_date, output_dir):
-    merged_csv_path = os.path.join(output_dir, f"merged_snotel_{end_date}.csv")
+def download_and_merge_snotel_data(id_list, state_list, start_date, end_date, output_dir, output_filename):
+    merged_csv_path = os.path.join(output_dir, output_filename)
     
     # Skip if already downloaded
     if os.path.exists(merged_csv_path):
@@ -385,7 +385,7 @@ def download_and_merge_snotel_data(id_list, state_list, start_date, end_date, ou
             f"start_of_period/{ids}:{state}:SNTL%257Cid=%2522%2522%257Cname/"
             f"{start_date},{end_date}/stationId,name,WTEQ::value?fitToScreen=false"
         )
-
+        print(url)
         try:
             response = requests.get(url)
             response.raise_for_status()
@@ -494,3 +494,11 @@ def extract_zip(zip_path, ext, output_folder):
 
     # Clean up temp folder
     shutil.rmtree(temp_extract_path)
+
+# safely read in a shapefile
+import geopandas as gpd
+import fiona
+
+def safe_read_shapefile(path):
+        with fiona.open(path, 'r') as src:
+            return gpd.GeoDataFrame.from_features(src, crs=src.crs)
