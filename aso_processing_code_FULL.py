@@ -139,6 +139,8 @@ for file in asoSWE:
                             'GradeDirection': [direction],
                             'GradeDifference': [percent_change],
                             'SWEDifference_in': [SWE_Difference],
+                            'modelRun': [modelRun],
+                            'RunDate': [rundate]
                         }
 
                         df = pd.DataFrame(ASO_snotel_stats)
@@ -150,10 +152,11 @@ for file in asoSWE:
                 else:
                     print("No SNOTEL sites found within raster extent")
 
-
-
-## __FUNCTION: WW fractional error
-# calculate fractional error layer.
+                ## __FUNCTION: WW fractional error layer
+                fractional_error(filename=file, input_folder=data_folder, output_folder=compareWS,
+                                 snapRaster=snapRaster, projIn=projIn, modelRunWorkspace=modelRunWorkspace,
+                                 rundate=rundate, delete=False)
+                print("completed")
 
 
 

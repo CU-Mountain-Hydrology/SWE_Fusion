@@ -115,3 +115,48 @@ def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspa
     arcpy.ExportTable_conversion(zonal_table_p8, zonal_table_p8.replace(".dbf", ".csv"))
 
     print("All ASO comparison outputs created.")
+
+
+def fractional_error(filename, input_folder, output_folder, snapRaster, projIn, modelRunWorkspace, rundate, delete=None):
+    """
+    Process a raster file by projecting, aggregating, and calculating fractional error.
+
+    Parameters:
+    file (str): Input raster filename
+    data_folder (str): Path to input data folder
+    compareWS (str): Path to comparison workspace
+    snapRaster: Snap raster for projection
+    projIn: Input projection
+    modelRunWorkspace (str): Path to model run workspace
+    rundate (str): Run date for p8 file naming
+    """
+    # Set snap raster
+    arcpy.env.snapRaster = snapRaster
+
+    # Create file paths
+    input_path = input_folder + filename
+    proj_output = output_folder + f"{filename[:-4]}_proj_50.tif"
+    agg_output = output_folder + f"{filename[:-4]}_proj_500Agg.tif"
+    error_output = output_folder + f"{filename[:-4]}_fraErr.tif"
+
+    # Project raster
+    arcpy.ProjectRaster_management(
+        input_path, proj_output, snapRaster,
+        "NEAREST", "50 50", "", "", projIn
+    )
+
+    # Aggregate raster
+    outAgg = Aggregate(proj_output, 10, "MEAN", "TRUNCATE", "DATA")
+    outAgg.save(agg_output)
+
+    # Calculate fractional error
+    p8_input = os.path.join(modelRunWorkspace, f"p8_{rundate}_noneg.tif")
+    FracError = Raster(p8_input) / (1 + Raster(agg_output))
+    FracError.save(error_output)
+
+    if delete is True or delete == "True":
+        arcpy.DeleteRaster_management([proj_output, agg_output])
+    else:
+        print("intermediary files not deleted")
+
+    return error_output  # Return the final output path
