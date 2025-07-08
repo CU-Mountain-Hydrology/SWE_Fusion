@@ -28,6 +28,7 @@ basin_textFile = r"M:\SWE\WestWide\Spatial_SWE\ASO\ASO_Metadata\State_Basin.txt"
 basinList = ["BoulderCreek"]
 snotel_shp = r"W:\Spatial_SWE\ASO\ASO_Metadata\WW_CDEC_SNOTEL_geon83.shp"
 cdec_shp = ""
+modelStatsCSV = f"M:/SWE/WestWide/Spatial_SWE/ASO/2025/data_testing/ASO_SNOTEL_DifferenceStats.csv"
 
 # open basin file for list
 basin_state_map = {}
@@ -120,6 +121,32 @@ for file in asoSWE:
                             output_dir=snotelWS,
                             output_filename=output_filename
                         )
+                        ## get % grade of snotel
+                        basin_snotel_df = pd.read_csv(snotelWS + output_filename)
+                        basin_snotel_df['MEAN'] = basin_snotel_df.drop('Date', axis=1).mean(axis=1)
+                        first_mean = basin_snotel_df['MEAN'].iloc[0]
+                        last_mean = basin_snotel_df['MEAN'].iloc[-1]
+                        SWE_Difference = (last_mean - first_mean)
+                        percent_change = ((last_mean - first_mean) / first_mean) * 100
+                        direction = "positive" if percent_change > 0 else "negative" if percent_change < 0 else "no change"
+
+                        # add metrics to csv
+                        ASO_snotel_stats = {
+                            'Basin': [basinName],
+                            'Date': [startDate],
+                            'Domain': [domain],
+                            'year': [startDate[:4]],
+                            'GradeDirection': [direction],
+                            'GradeDifference': [percent_change],
+                            'SWEDifference_in': [SWE_Difference],
+                        }
+
+                        df = pd.DataFrame(ASO_snotel_stats)
+                        # Append or write new file
+                        if os.path.exists(modelStatsCSV):
+                            df.to_csv(modelStatsCSV, mode='a', header=False, index=False)
+                        else:
+                            df.to_csv(modelStatsCSV, index=False)
                 else:
                     print("No SNOTEL sites found within raster extent")
 

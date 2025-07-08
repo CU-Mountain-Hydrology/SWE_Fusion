@@ -385,7 +385,6 @@ def download_and_merge_snotel_data(id_list, state_list, start_date, end_date, ou
             f"start_of_period/{ids}:{state}:SNTL%257Cid=%2522%2522%257Cname/"
             f"{start_date},{end_date}/stationId,name,WTEQ::value?fitToScreen=false"
         )
-        print(url)
         try:
             response = requests.get(url)
             response.raise_for_status()
