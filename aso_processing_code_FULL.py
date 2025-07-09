@@ -165,7 +165,7 @@ for file in asoSWE:
                 fractional_error(filename=file, input_folder=data_folder, output_folder=compareWS + f"{rundate}_{modelRun}/",
                                  snapRaster=snapRaster, projIn=projIn, modelRunWorkspace=modelRunWorkspace,
                                  rundate=rundate, delete=False)
-                print("completed")
+                print("completed thanks")
 
 
 
