@@ -3,6 +3,9 @@ import zipfile
 import os
 import shutil
 
+from sympy.codegen.ast import continue_
+
+
 def extract_zip(zip_path, ext, output_folder):
     """
     Extracts files with a specific tag from a zip archive and moves them to a new folder.
@@ -64,57 +67,60 @@ def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspa
     basinName = file.split("_")[1]
     output_dir = os.path.join(compareWS, f"{rundate}_{modelRun}")
     os.makedirs(output_dir, exist_ok=True)
+    if os.path.exists (os.path.join(output_dir, f"DIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}.tif")):
+        print(f'Difference file for {rundate}_{modelRun}_{basinName} is already created')
 
-    aso_raster = os.path.join(data_folder, file)
-    projected_aso = os.path.join(output_dir, f"{file[:-4]}_albn83_50.tif")
+    else:
+        aso_raster = os.path.join(data_folder, file)
+        projected_aso = os.path.join(output_dir, f"{file[:-4]}_albn83_50.tif")
 
-    # Project
-    arcpy.ProjectRaster_management(
-        aso_raster, projected_aso, snapRaster,
-        "NEAREST", "50 50", "", "", projIn
-    )
+        # Project
+        arcpy.ProjectRaster_management(
+            aso_raster, projected_aso, snapRaster,
+            "NEAREST", "50 50", "", "", projIn
+        )
 
-    # Create mask where ASO >= 0
-    ASOmask = Con(Raster(aso_raster) >= 0, 1, -9999)
-    mask_path = os.path.join(output_dir, f"{file[:-4]}_albn83_msk.tif")
-    ASOmask.save(mask_path)
+        # Create mask where ASO >= 0
+        ASOmask = Con(Raster(aso_raster) >= 0, 1, -9999)
+        mask_path = os.path.join(output_dir, f"{file[:-4]}_albn83_msk.tif")
+        ASOmask.save(mask_path)
 
-    # Resample P8 model to 50m
-    p8_input = os.path.join(modelRunWorkspace, f"p8_{rundate}_noneg.tif")
-    p8_resampled = os.path.join(output_dir, f"p8_{rundate}_50m.tif")
-    arcpy.Resample_management(p8_input, p8_resampled)
+        # Resample P8 model to 50m
+        p8_input = os.path.join(modelRunWorkspace, f"p8_{rundate}_noneg.tif")
+        p8_resampled = os.path.join(output_dir, f"p8_{rundate}_50m.tif")
+        arcpy.Resample_management(p8_input, p8_resampled)
 
-    # Apply mask
-    masked_p8 = Raster(p8_resampled) * Raster(mask_path)
-    masked_p8_path = os.path.join(output_dir, f"p8_{rundate}_50m_msk.tif")
-    masked_p8.save(masked_p8_path)
+        # Apply mask
+        masked_p8 = Raster(p8_resampled) * Raster(mask_path)
+        masked_p8_path = os.path.join(output_dir, f"p8_{rundate}_50m_msk.tif")
+        masked_p8.save(masked_p8_path)
 
-    # Difference
-    diff = Raster(masked_p8_path) - Raster(projected_aso)
-    diff_path = os.path.join(output_dir, f"DIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}.tif")
-    diff.save(diff_path)
+        # Difference
+        diff = Raster(masked_p8_path) - Raster(projected_aso)
+        diff_path = os.path.join(output_dir, f"DIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}.tif")
+        diff.save(diff_path)
 
-    # Percent difference
-    perc_diff = ((Raster(masked_p8_path) - Raster(projected_aso)) / Raster(projected_aso)) * 100
-    perc_diff_path = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}.tif")
-    perc_diff.save(perc_diff_path)
+        # Percent difference
+        perc_diff = ((Raster(masked_p8_path) - Raster(projected_aso)) / Raster(projected_aso)) * 100
+        perc_diff_path = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}.tif")
+        perc_diff.save(perc_diff_path)
 
-    # Zonal stats for % difference
-    zonal_table_perc = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_byBands.dbf")
-    ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", perc_diff_path, zonal_table_perc, "", "ALL")
-    arcpy.ExportTable_conversion(zonal_table_perc, zonal_table_perc.replace(".dbf", ".csv"))
+        # Zonal stats for % difference
+        zonal_table_perc = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_byBands.dbf")
+        ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", perc_diff_path, zonal_table_perc, "", "ALL")
+        arcpy.ExportTable_conversion(zonal_table_perc, zonal_table_perc.replace(".dbf", ".csv"))
 
-    # Zonal stats for ASO mask
-    zonal_table_aso = os.path.join(output_dir, f"{file[:-4]}_albn83_byBands.dbf")
-    ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", mask_path, zonal_table_aso, "", "ALL")
-    arcpy.ExportTable_conversion(zonal_table_aso, zonal_table_aso.replace(".dbf", ".csv"))
+        # Zonal stats for ASO mask
+        zonal_table_aso = os.path.join(output_dir, f"{file[:-4]}_albn83_byBands.dbf")
+        ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", mask_path, zonal_table_aso, "", "ALL")
+        arcpy.ExportTable_conversion(zonal_table_aso, zonal_table_aso.replace(".dbf", ".csv"))
 
-    # Zonal stats for masked P8
-    zonal_table_p8 = os.path.join(output_dir, f"p8_{rundate}_50m_msk_byBands.dbf")
-    ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", masked_p8_path, zonal_table_p8, "", "ALL")
-    arcpy.ExportTable_conversion(zonal_table_p8, zonal_table_p8.replace(".dbf", ".csv"))
+        # Zonal stats for masked P8
+        zonal_table_p8 = os.path.join(output_dir, f"p8_{rundate}_50m_msk_byBands.dbf")
+        ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", masked_p8_path, zonal_table_p8, "", "ALL")
+        arcpy.ExportTable_conversion(zonal_table_p8, zonal_table_p8.replace(".dbf", ".csv"))
 
-    print("All ASO comparison outputs created.")
+        print("All ASO comparison outputs created.")
 
 
 def fractional_error(filename, input_folder, output_folder, snapRaster, projIn, modelRunWorkspace, rundate, delete=None):
@@ -139,24 +145,28 @@ def fractional_error(filename, input_folder, output_folder, snapRaster, projIn, 
     agg_output = output_folder + f"{filename[:-4]}_proj_500Agg.tif"
     error_output = output_folder + f"{filename[:-4]}_fraErr.tif"
 
-    # Project raster
-    arcpy.ProjectRaster_management(
-        input_path, proj_output, snapRaster,
-        "NEAREST", "50 50", "", "", projIn
-    )
+    if os.path.exists (error_output):
+        print(f'Fractional Error Layer for {rundate}_{filename[:-4]} is already created')
 
-    # Aggregate raster
-    outAgg = Aggregate(proj_output, 10, "MEAN", "TRUNCATE", "DATA")
-    outAgg.save(agg_output)
-
-    # Calculate fractional error
-    p8_input = os.path.join(modelRunWorkspace, f"p8_{rundate}_noneg.tif")
-    FracError = Raster(p8_input) / (1 + Raster(agg_output))
-    FracError.save(error_output)
-
-    if delete is True or delete == "True":
-        arcpy.DeleteRaster_management([proj_output, agg_output])
     else:
-        print("intermediary files not deleted")
+        # Project raster
+        arcpy.ProjectRaster_management(
+            input_path, proj_output, snapRaster,
+            "NEAREST", "50 50", "", "", projIn
+        )
 
-    return error_output  # Return the final output path
+        # Aggregate raster
+        outAgg = Aggregate(proj_output, 10, "MEAN", "TRUNCATE", "DATA")
+        outAgg.save(agg_output)
+
+        # Calculate fractional error
+        p8_input = os.path.join(modelRunWorkspace, f"p8_{rundate}_noneg.tif")
+        FracError = Raster(p8_input) / (1 + Raster(agg_output))
+        FracError.save(error_output)
+
+        if delete is True or delete == "True":
+            arcpy.DeleteRaster_management([proj_output, agg_output])
+        else:
+            print("intermediary files not deleted")
+
+        return error_output  # Return the final output path

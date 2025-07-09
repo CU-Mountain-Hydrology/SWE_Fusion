@@ -17,15 +17,16 @@ from shapefile import NODATA
 print("modules imported")
 
 ## model run variables
-rundate = "20250413"
+rundate = "20250526"
 modelRun = "fSCA_RT_CanAdj_rcn_noSW_woCCR"
 
 # set parameters for zip extraction
-zip_file_path = r"M:\SWE\WestWide\Spatial_SWE\ASO\2025\ASO_BoulderCreek_2025Apr09-10_AllData_and_Reports.zip"
+toProcessFolder = r"M:/SWE/WestWide/Spatial_SWE/ASO/2025/toProcess/"
+# zip_file_path = r"W:\Spatial_SWE\ASO\2025\ASO_BlueRiver_2025May24_AllData_and_Reports.zip"
 search_tag = "swe_50m.tif"
 data_folder = r"M:/SWE/WestWide/Spatial_SWE/ASO/2025/data_testing/"
 basin_textFile = r"M:\SWE\WestWide\Spatial_SWE\ASO\ASO_Metadata\State_Basin.txt"
-basinList = ["BoulderCreek"]
+basinList = []
 snotel_shp = r"W:\Spatial_SWE\ASO\ASO_Metadata\WW_CDEC_SNOTEL_geon83.shp"
 cdec_shp = ""
 modelStatsCSV = f"M:/SWE/WestWide/Spatial_SWE/ASO/2025/data_testing/ASO_SNOTEL_DifferenceStats.csv"
@@ -39,9 +40,17 @@ with open(basin_textFile, 'r') as f:
         state = row[1].strip('"')
         basin_state_map[basin] = state
 
-# # get SWE file from zip folder
-extract_zip(zip_path=zip_file_path, ext=search_tag, output_folder=data_folder)
-print("file moved")
+zips_to_process = os.listdir(toProcessFolder)
+for zip_file in zips_to_process:
+    if zip_file.endswith(".zip"):
+        zip_file_path = os.path.join(toProcessFolder, zip_file)
+
+        # # get SWE file from zip folder
+        extract_zip(zip_path=zip_file_path, ext=search_tag, output_folder=data_folder)
+        print("file moved")
+
+        name = zip_file.split("_")[1]
+        basinList.append(name)
 
 # get basin and basin info from aso folder
 asoSWE = os.listdir(data_folder)
