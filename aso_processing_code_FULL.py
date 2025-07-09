@@ -135,7 +135,7 @@ for file in asoSWE:
                             'Basin': [basinName],
                             'Date': [startDate],
                             'Domain': [domain],
-                            'year': [startDate[:4]],
+                            'Year': [startDate[:4]],
                             'GradeDirection': [direction],
                             'GradeDifference': [percent_change],
                             'SWEDifference_in': [SWE_Difference],
@@ -153,7 +153,7 @@ for file in asoSWE:
                     print("No SNOTEL sites found within raster extent")
 
                 ## __FUNCTION: WW fractional error layer
-                fractional_error(filename=file, input_folder=data_folder, output_folder=compareWS,
+                fractional_error(filename=file, input_folder=data_folder, output_folder=compareWS + f"{rundate}_{modelRun}/",
                                  snapRaster=snapRaster, projIn=projIn, modelRunWorkspace=modelRunWorkspace,
                                  rundate=rundate, delete=False)
                 print("completed")
