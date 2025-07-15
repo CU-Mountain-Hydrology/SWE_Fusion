@@ -507,7 +507,7 @@ import rasterio
 import numpy
 import os
 
-
+##add  buffer
 def get_points_within_raster(shapefile_path, raster_path, id_column="site_id"):
     """
     Find points from a shapefile that are within a raster and have actual data values.

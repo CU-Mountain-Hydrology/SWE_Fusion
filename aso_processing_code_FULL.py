@@ -138,6 +138,7 @@ for file in asoSWE:
                         SWE_Difference = (last_mean - first_mean)
                         percent_change = ((last_mean - first_mean) / first_mean) * 100
                         direction = "positive" if percent_change > 0 else "negative" if percent_change < 0 else "no change"
+                        print("update")
 
                         # add metrics to csv
                         ASO_snotel_stats = {
