@@ -51,12 +51,15 @@ for zip_file in zips_to_process:
 
         name = zip_file.split("_")[1]
         basinList.append(name)
+        print(basinList)
 
 # get basin and basin info from aso folder
 asoSWE = os.listdir(data_folder)
 for file in asoSWE:
     if file.endswith(".tif"):
+        print(file)
         basinName = file.split("_")[1] # gets the value between the first and second "_"
+        print(basinName)
         if basinName in basinList:
             dates = file.split("_")[2]
             startDate = dates.split("-")[0]
@@ -138,7 +141,26 @@ for file in asoSWE:
                         SWE_Difference = (last_mean - first_mean)
                         percent_change = ((last_mean - first_mean) / first_mean) * 100
                         direction = "positive" if percent_change > 0 else "negative" if percent_change < 0 else "no change"
-                        print("update")
+
+                        # determining if all increasing or decreased or mixed
+                        pillowsNum = basin_snotel_df.shape[1] - 1
+                        print(f"Number of pillows: {pillowsNum}")
+
+                        # getting the decrease values for all snotel
+                        snotel_cols = basin_snotel_df.columns[1:]
+
+                        differences = {}
+                        for col in snotel_cols:
+                            first_val = basin_snotel_df[col].iloc[0]
+                            last_val = basin_snotel_df[col].iloc[-1]
+                            diff = last_val - first_val
+                            differences[col] = diff
+
+                        diff_df = pd.DataFrame.from_dict(differences, orient='index', columns=['Change'])
+                        diff_df['Direction'] = diff_df['Change'].apply(
+                            lambda x: 'Positive' if x > 0 else ('Negative' if x < 0 else 'No change'))
+
+                        print(diff_df)
 
                         # add metrics to csv
                         ASO_snotel_stats = {
