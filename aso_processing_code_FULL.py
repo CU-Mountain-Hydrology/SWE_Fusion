@@ -54,6 +54,7 @@ for zip_file in zips_to_process:
         print(basinList)
 
 # get basin and basin info from aso folder
+all_stats = []
 asoSWE = os.listdir(data_folder)
 for file in asoSWE:
     if file.endswith(".tif"):
@@ -119,12 +120,7 @@ for file in asoSWE:
                     output_filename = f"merged_snotel_{basinName}_{end}.csv"
 
                     # Check if file already exists
-                    if os.path.exists(snotelWS + output_filename):
-                        print("sensor file already downloaded")
-
-                    else:
-                        print(f"Downloading SNOTEL data for {len(id_list)} sites within raster extent")
-                        # Download snotel values
+                    if not os.path.exists(snotelWS + output_filename):
                         merged_snotel_df = download_and_merge_snotel_data(
                             id_list=id_list,
                             state_list=state_list,
@@ -133,63 +129,79 @@ for file in asoSWE:
                             output_dir=snotelWS,
                             output_filename=output_filename
                         )
-                        ## get % grade of snotel
-                        basin_snotel_df = pd.read_csv(snotelWS + output_filename)
-                        basin_snotel_df['MEAN'] = basin_snotel_df.drop('Date', axis=1).mean(axis=1)
-                        first_mean = basin_snotel_df['MEAN'].iloc[0]
-                        last_mean = basin_snotel_df['MEAN'].iloc[-1]
-                        SWE_Difference = (last_mean - first_mean)
-                        percent_change = ((last_mean - first_mean) / first_mean) * 100
-                        direction = "positive" if percent_change > 0 else "negative" if percent_change < 0 else "no change"
+                    ## get % grade of snotel
+                    basin_snotel_df = pd.read_csv(snotelWS + output_filename)
+                    basin_snotel_df['MEAN'] = basin_snotel_df.drop('Date', axis=1).mean(axis=1)
+                    first_mean = basin_snotel_df['MEAN'].iloc[0]
+                    last_mean = basin_snotel_df['MEAN'].iloc[-1]
+                    SWE_Difference = (last_mean - first_mean)
+                    percent_change = ((last_mean - first_mean) / first_mean) * 100
+                    direction = "positive" if percent_change > 0 else "negative" if percent_change < 0 else "no change"
 
-                        # determining if all increasing or decreased or mixed
-                        pillowsNum = basin_snotel_df.shape[1] - 1
-                        print(f"Number of pillows: {pillowsNum}")
+                    # # determining if all increasing or decreased or mixed
+                    # pillowsNum = basin_snotel_df.shape[1] - 1
+                    # print(f"Number of pillows: {pillowsNum}")
+                    #
+                    # # getting the decrease values for all snotel
+                    # snotel_cols = basin_snotel_df.columns[1:]
+                    # station_cols = basin_snotel_df.columns.drop("Date")
+                    # trends = {col: classify_trend(basin_snotel_df[col]) for col in station_cols}
+                    #
+                    # unique_trends = set(trends.values())
+                    # if len(unique_trends) == 1:
+                    #     overall_trend = list(unique_trends)[0]
+                    # else:
+                    #     overall_trend = "Mixed"
+                    #
+                    # differences = {}
+                    # for col in snotel_cols:
+                    #     first_val = basin_snotel_df[col].iloc[0]
+                    #     last_val = basin_snotel_df[col].iloc[-1]
+                    #     diff = last_val - first_val
+                    #     differences[col] = diff
+                    #
+                    # diff_df = pd.DataFrame.from_dict(differences, orient='index', columns=['Change'])
+                    # diff_df['Direction'] = diff_df['Change'].apply(
+                    #     lambda x: 'Positive' if x > 0 else ('Negative' if x < 0 else 'No change'))
 
-                        # getting the decrease values for all snotel
-                        snotel_cols = basin_snotel_df.columns[1:]
+                    station_cols = basin_snotel_df.columns.drop("Date")
+                    trends = {col: classify_trend(basin_snotel_df[col]) for col in station_cols}
 
-                        differences = {}
-                        for col in snotel_cols:
-                            first_val = basin_snotel_df[col].iloc[0]
-                            last_val = basin_snotel_df[col].iloc[-1]
-                            diff = last_val - first_val
-                            differences[col] = diff
+                    if all(t == "Increasing" for t in trends.values()):
+                        overall_trend = "Increasing"
+                    elif all(t == "Decreasing" for t in trends.values()):
+                        overall_trend = "Decreasing"
+                    elif all(t == "No Trend" for t in trends.values()):
+                        overall_trend = "No Trend"
+                    else:
+                        overall_trend = "Mixed"
 
-                        diff_df = pd.DataFrame.from_dict(differences, orient='index', columns=['Change'])
-                        diff_df['Direction'] = diff_df['Change'].apply(
-                            lambda x: 'Positive' if x > 0 else ('Negative' if x < 0 else 'No change'))
-
-                        print(diff_df)
-
-                        # add metrics to csv
-                        ASO_snotel_stats = {
-                            'Basin': [basinName],
-                            'Date': [startDate],
-                            'Domain': [domain],
-                            'Year': [startDate[:4]],
-                            'GradeDirection': [direction],
-                            'GradeDifference': [percent_change],
-                            'SWEDifference_in': [SWE_Difference],
-                            'modelRun': [modelRun],
-                            'RunDate': [rundate]
-                        }
-
-                        df = pd.DataFrame(ASO_snotel_stats)
-                        # Append or write new file
-                        if os.path.exists(modelStatsCSV):
-                            df.to_csv(modelStatsCSV, mode='a', header=False, index=False)
-                        else:
-                            df.to_csv(modelStatsCSV, index=False)
-                else:
-                    print("No SNOTEL sites found within raster extent")
+                    # add metrics to csv
+                    all_stats.append({
+                        'Basin': basinName,
+                        'Date': startDate,
+                        'Domain': domain,
+                        'Year': startDate[:4],
+                        'GradeDirection': direction,
+                        'GradeDifference': percent_change,
+                        'SWEDifference_in': SWE_Difference,
+                        'modelRun': modelRun,
+                        'RunDate': rundate,
+                        'OverallTrend': overall_trend
+                    })
 
                 ## __FUNCTION: WW fractional error layer
                 fractional_error(filename=file, input_folder=data_folder, output_folder=compareWS + f"{rundate}_{modelRun}/",
                                  snapRaster=snapRaster, projIn=projIn, modelRunWorkspace=modelRunWorkspace,
                                  rundate=rundate, delete=False)
                 print("completed thanks")
-
+if all_stats:
+    stats_df = pd.DataFrame(all_stats)
+    if os.path.exists(modelStatsCSV):
+        stats_df.to_csv(modelStatsCSV, mode='a', header=False, index=False)
+    else:
+        stats_df.to_csv(modelStatsCSV, index=False)
+df = pd.DataFrame(all_stats)
 
 
 

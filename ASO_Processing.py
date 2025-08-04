@@ -88,11 +88,13 @@ def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspa
         # Resample P8 model to 50m
         p8_input = os.path.join(modelRunWorkspace, f"p8_{rundate}_noneg.tif")
         p8_resampled = os.path.join(output_dir, f"p8_{rundate}_50m.tif")
-        arcpy.Resample_management(p8_input, p8_resampled)
-
+        if os.path.exists(p8_resampled):
+            print("")
+        else:
+            arcpy.Resample_management(p8_input, p8_resampled)
         # Apply mask
         masked_p8 = Raster(p8_resampled) * Raster(mask_path)
-        masked_p8_path = os.path.join(output_dir, f"p8_{rundate}_50m_msk.tif")
+        masked_p8_path = os.path.join(output_dir, f"p8_{rundate}_50m_{basinName}_msk.tif")
         masked_p8.save(masked_p8_path)
 
         # Difference
@@ -116,7 +118,7 @@ def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspa
         arcpy.ExportTable_conversion(zonal_table_aso, zonal_table_aso.replace(".dbf", ".csv"))
 
         # Zonal stats for masked P8
-        zonal_table_p8 = os.path.join(output_dir, f"p8_{rundate}_50m_msk_byBands.dbf")
+        zonal_table_p8 = os.path.join(output_dir, f"p8_{rundate}_50m_msk_byBands_{basinName}.dbf")
         ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", masked_p8_path, zonal_table_p8, "", "ALL")
         arcpy.ExportTable_conversion(zonal_table_p8, zonal_table_p8.replace(".dbf", ".csv"))
 
@@ -170,3 +172,28 @@ def fractional_error(filename, input_folder, output_folder, snapRaster, projIn, 
             print("intermediary files not deleted")
 
         return error_output  # Return the final output path
+
+import pandas as pd
+import numpy as np
+def classify_trend(series):
+    # Convert to numeric and drop NaN
+    s = pd.to_numeric(series, errors="coerce").dropna()
+
+    if len(s) == 0:
+        return "No Data"
+
+    # Special case: all zeros → treat as decreasing
+    if (s == 0).all():
+        return "Decreasing"
+
+    # If first and last value are the same, no trend
+    if s.iloc[0] == s.iloc[-1]:
+        return "No Trend"
+
+    # Compare first and last value for general trend
+    if s.iloc[-1] > s.iloc[0]:
+        return "Increasing"
+    elif s.iloc[-1] < s.iloc[0]:
+        return "Decreasing"
+    else:
+        return "No Trend"
