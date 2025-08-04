@@ -138,32 +138,6 @@ for file in asoSWE:
                     percent_change = ((last_mean - first_mean) / first_mean) * 100
                     direction = "positive" if percent_change > 0 else "negative" if percent_change < 0 else "no change"
 
-                    # # determining if all increasing or decreased or mixed
-                    # pillowsNum = basin_snotel_df.shape[1] - 1
-                    # print(f"Number of pillows: {pillowsNum}")
-                    #
-                    # # getting the decrease values for all snotel
-                    # snotel_cols = basin_snotel_df.columns[1:]
-                    # station_cols = basin_snotel_df.columns.drop("Date")
-                    # trends = {col: classify_trend(basin_snotel_df[col]) for col in station_cols}
-                    #
-                    # unique_trends = set(trends.values())
-                    # if len(unique_trends) == 1:
-                    #     overall_trend = list(unique_trends)[0]
-                    # else:
-                    #     overall_trend = "Mixed"
-                    #
-                    # differences = {}
-                    # for col in snotel_cols:
-                    #     first_val = basin_snotel_df[col].iloc[0]
-                    #     last_val = basin_snotel_df[col].iloc[-1]
-                    #     diff = last_val - first_val
-                    #     differences[col] = diff
-                    #
-                    # diff_df = pd.DataFrame.from_dict(differences, orient='index', columns=['Change'])
-                    # diff_df['Direction'] = diff_df['Change'].apply(
-                    #     lambda x: 'Positive' if x > 0 else ('Negative' if x < 0 else 'No change'))
-
                     station_cols = basin_snotel_df.columns.drop("Date")
                     trends = {col: classify_trend(basin_snotel_df[col]) for col in station_cols}
 
