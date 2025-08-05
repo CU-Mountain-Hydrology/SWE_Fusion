@@ -1,15 +1,27 @@
-'''
+"""
 Automatically generates report maps in ArcPy using post-processed rasters.
 
-Usage: python generate_maps.py <report_type> <date> --figs=all --preview
-    report_type: Type of report to generate. Currently supported types: WW
-    date: Date of report, formatted as YYYYMMDD
-    --figs (optional): Regular expression describing which figures to generate. ex. --figs=all, --figs=1a, --figs=1*,2a,3
-    --preview (optional): Open the generated JPG maps upon completion
-'''
+**Usage:**
+    python generate_maps.py report_type date [--figs REGEX] [--preview]
 
+**Arguments:**
+    - ``report_type``: Type of report to generate (e.g., WW)
+    - ``date``: Date of report in YYYYMMDD format
+
+**Options:**
+    - ``--figs REGEX``: Regex for figures to generate (default: all).
+      Example: ``--figs 1a`` or ``--figs "1*,2a,3"``
+    - ``--preview``, ``-p``: Open the generated JPG maps upon completion
+    - ``--verbose``, ``-v``: Enable verbose output messages
+"""
+
+
+from zero_to_no_data import *
 import argparse
 import re # Regular Expression
+import os # Operating System
+import tempfile
+import shutil
 import arcpy
 # from arcpy import env
 from arcpy.sa import * # Spatial Analyst module
@@ -18,9 +30,9 @@ from arcpy.sa import * # Spatial Analyst module
 #         CONFIG        #
 #########################
 # TODO: config should not need to be changed for each run, but may vary based on system filepaths
-# templateAprx = "M:/.../ReportTemplate.aprx"
-# productSourceDir = f"M:/SWE/WestWide/{date}_..."
-# jpgOutputDir = "../output/{date}_figs"
+template_aprx = "U:\EricG\MapTemplate\MapTemplate.aprx"
+product_source_dir = r"U:\EricG\testing_Directory\20250331_RT_Report\fSCA_RT_CanAdj_rcn_noSW_wCCR_UseThis"
+output_parent_dir = "../output/"
 
 #########################
 #       END CONFIG      #
@@ -64,11 +76,6 @@ def interpret_figs(figs: str, reportType: str) -> list[str]:
 
     return sorted(fig_list)
 
-'''
-@brief Creates a clone of the map template APRX file
-'''
-def cloneTemplate():
-    pass
 
 '''
 @brief Sets the data source for the given figure
@@ -87,22 +94,58 @@ def exportToJpg(layout):
 '''
 # TODO: update function documentation
 def main():
-    # Parse input arguments and flags
+    # Parse input arguments and flags, see top of file for argument usage examples
     parser = argparse.ArgumentParser()
     parser.add_argument("report_type", type=str, help="Acceptable report types: WW")
     parser.add_argument("date", type=int, help="Date to process (YYYYMMDD)")
     parser.add_argument("--figs", default="all", type=str, help="Regex pattern(s) for figure names to generate")
-    parser.add_argument("--preview", action="store_true", help="Preview the generated maps")
+    parser.add_argument("-p","--preview", action="store_true", help="Preview the generated maps")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output messages")
     args = parser.parse_args()
 
     # Interpret --figs flag and return a list of figure names to generate
     fig_list = interpret_figs(args.figs, args.report_type)
-    print(fig_list)
+
+    # Clone the template aprx to a temporary directory
+    temp_dir = tempfile.mkdtemp()
+    working_aprx = os.path.join(temp_dir, "working_aprx.aprx")
+    shutil.copyfile(template_aprx, working_aprx)
+    aprx = arcpy.mp.ArcGISProject(working_aprx) # Open the working aprx in ArcPy
+    # for fig in fig_list:
+    if True:
+        #TODO setDataSource(fig, new_source_file)
+        fig1a_map = aprx.listMaps()[0]
+        undefined_p8_layer = fig1a_map.listLayers("p8_*")[0]
+        p8_symbology = undefined_p8_layer.symbology
+        # p8_symbology_layer = arcpy.mp.LayerFile(r"C:\Users\craft\MountainHydrology\MapTemplate\LayerSymbology\p8_20250331_noneg_fsca_wccr.tif.lyrx")
+
+        fig1a_map.removeLayer(undefined_p8_layer)
+
+        new_p8_path = r"U:\EricG\testing_Directory\20250331_RT_Report\fSCA_RT_CanAdj_rcn_noSW_wCCR_UseThis\p8_20250331_noneg_copy_2.tif"
+        # Check if new p8 raster contains 0 cells instead of NoData
+        # if contains_zero_value_cells(new_p8_path):
+        #     pass
+
+        fig1a_map.addDataFromPath(new_p8_path)
+        p8_layer = fig1a_map.listLayers("p8_*")[0]
+        p8_layer.name = "p8_20250331_noneg"
+        p8_layer.symbology = p8_symbology
+        # p8_layer.symbology = p8_symbology_layer.listLayers()[0].symbology
+
+        # sym = p8_layer.symbology
+        # print(type(sym))
+        # print(sym.renderer.type)
+        # sym.noDataValues = [0.0]
+        # p8_layer.symbology = sym
+
+        fig1a = aprx.listLayouts()[0]
+
+        fig1a.exportToJPEG(output_parent_dir+"\\"+fig1a.name+".jpg")
+
+    # Clean up
+    del aprx
 
 #TODO
-    # Parse file arguments and flags, as well as any config variables defined in this file
-    # Check --figs != none
-    # Generate temporary directory to store aprx files in
     # Open a copy of the template aprx file
     #   call cloneTemplate()
     # For each map in --figs:
