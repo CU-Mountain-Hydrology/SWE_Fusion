@@ -41,8 +41,6 @@ import glob # OS Pattern Searching
 import tempfile
 import shutil
 import arcpy
-# from arcpy import env
-from arcpy.sa import * # Spatial Analyst module
 
 def interpret_figs(figs: str, report_type: str) -> list[str]:
     """
@@ -144,21 +142,6 @@ def find_layer_file(date: int, layer_id: str, prompt_user = True, warn = True) -
     return layer_file
 
 
-'''
-@brief Sets the data source for the given figure
-'''
-def setDataSource(figure, new_data_source):
-    # TODO
-    pass
-
-'''
-@brief Exports the given layout to JPG
-'''
-def exportToJpg(layout):
-    # TODO
-    pass
-
-
 def main():
     # Parse input arguments and flags, see top of file for argument usage examples
     parser = argparse.ArgumentParser()
@@ -167,7 +150,7 @@ def main():
     parser.add_argument("--figs", default="all", type=str, help="Regex pattern(s) for figure names to generate")
     parser.add_argument("-p","--preview", action="store_true", help="Preview the generated maps")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output messages")
-    # TODO: prompt user config option
+    parser.add_argument("-u", "--prompt_user", action="store_true", help="Prompt the user before overwriting or automatically selecting files")
     args = parser.parse_args()
 
     # Interpret --figs flag and return a list of figure names to generate
@@ -178,41 +161,40 @@ def main():
     working_aprx = os.path.join(temp_dir, "working_aprx.aprx")
     shutil.copyfile(template_aprx, working_aprx)
     aprx = arcpy.mp.ArcGISProject(working_aprx) # Open the working aprx in ArcPy
-    for fig in fig_list:
-        #TODO setDataSource(fig, new_source_file)
+    for fig_id in fig_list:
         fig1a_map = aprx.listMaps()[0]
-        for layer in ww_figs_to_layers.get(fig):
-            undefined_p8_layer = fig1a_map.listLayers("p8_*")[0]
-            p8_symbology = undefined_p8_layer.symbology
-            fig1a_map.removeLayer(undefined_p8_layer)
+        for layer_id in ww_figs_to_layers.get(fig_id):
+            # Find the existing undefined layer and copy its symbology
+            undefined_layer = fig1a_map.listLayers(f"{layer_id}_*")[0]
+            symbology = undefined_layer.symbology
+            fig1a_map.removeLayer(undefined_layer)
 
-            # Check if new p8 raster contains 0 cells instead of NoData
-            # if contains_zero_value_cells(new_p8_path):
-            #     pass
-            new_layer_path = find_layer_file(args.date, layer)
+            # Find the new raster layer source
+            new_layer_path = find_layer_file(args.date, layer_id, prompt_user=args.prompt_user)
 
+            # Check if new raster contains zero-valued cells instead of NoData
+            if contains_zero_value_cells(new_layer_path):
+                # Remove zero-valued cells
+                nulled_path = new_layer_path.split(".tif")[0] + "_nulled.tif"
+                zero_to_no_data(new_layer_path, nulled_path, prompt_user=args.prompt_user, verbose=args.verbose)
+                new_layer_path = nulled_path
+
+            # Set the data source and update the symbology
             fig1a_map.addDataFromPath(new_layer_path)
-            p8_layer = fig1a_map.listLayers("p8_*")[0]
-            p8_layer.name = "p8_20250331_noneg" # TODO: generalize, this line may also only be there to update the map, cant remember
-            p8_layer.symbology = p8_symbology
-        # p8_layer.symbology = p8_symbology_layer.listLayers()[0].symbology
+            layer = fig1a_map.listLayers(f"{layer_id}_*")[0]
+            layer.symbology = symbology
 
+        # Export the layout to JPEG
         fig1a = aprx.listLayouts()[0]
+        fig1a.name = f"{args.date}_{args.report_type}_Fig{fig_id}"
+        output_dir = os.path.join(output_parent_dir, f"{args.date}_{args.report_type}_JPEGmaps")
+        os.makedirs(output_dir, exist_ok=True)
+        fig1a.exportToJPEG(output_dir+"/"+fig1a.name+".jpg")
 
-        fig1a.exportToJPEG(output_parent_dir+"\\"+fig1a.name+".jpg")
+    # TODO: automatically zip the JPEGmaps folder at the end?
 
     # Clean up
     del aprx
-
-#TODO
-    # Open a copy of the template aprx file
-    #   call cloneTemplate()
-    # For each map in --figs:
-    #   call setDataSource()
-    #   call exportToJpg()
-    # Save all jpgs to a subdirectory
-    # If --preview open the jpg (option to go through one by one and generate as needed?)
-    # Delete temporary directory and clean up any files (del aprx)
 
 if __name__ == '__main__':
     main()
