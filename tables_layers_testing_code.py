@@ -9,7 +9,7 @@ from arcpy.sa import *
 import pandas as pd
 import geopandas as gpd
 import os
-from tables_layer_testing_code import *
+# from tables_layer_testing_code import *
 print('modules imported')
 
 # establish paths

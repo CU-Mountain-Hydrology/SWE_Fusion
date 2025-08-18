@@ -172,7 +172,7 @@ import geopandas as gpd
 from shapely.geometry import Point
 from datetime import datetime
 
-def download_snow_surveys(rundate, surveyWorkspace, resultsWorkspace, url_file, NRCS_shp, state_list):
+def download_snow_surveys(report_date, survey_workspace, results_workspace, WW_url_file, NRCS_shp, WW_state_list):
     """
     Downloads, cleans, merges, and georeferences NRCS survey data for a given rundate.
 
@@ -186,26 +186,26 @@ def download_snow_surveys(rundate, surveyWorkspace, resultsWorkspace, url_file, 
     """
 
     # ---- Set up workspace ----
-    path = os.path.join(surveyWorkspace, rundate)
+    path = os.path.join(survey_workspace, report_date)
     os.makedirs(path, exist_ok=True)
-    snowCourseWorkspace = os.path.join(surveyWorkspace, rundate)
-    date_obj = datetime.strptime(rundate, "%Y%m%d")
+    snowCourseWorkspace = os.path.join(survey_workspace, report_date)
+    date_obj = datetime.strptime(report_date, "%Y%m%d")
     month = date_obj.strftime("%B")
     year = date_obj.year
 
     # ---- Read URLs from file ----
     state_url_dict = {}
-    with open(url_file, "r") as f:
+    with open(WW_url_file, "r") as f:
         for line in f:
             if "|" in line:
                 state, url = line.strip().split("|", 1)
                 state_url_dict[state] = url
 
-    state_url_list = [state_url_dict[state] for state in state_list]
-    state_text_list = [os.path.join(snowCourseWorkspace, f"{state}_original.txt") for state in state_list]
-    state_edit_list = [os.path.join(snowCourseWorkspace, f"{state}.txt") for state in state_list]
+    state_url_list = [state_url_dict[state] for state in WW_state_list]
+    state_text_list = [os.path.join(snowCourseWorkspace, f"{state}_original.txt") for state in WW_state_list]
+    state_edit_list = [os.path.join(snowCourseWorkspace, f"{state}.txt") for state in WW_state_list]
 
-    for url, text, edit, state in zip(state_url_list, state_text_list, state_edit_list, state_list):
+    for url, text, edit, state in zip(state_url_list, state_text_list, state_edit_list, WW_state_list):
         # Download text data
         state_data = requests.get(url)
         with open(text, 'w') as out_f:
@@ -240,11 +240,11 @@ def download_snow_surveys(rundate, surveyWorkspace, resultsWorkspace, url_file, 
     merged_df = pd.concat(df_list, ignore_index=True)
     merged_df["SWE_in"] = merged_df[month]
     merged_df["SWE_m"] = merged_df["SWE_in"] * 0.0254
-    merged_df.to_csv(os.path.join(snowCourseWorkspace, f"{rundate}_WestWide_surveys.csv"), index=False)
+    merged_df.to_csv(os.path.join(snowCourseWorkspace, f"{report_date}_WestWide_surveys.csv"), index=False)
 
     # Merge with shapefile
     gdf = gpd.read_file(NRCS_shp)
-    df = pd.read_csv(os.path.join(snowCourseWorkspace, f"{rundate}_WestWide_surveys.csv"))
+    df = pd.read_csv(os.path.join(snowCourseWorkspace, f"{report_date}_WestWide_surveys.csv"))
 
     df = df[["Station Name", "Station Id", month, "SWE_in", "SWE_m"]]
     gdf = gdf[["Station_Na", "Station_Id", "State_Code", "Network_Co", "Elevation", "Latitude", "Longitude", "geometry"]]
@@ -256,42 +256,42 @@ def download_snow_surveys(rundate, surveyWorkspace, resultsWorkspace, url_file, 
     geometry = [Point(xy) for xy in zip(merged_df["Longitude"], merged_df["Latitude"])]
     gdf_stateSurvey = gpd.GeoDataFrame(merged_df, geometry=geometry, crs="EPSG:4326")
 
-    results_dir = os.path.join(resultsWorkspace, f"{rundate}_results")
+    results_dir = os.path.join(results_workspace, f"{report_date}_results")
     os.makedirs(results_dir, exist_ok=True)
 
-    gdf_stateSurvey.to_file(os.path.join(results_dir, f"{rundate}_surveys.shp"), driver="ESRI Shapefile")
+    gdf_stateSurvey.to_file(os.path.join(results_dir, f"{report_date}_surveys.shp"), driver="ESRI Shapefile")
 
     print(f"Snow Courses Downloaded")
 
 
 # code for downloading CDEC sensors
-def download_cdec_snow_surveys(rundate, base_workspace, results_workspace, cdec_shapefile, basin_list):
-    import requests
-    import pandas as pd
-    import os
-    import geopandas as gpd
-    from shapely.geometry import Point
-    from datetime import datetime
+import requests
+import pandas as pd
+import os
+import geopandas as gpd
+from shapely.geometry import Point
+from datetime import datetime
 
+def download_cdec_snow_surveys(report_date, survey_workspace, SNM_results_workspace, cdec_shapefile, basin_list):
     print("Starting CDEC snow survey download...")
 
     # Parse date
-    date_obj = datetime.strptime(rundate, "%Y%m%d")
+    date_obj = datetime.strptime(report_date, "%Y%m%d")
     month = date_obj.strftime("%B")
     year = date_obj.year
-    other_date = rundate[:-2]
+    other_date = report_date[:-2]
 
     # Set paths
-    snow_course_workspace = os.path.join(base_workspace, rundate)
+    snow_course_workspace = os.path.join(survey_workspace, report_date)
     os.makedirs(snow_course_workspace, exist_ok=True)
 
     cdec_url = f"https://cdec.water.ca.gov/reportapp/javareports?name=COURSES.{other_date}"
-    original_csv = os.path.join(base_workspace, f"{rundate}_SnowCourseMeasurements_original.csv")
-    v1_csv = os.path.join(base_workspace, f"{rundate}_SnowCourseMeasurements_v1.csv")
-    clean_csv = os.path.join(base_workspace, f"{rundate}_SnowCourseMeasurements.csv")
-    shapefile_out = os.path.join(snow_course_workspace, f"{rundate}_surveys_cdec.shp")
-    merged_csv = os.path.join(base_workspace, rundate, f"{rundate}_surveys_cdec.csv")
-    final_shapefile = os.path.join(results_workspace, f"{rundate}_results", f"{rundate}_surveys.shp")
+    original_csv = os.path.join(survey_workspace, f"{report_date}_SnowCourseMeasurements_original.csv")
+    v1_csv = os.path.join(survey_workspace, f"{report_date}_SnowCourseMeasurements_v1.csv")
+    clean_csv = os.path.join(survey_workspace, f"{report_date}_SnowCourseMeasurements.csv")
+    shapefile_out = os.path.join(snow_course_workspace, f"{report_date}_surveys_cdec.shp")
+    merged_csv = os.path.join(survey_workspace, report_date, f"{report_date}_surveys_cdec.csv")
+    final_shapefile = os.path.join(SNM_results_workspace, f"{report_date}_results", f"{report_date}_surveys.shp")
 
     # Download HTML table from CDEC
     print(f"Downloading survey from: {cdec_url}")
@@ -337,32 +337,14 @@ def download_cdec_snow_surveys(rundate, base_workspace, results_workspace, cdec_
     merged.to_file(final_shapefile)
     print(f"Final shapefile saved: {final_shapefile}")
 
-## function for downloading snotel for a time series 
-import rasterio
-from rasterio.warp import reproject, Resampling
+## function for downloading snotel for a time series
 from rasterio.merge import merge
-import matplotlib.pyplot as plt
-from matplotlib import colormaps
-from matplotlib.colors import ListedColormap, Normalize
-from matplotlib.colors import BoundaryNorm
-from matplotlib.colors import TwoSlopeNorm
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
-import os 
 import io
 import re
-import math
-from rasterio.transform import rowcol
 import requests
-import matplotlib.patches as mpatches
-import numpy as np
 from shapely.geometry import box
-import geopandas as gpd
-# import fiona
-# from matplotlib_scalebar.scalebar import ScaleBar
 from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
 import numpy as np
 import time
 
@@ -458,7 +440,6 @@ def download_and_merge_snotel_data(id_list, state_list, start_date, end_date, ou
     return merged_df
 
 import shutil
-import os
 import zipfile
 def extract_zip(zip_path, ext, output_folder):
     """
@@ -502,11 +483,8 @@ def safe_read_shapefile(path):
         with fiona.open(path, 'r') as src:
             return gpd.GeoDataFrame.from_features(src, crs=src.crs)
 
-import geopandas
 import rasterio
-import numpy
 import os
-
 ##add  buffer
 def get_points_within_raster(shapefile_path, raster_path, id_column="site_id"):
     """
