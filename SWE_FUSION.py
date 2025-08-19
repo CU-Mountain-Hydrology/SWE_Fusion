@@ -11,7 +11,7 @@ import pandas as pd
 import geopandas as gpd
 import os
 from tables_layers_testing_code import *
-from SWE_FusionProcessing import *
+from SWE_Fusion_functions import *
 print('modules imported')
 
 # tables and layers -- establish paths
@@ -40,7 +40,9 @@ WW_state_list = ["AZ", "CO", "ID", "MT", "NV", "NM", "OR", "SD", "UT", "WA", "WY
 
 # set paths
 
-# download fSCA
+#process fSCA
+print("\nProcessing fSCA data...")
+fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaWS, proj_in, snap_raster, extent, proj_out)
 
 # run DMFSCA (look into r version of this code)
 

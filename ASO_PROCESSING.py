@@ -1,7 +1,7 @@
 # import modules
 import sys
-from ASO_Processing import *
-from SWE_FusionProcessing import *
+from ASO_Processing_functions import *
+from SWE_Fusion_functions import *
 import arcpy
 import csv
 import rasterio
