@@ -27,8 +27,19 @@ prev_model_run = "ASO_FixLayers_fSCA_RT_CanAdj_rcn_noSW_woCCR_UseThis"
 masking = "N"
 bias = "n"
 
+#zones
+watershedRas = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
+huc6_raster = "M:/SWE/WestWide/data/hydro/WW_HUC6_albn83_ras_msked.tif"
+band_raster = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
+region_raster = "M:/SWE/WestWide/data/hydro/WW_Regions_albn83_v2.tif"
+watermask = "M:/SWE/WestWide//data/mask/watermask_outdated/outdated/WW/Albers/WW_watermaks_10_albn83_clp_final.tif"
+glacierMask = "M:/SWE/WestWide/data/mask/glacierMask/glims_glacierMask_null_GT10_final.tif"
 
-def tables_and_layers(user, year, report_date, mean_date, prev_report_date, model_run, prev_model_run, masking, bias):
+case_field_wtrshd = "SrtName"
+case_field_band = "SrtNmeBand"
+
+def tables_and_layers(user, year, report_date, mean_date, prev_report_date, model_run, prev_model_run, masking, watershed_zones,
+                      band_zones, HUC6_zones, region_zones, case_field_wtrshd, case_field_band, watermask, glacierMask, bias):
 
     # set code parameters
     where_clause = """"POLY_AREA" > 100"""
@@ -65,17 +76,6 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
 
     meanWorkspace = workspaceBase + "mean_2001_2021_Nodmfsca/"
     prevRepWorkspace = workspaceBase + f"RT_report_data/{prev_report_date}_results/{prev_model_run}/"
-    watermask = "M:/SWE/WestWide//data/mask/watermask_outdated/outdated/WW/Albers/WW_watermaks_10_albn83_clp_final.tif"
-    glacierMask = "M:/SWE/WestWide/data/mask/glacierMask/glims_glacierMask_null_GT10_final.tif"
-
-    ## CHANGE THESE DATA SETS!!! THESE SHOULD BE A FUNCTION OF THE DOMAIN AND HAVE THE SAME NAMING CONVENTION
-    banded_elev100 = "M:/SWE/WestWide/data/topo/ww_DEM_albn83_feet_banded_100.tif"
-    watershedRas = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
-    huc6_raster = "M:/SWE/WestWide/data/hydro/WW_HUC6_albn83_ras_msked.tif"
-    band_raster = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
-    region_raster = "M:/SWE/WestWide/data/hydro/WW_Regions_albn83_v2.tif"
-    case_field_wtrshd = "SrtName"
-    case_field_band = "SrtNmeBand"
 
     meanMask = outWorkspace + f"{mean_date}_mean_msk.tif"
     MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.0d/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
@@ -323,15 +323,13 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
     anomnoneg_Mask.save(anom0_100msk)
 
     print("create zonal stats and tables")
-    outBand100Table = ZonalStatisticsAsTable(banded_elev100, "Value", product8, SWEbandtable100, "DATA",
-                                             "MEAN")
-    outBandTable = ZonalStatisticsAsTable(band_raster, case_field_band, product8, SWEbandtable, "DATA",
+    outBandTable = ZonalStatisticsAsTable(band_zones, case_field_band, product8, SWEbandtable, "DATA",
                                           "MEAN")
-    outSWETable = ZonalStatisticsAsTable(watershedRas, case_field_wtrshd, product8, SWEtable, "DATA",
+    outSWETable = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, product8, SWEtable, "DATA",
                                          "MEAN")
-    outSCABand = ZonalStatisticsAsTable(band_raster, case_field_band, modscag_per, scabandtable, "DATA",
+    outSCABand = ZonalStatisticsAsTable(band_zones, case_field_band, modscag_per, scabandtable, "DATA",
                                         "ALL")
-    outSCAWtshd = ZonalStatisticsAsTable(watershedRas, case_field_wtrshd, modscag_per, scatable, "DATA",
+    outSCAWtshd = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, modscag_per, scatable, "DATA",
                                          "ALL")
     arcpy.AddField_management(SWEbandtable, "SWE_IN", "DOUBLE", "", "", "",
                               "", "NULLABLE", "NON_REQUIRED")
@@ -395,8 +393,8 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
 
     print("Create SWE and mean zonal maps...")
     # NEED TO ADD IN MEAN MASK
-    swezmap = ZonalStatistics(watershedRas, case_field_wtrshd, product8, "MEAN", "DATA")
-    meanzmap = ZonalStatistics(watershedRas, case_field_wtrshd, meanMapMask, "MEAN", "DATA")
+    swezmap = ZonalStatistics(watershed_zones, case_field_wtrshd, product8, "MEAN", "DATA")
+    meanzmap = ZonalStatistics(watershed_zones, case_field_wtrshd, meanMapMask, "MEAN", "DATA")
     swezmap.save(SWEzoneMap)
     meanzmap.save(MeanzoneMap)
 
@@ -407,8 +405,8 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
 
     # creating banded watershed mean and swe
     # NEED TO ADD IN MEAN MASK
-    tswebzmap = ZonalStatistics(band_raster, case_field_band, product8, statisticType, "DATA")
-    tmeanbzmap = ZonalStatistics(band_raster, case_field_band, meanMapMask, statisticType, "DATA")
+    tswebzmap = ZonalStatistics(band_zones, case_field_band, product8, statisticType, "DATA")
+    tmeanbzmap = ZonalStatistics(band_zones, case_field_band, meanMapMask, statisticType, "DATA")
     tswebzmap.save(SWEbandzoneMap)
     tmeanbzmap.save(MeanBandZoneMap)
 
@@ -418,8 +416,8 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
     prod10.save(product10)
 
     print("created product 11 = HUC 6 percent of average")
-    swezmap = ZonalStatistics(huc6_raster, "name", product8, "MEAN", "DATA")
-    meanzmap = ZonalStatistics(huc6_raster, "name", meanMapMask, "MEAN", "DATA")
+    swezmap = ZonalStatistics(HUC6_zones, "name", product8, "MEAN", "DATA")
+    meanzmap = ZonalStatistics(HUC6_zones, "name", meanMapMask, "MEAN", "DATA")
     swezmap.save(SWEHuc6Map)
     meanzmap.save(MeanHuc6Map)
 
@@ -427,8 +425,8 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
     prod11.save(product11)
 
     print("created product 12 = region percent of average")
-    swezmap = ZonalStatistics(region_raster, "RegionAll", product8, "MEAN", "DATA")
-    meanzmap = ZonalStatistics(region_raster, "RegionAll", meanMapMask, "MEAN", "DATA")
+    swezmap = ZonalStatistics(region_zones, "RegionAll", product8, "MEAN", "DATA")
+    meanzmap = ZonalStatistics(region_zones, "RegionAll", meanMapMask, "MEAN", "DATA")
     swezmap.save(SWEregionMap)
     meanzmap.save(MeanRegionMap)
 
@@ -438,10 +436,10 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
 
     print("create anomaly layer table = " + anomTable)
     # NEED TO ADD IN MEAN MASK
-    anomt = ZonalStatisticsAsTable(watershedRas, case_field_wtrshd, product9, anomTable, "DATA", "MEAN")
-    anombt = ZonalStatisticsAsTable(band_raster, case_field_band, product10, anombandTable, "DATA", "MEAN")
-    anomh6 = ZonalStatisticsAsTable(huc6_raster, "name", product11, anomHuc6Table, "DATA", "MEAN")
-    anomreg = ZonalStatisticsAsTable(region_raster, "RegionAll", product12, anomRegionTable, "DATA", "MEAN")
+    anomt = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, product9, anomTable, "DATA", "MEAN")
+    anombt = ZonalStatisticsAsTable(band_zones, case_field_band, product10, anombandTable, "DATA", "MEAN")
+    anomh6 = ZonalStatisticsAsTable(HUC6_zones, "name", product11, anomHuc6Table, "DATA", "MEAN")
+    anomreg = ZonalStatisticsAsTable(region_zones, "RegionAll", product12, anomRegionTable, "DATA", "MEAN")
 
     # NEED TO ADD IN MEAN MASK
     # Sort by bandname and watershed name, 3 tables

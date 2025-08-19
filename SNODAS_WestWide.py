@@ -34,10 +34,6 @@ date = "20250526"
 ## Use this run name when creating SNODAS for fSCA, nt for final model output
 RunName = "RT_CanAdj_rcn_noSW_woCCR"
 
-## Set regression model run output, this is when you have a
-## regression model run that is good
-#RunName = "fSCA_RT_CanAdj_woCCR"
-
 ## Is SNODAS masked or unmasked? "masked" or "unmasked"
 SType = "masked"
 
@@ -66,54 +62,30 @@ OutWorkspace = SWEWorkspace
 RegressSWE = SWEWorkspaceBase + "p8_" + date + "_noneg.tif"
 
 ## Set snapraster
-snapRaster = "W:/data/boundaries/SNM_SnapRaster_albn83.tif"
+snapRaster = "M:/SWE/WestWide/data/boundaries/SnapRaster_albn83.tif"
 
 ## Set the water mask used by the LRM model
-Watermask = "W:/data/mask/SNM_watermask.tif"
-
-# ## Now use this mask it's the whole area of the watersheds
-# MaskTif = MskWorkspace + "dwr_watersheds_lakes.tif"
+watermask = "M:/SWE/WestWide//data/mask/watermask_outdated/outdated/WW/Albers/WW_watermaks_10_albn83_clp_final.tif"
+glacierMask = "M:/SWE/WestWide/data/mask/glacierMask/glims_glacierMask_null_GT10_final.tif"
 
 ## Set up band watershed and watershed raster layers
-watershedSHP = "W:/data/hydro/SNM_Region_albn83.shp"
-band_watershed = "W:/data/hydro/SNM/dwr_band_basins_geoSort_albn83_delin.tif"
-watershed = "W:/data/hydro/SNM/dwr_basins_geoSort_albn83.tif"
-CNRFC_band_watershed = WatShdWorkspace + r"CNRFC_basin_boundaries/" + "cnrfc_final_basins_nameband_geo.tif"
+band_zones = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
+watershed_zones = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
 
 ## Set up input and output projections
-## GCS NAD83
-projin = arcpy.SpatialReference(4269)
-## albers
-projout = arcpy.SpatialReference(102039)
-
-## Set output cellsize b/c arcpy can't figure it out from snapRaster
+projin = arcpy.SpatialReference(4269) #GCS NAD
+projout = arcpy.SpatialReference(102039) #Albers
 Cellsize = "500"
 
 print("variables established")
 ##############################################################
-
 ## End of Set these variables
-
 ##############################################################
 
 ##### Set automatic local variables
 arcpy.CreateFolder_management(resultsWorkspace, "SNODAS")
 product8 = SWEWorkspace + "p8_" + date + "_noneg.tif"
 arcpy.CopyRaster_management(RegressSWE, product8)
-
-# if RunName == "test":
-#     templateRaster = RegressModelWorkspace + "phvrcn_YYYYMMDD.tif"
-#     phvrcnRaster = RegressModelWorkspace + "SNM_phvrcn_" + date + ".tif"
-#     arcpy.CopyRaster_management(templateRaster, phvrcnRaster, "#", "#", "#", "NONE", "NONE", "32_BIT_FLOAT", "NONE",
-#                                 "NONE", "TIFF", "NONE")
-#
-# ## Set regression model layer
-# rcn_raw = RegressModelWorkspace + "SNM_phvrcn_" + date + ".tif"
-# rcn_GT0 = SWEWorkspace + "SNM_phvrcn_" + date + "_GT0.tif"
-# rcn_proj = SWEWorkspace + "SNM_phvrcn_" + date + "_albn83.tif"
-
-## Product #8 = masked model output
-
 
 ## Output tables
 SWEbandtable = SWEWorkspace + date + "_band_SNODAS_swe_table.dbf"
@@ -145,28 +117,13 @@ MOD_SCA_SNODAS = MODWorkspace + "SNODAS_" + date + "_fSCA.tif"
 SWE_both = SWEWorkspace + "SWE_" + date + "_both.tif"
 
 ###### End of setting up variables
-
+# To Do: need to rename and move the HDR file
+# maybe extract the zip
 print("Creating masked SWE: " + product8)
-
-## Mask regression product and set anything GT 200 equal to NODATA, or anything
-## LT 0 equal to 0
-
-# rcn_LT_200 = SetNull(Raster(rcn_raw) > 200, Raster(rcn_raw))
-# rcn_GT_0 = Con(rcn_LT_200 < 0.0001, 0, rcn_LT_200)
-#
-# ## Mask the layer created above
-# # rcn_mask = rcn_GT_0 * Raster(MaskTif)
-# rcn_GT_0.save(rcn_GT0)
-#
-# # project to albers
-# arcpy.ProjectRaster_management(rcn_GT0, product8, projout, "NEAREST", Cellsize)
-
-## Find .dat file
 arcpy.env.workspace = SNODASWorkspace
 print("Input Workspace: " + SNODASWorkspace)
 
 ## Add .dat file to file list
-##dats = arcpy.ListRasters()
 dats = arcpy.ListFiles("*.dat")
 
 ## Process all applicable .dat files
@@ -183,14 +140,11 @@ for dat in dats:
         ## Create a geotif from the .dat file
         arcpy.RasterToOtherFormat_conversion(dat, SNODASWorkspace, "TIFF")
 
-    ## Projectdefine as projection doesn't come across
-    ## Projection is actually wgs84 but I have to "project" it later, so now
-    ## setting it to NAD83. Doesn't really matter at this scale
+    # define projection
     arcpy.DefineProjection_management(OutTif, projin)
 
     ## Get rid of -9999 values and change to NODATA values
     NoData = SetNull(Raster(OutTif) == -9999, OutTif)
-    ## Save to new raster
     NoData.save(OutSNODASplus)
 
     ## Copy to floating point raster
@@ -216,35 +170,19 @@ for dat in dats:
     arcpy.ProjectRaster_management(MeterSNODAS, ProjSNODAS, projout, "NEAREST", Cellsize,
                                    "", "", projin)
 
-    ## The extent command doesn't work, only kind of, so then clip the
-    ## raster to get it close to the same extent as the regression SWE
-    # arcpy.Clip_management(ProjSNODAS,"-112.25 33 -104.125 43.75", ClipSNODAS,
-                             # snapRaster,"-3.402823e+038", "NONE","NO_MAINTAIN_EXTENT")
-
-    # Then mask the product with the same extent as the regression SWE product, this
-    # includes masking out lakes, clouds, nodata cells, same as regression SWE product
-    # SNODASmsk = Raster(ProjSNODAS) * Raster(prod8msk)
-
-    # Then mask the product with the watersheds/lakes mask, this
-    # includes masking out lakes
-    # SNODASmsk = Raster(ProjSNODAS) * Raster(MaskTif)
-    SNODASmsk = ExtractByMask(ProjSNODAS, watershedSHP, "INSIDE")
-    SNODASmsk.save(ClipSNODAS)
-
-    ## Then set the extent to the same as the LRM model domain, mask with the
-    ## same watermask used by the LRM model, and create an fSCA image from
-    ## the SNODAS to use as input to the model if need be.
+    # set extent and apply masks
     arcpy.env.extent = snapRaster
-    SNODASwatMsk = Raster(ProjSNODAS) * Raster(Watermask)
+    SNODASwatMsk = Raster(ProjSNODAS) * Raster(watermask)
+    SNODASallMsk = SNODASwatMsk * Raster(glacierMask)
 
     ## If test run previously then SCA_SNODAS will exist, delete and then create
     if arcpy.Exists(SCA_SNODAS):
         arcpy.Delete_management(SCA_SNODAS, "#")
-        SNODASfSCA = Con(SNODASwatMsk > .001, 100, 0)
+        SNODASfSCA = Con(SNODASallMsk > .001, 100, 0)
         SNODASfSCA.save(SCA_SNODAS)
     ## Else if this is a test run create it
     else:
-        SNODASfSCA = Con(SNODASwatMsk > .001, 100, 0)
+        SNODASfSCA = Con(SNODASallMsk > .001, 100, 0)
         SNODASfSCA.save(SCA_SNODAS)
 
 ## If test run delete all layers b/c they are not final, and copy fSCA image
@@ -265,10 +203,10 @@ if RunName != "test":
 
     # Do zonal stats for real time swe layer table
     print("creating zonal stats for SNODAS swe = " + SWEtable)
-    outswetbl = ZonalStatisticsAsTable(band_watershed, "SrtNmeBand", ClipSNODAS, SWEbandtable, "DATA", "MEAN")
-    outswetbl2 = ZonalStatisticsAsTable(watershed, "SrtName", ClipSNODAS, SWEtable, "DATA", "MEAN")
-    outswetbl3 = ZonalStatisticsAsTable(CNRFC_band_watershed, "NameBand", ProjSNODAS, CNRFC_SWEbandtable, "DATA",
-                                        "MEAN")
+    outswetbl = ZonalStatisticsAsTable(band_zones, "SrtNmeBand", ClipSNODAS, SWEbandtable, "DATA", "MEAN")
+    outswetbl2 = ZonalStatisticsAsTable(watershed_zones, "SrtName", ClipSNODAS, SWEtable, "DATA", "MEAN")
+    # outswetbl3 = ZonalStatisticsAsTable(CNRFC_band_watershed, "NameBand", ProjSNODAS, CNRFC_SWEbandtable, "DATA",
+    #                                     "MEAN")
 
     # Add SWE in inches fields to 2 tables above
     arcpy.AddField_management(SWEbandtable, "SWE_IN", "FLOAT", "#", "#", "#", "#", "NULLABLE", "NON_REQUIRED", "#")
@@ -311,8 +249,5 @@ if RunName != "test":
     snodas_cnrfc_dbf = gpd.read_file(CNRFC_SWEbandtable_save)
     snodas_cnrfc_df = pd.DataFrame(snodas_cnrfc_dbf)
     snodas_cnrfc_df.to_csv(CNRFC_SWEbandtableCSV, index=False)
-
-# If an error occurred while running a tool, then print the messages.
-print(arcpy.GetMessages())
 
 

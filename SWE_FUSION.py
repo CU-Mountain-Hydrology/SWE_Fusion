@@ -56,11 +56,9 @@ if surveys == "Y":
     download_snow_surveys(report_date=report_date, surveyWorkspace=survey_workspace, results_workspace=results_workspace,
                           WW_url_file=WW_url_file, NRCS_shp=NRCS_shp, WW_state_list=WW_state_list)
 
-# run SNODAS code
+# run SNODAS code --> need to make a function
 ## run SNODAS for WW
-# clip snodas extent
-
-
+## clip snodas extent
 
 ## Maybe this section should be looped through CCR and woCCR
 # run R model
