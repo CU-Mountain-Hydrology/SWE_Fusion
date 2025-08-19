@@ -7,6 +7,7 @@ from datetime import datetime
 print('modules imported')
 
 # establish paths
+methods = ['Recent', 'SNOTEL_Grade', 'SNOTEL_Pattern', 'Specific']
 # list the basins for bias correction
 # establish method for bias correction
 ## METHOD ONE, MOST RECENT FRACTIONAL ERROR LAYER
