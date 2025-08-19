@@ -14,6 +14,26 @@ from rasterio.merge import merge
 from datetime import datetime, timedelta
 
 def fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaWS, proj_in, snap_raster, extent, proj_out):
+    """
+        This code requires the user to download the NetCDF tiles from SnowToday and place them in the correct folder.
+        TKTK This code should add a prompt that if the files are not in the correct folder, it will add a prompt. Ask Eric
+
+        Once the folders are in the correct places, it will reprojects, mosiac, and process to a GeoTIFF for use in the
+        CU Boulder LRM model. This will go from a Sinusodial MODIS projection to a GCS NAD83 projection. This function
+        uses ArcPy and requires the proper license.
+
+        Parameters:
+            start_date (datetime object): e.g. datetime(2025, 5, 26)
+            start_date (datetime object): e.g. datetime(2025, 5, 28)
+            netCDF_WS (str): Directory where the NetCDFs files are located. This should contain the tile folders
+            tile_list (list, str): This is the list of the strings og the various tiles from MODIS. This includes ['h08v04', 'h09v04... etc.]
+            output_fscaWS (str): Directory where the processing is output is held. This function creates three sub-directories to hold the intermediary processed data.
+            proj_in (arcpy proj str): This is the MODIS Sinusodial projection string that will be used to define the projection of the tiles.
+            snap_raster (str): This is a reference raster that has the same cell size, cell alignment, extent, and CRS as the desired output.
+            extent (str): This is the extent of the final raster
+            proj_out (arcpy proj Spatial Reference): This is the projection string that will be used to define the output. This would likely be GCS NAD83 for the CU Boulder LRM model.
+        """
+
     proj_out = proj_out
     proj_in = proj_in
 
