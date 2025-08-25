@@ -189,6 +189,8 @@ for file in asoSWE:
                 cdec_merged = download_and_merge_cdec_pillow_data(start_date=start_cdec, end_date=end_cdec, cdec_ws=cdec_ws,
                                                     output_csv_filename=f"cdec_snowPillows_{start_cdec}.csv")
 
+                print(f"\n Subsetting cdec sesnors to include only: {site_id_list}")
+                cdec_subset = cdec_merged[cdec_merged["ID"].isin(site_id_list)]
 
 if all_stats:
     stats_df = pd.DataFrame(all_stats)
