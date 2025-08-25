@@ -83,6 +83,17 @@ for file in asoSWE:
                 zonalRaster = r"M:\SWE\WestWide\data\hydro\SNM\dwr_band_basins_geoSort_albn83_delin.tif"
                 snotelWorkspace = "W:/Spatial_SWE/ASO/2025/data_testing/snotel_comparisons/cdec_metaData.csv"
                 pillow_shp = cdec_shp
+
+                print(f"Basin: {basinName}, State: {basin_state}, Domain: {domain}")
+                modelRunWorkspace = rf"M:/SWE/{fullDomain}/Spatial_SWE/{domain}_regression/RT_report_data/{rundate}_results/{modelRun}/"
+
+                # process ASO comparison
+                process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspace, compareWS, snapRaster,
+                                       projIn, zonalRaster)
+
+                # find the snotels that are within a raster file
+                gdf_final, site_id_list = get_points_within_raster(pillow_shp, data_folder + file, id_column="site_id")
+
             else:
                 domain = "WW"
                 fullDomain = "WestWide"
@@ -93,15 +104,15 @@ for file in asoSWE:
                 pillowMeta = r"W:\Spatial_SWE\ASO\ASO_Metadata\snotel_metaData.csv"
                 pillow_shp = snotel_shp
 
-            print(f"Basin: {basinName}, State: {basin_state}, Domain: {domain}")
-            modelRunWorkspace = rf"M:/SWE/{fullDomain}/Spatial_SWE/{domain}_regression/RT_report_data/{rundate}_results/{modelRun}/"
+                print(f"Basin: {basinName}, State: {basin_state}, Domain: {domain}")
+                modelRunWorkspace = rf"M:/SWE/{fullDomain}/Spatial_SWE/{domain}_regression/RT_report_data/{rundate}_results/{modelRun}/"
 
-            # process ASO comparison
-            process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspace, compareWS, snapRaster,
-                                   projIn, zonalRaster)
+                # process ASO comparison
+                process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspace, compareWS, snapRaster,
+                                       projIn, zonalRaster)
 
-            # find the snotels that are within a raster file
-            gdf_final, site_id_list = get_points_within_raster(pillow_shp, data_folder + file, id_column="site_id")
+                # find the snotels that are within a raster file
+                gdf_final, site_id_list = get_points_within_raster(pillow_shp, data_folder + file, id_column="site_id")
 
             # download snotel function
             print(startDate)
@@ -169,6 +180,16 @@ for file in asoSWE:
                                  snapRaster=snapRaster, projIn=projIn, modelRunWorkspace=modelRunWorkspace,
                                  rundate=rundate, delete=False)
                 print("completed thanks")
+            if domain == "SNM":
+                # start_date = "20250403"
+                # end_date = "20250410"  # this should be in YYYYMMDD format
+                end_cdec = datetime.strptime(startDate, "%Y%m%d")
+                start_cdec = end_cdec - timedelta(days=7)
+                cdec_ws = "W:/Spatial_SWE/ASO/2025/data_testing/cdec_comparisons/"
+                cdec_merged = download_and_merge_cdec_pillow_data(start_date=start_cdec, end_date=end_cdec, cdec_ws=cdec_ws,
+                                                    output_csv_filename=f"cdec_snowPillows_{start_cdec}.csv")
+
+
 if all_stats:
     stats_df = pd.DataFrame(all_stats)
     if os.path.exists(modelStatsCSV):

@@ -459,6 +459,79 @@ def download_and_merge_snotel_data(id_list, state_list, start_date, end_date, ou
 
     return merged_df
 
+
+import pandas as pd
+from datetime import datetime, timedelta
+
+
+def download_and_merge_cdec_pillow_data(start_date, end_date, cdec_ws, output_csv_filename):
+    """
+    Download CDEC PAGE6 snow pillow data from start_date to end_date
+    and merge into a single CSV.
+
+    Parameters:
+    start_date (str): YYYYMMDD
+    end_date (str): YYYYMMDD
+    cdec_ws (str): folder path to save CSV
+    output_csv_filename (str): output CSV filename
+    """
+
+    # generate prior 7 dates + target
+    start_obj = datetime.strptime(start_date, "%Y%m%d")
+    end_obj = datetime.strptime(end_date, "%Y%m%d")
+
+    # generate list of all dates from start to end (inclusive)
+    delta_days = (end_obj - start_obj).days
+    all_dates = [(start_obj + timedelta(days=i)).strftime("%Y%m%d") for i in range(delta_days + 1)]
+    print(f'\nProcessing cdec pillows for: {all_dates}')
+
+    all_dfs = []
+
+    for dt in all_dates:
+        print(f'Downloading {dt}')
+        sensor_url = f"https://cdec.water.ca.gov/reportapp/javareports?name=PAGE6.{dt}"
+
+        # read tables from url
+        tables = pd.read_html(sensor_url)
+
+        cleaned_tables = []
+        for t in tables:
+            if isinstance(t.columns, pd.MultiIndex):
+                t.columns = t.columns.droplevel(0)
+            cleaned_tables.append(t)
+
+        # concat all tables for this date
+        df = pd.concat(cleaned_tables, ignore_index=True)
+
+        # clean stray characters in 'Today (IN)'
+        df['Today (IN)'] = (
+            df['Today (IN)']
+            .astype(str)
+            .str.replace(r"[^0-9.\-]", "", regex=True)
+        )
+        df['Today (IN)'] = pd.to_numeric(df['Today (IN)'], errors="coerce")
+
+        # drop rows where ID is NaN
+        df = df.dropna(subset=["ID"])
+
+        # keep relevant columns
+        df_clean = df[['Station', 'ID', 'Elev (FT)', 'Today (IN)']].copy()
+
+        # rename 'Today (IN)' to include the date
+        df_clean[f'{dt}_SWE'] = df_clean['Today (IN)']
+        df_clean = df_clean.drop(columns=["Today (IN)"])
+
+        all_dfs.append(df_clean)
+
+    # merge all dataframes on 'ID' (or ['Station','ID'] if you prefer)
+    from functools import reduce
+    merged_df = reduce(lambda left, right: pd.merge(left, right, on=['Station', 'ID', 'Elev (FT)'], how='outer'),
+                       all_dfs)
+
+    print(merged_df.head(10))
+    merged_df.to_csv(cdec_ws + output_csv_filename)
+    return merged_df
+
 import shutil
 import zipfile
 def extract_zip(zip_path, ext, output_folder):
