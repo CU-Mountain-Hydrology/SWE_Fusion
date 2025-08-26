@@ -13,21 +13,30 @@ Automatically generates report maps in ArcPy using post-processed rasters.
       Example: ``--figs=1a`` or ``--figs=1*,2a,3``
     - ``--preview``, ``-p``: Open the generated JPG maps upon completion
     - ``--verbose``, ``-v``: Enable verbose output messages
+    - ``--prompt_user``, ``-u``: Prompt user before overwriting files or automatically selecting layer files
 """
 
-#########################
-#         CONFIG        #
+#########################   These values should not need to be changed between runs, but may change depending on your
+#         CONFIG        #   operating system, filepaths, and preferred output location.
 #########################
 # Filepath configs
 template_aprx = "U:\EricG\MapTemplate\MapTemplate.aprx" # Project containing template for each figure
 product_source_dir = r"U:\EricG\testing_Directory"      # Parent directory of the YYYYMMDD_RT_Report folders
-layer_dir_pattern = "*UseThis"                          # Directory to get layers from. Could also be "*UseAvg" or some other glob pattern
 output_parent_dir = "../output/"                        # Directory the figures will be exported to
 
 # Figure configs
 ww_all_figs = {"1a","1b","2a","2b","3","4","5","6"}     # List of all figure id's in the WestWide reports
 ww_figs_to_layers = {                                   # Mapping of figure id's to layer id's
     "1a" : ["p8"],
+    "1b" : ["anomRegion_table"],
+}
+ww_layers_to_format = {                                 # Mapping of layer id's to file format (tif, csv)
+    "p8" : "tif",
+    "anomRegion_table" : "csv",
+}
+ww_layers_to_dirs = {                                   # Mapping of figure id's to data source directory
+    "p8" : "*UseThis",
+    "anomRegion_table" : "*UseAvg",
 }
 #########################
 #       END CONFIG      #
@@ -97,17 +106,18 @@ def find_layer_file(date: int, layer_id: str, prompt_user = True, warn = True) -
     """
 
     # Find RT_Report directory for this date
+    # TODO: may want to make this the results dir not the RT_Report dir, need to figure out what data is duplicated where
     rt_report_dir = os.path.join(product_source_dir, str(date) + "_RT_Report")
 
     # Find the directory containing the layer products to be used e.g. "...UseThis"
     try:
-        layer_dir = glob.glob(os.path.join(rt_report_dir, layer_dir_pattern))[0]
+        layer_dir = glob.glob(os.path.join(rt_report_dir, ww_layers_to_dirs[layer_id]))[0]
     except IndexError:
-        raise FileNotFoundError(f"No directory matching pattern '{layer_dir_pattern}' found in '{rt_report_dir}'! "
+        raise FileNotFoundError(f"No directory matching pattern '{ww_layers_to_dirs[layer_id]}' found in '{rt_report_dir}'! "
                                 f"Confirm config values are set correctly.")
 
-    # Find the layer products that start with layer_id e.g. "p8"
-    layer_files = glob.glob(os.path.join(layer_dir, layer_id + "*.tif"))
+    # Find the layer products that contains the layer_id e.g. "p8"
+    layer_files = glob.glob(os.path.join(layer_dir, f"*{layer_id}*.{ww_layers_to_format[layer_id]}"))
     if not layer_files:
         raise FileNotFoundError(f"No file matching pattern '{layer_id}' found in '{layer_dir}'!")
 
@@ -115,7 +125,7 @@ def find_layer_file(date: int, layer_id: str, prompt_user = True, warn = True) -
     if len(layer_files) > 1:
         # If one of the multiple layer files ends with "nulled", use it
         for file in layer_files:
-            if file.endswith("nulled.tif"):
+            if ww_layers_to_format[layer_id] == "tif" and file.endswith("nulled.tif"):
                 # TODO: option to disable selecting "...nulled.tif" by default
                 layer_file = file
                 if warn: print(f"find_layer_file warning: Multiple files matching pattern '{layer_id}' found in '{layer_dir}'. Using {layer_file}")
@@ -162,34 +172,45 @@ def main():
     shutil.copyfile(template_aprx, working_aprx)
     aprx = arcpy.mp.ArcGISProject(working_aprx) # Open the working aprx in ArcPy
     for fig_id in fig_list:
-        fig1a_map = aprx.listMaps()[0]
-        for layer_id in ww_figs_to_layers.get(fig_id):
+        map = aprx.listMaps(f"*{fig_id}*")[0]
+        if not map:
+            raise ValueError(f"No map matching pattern '{fig_id}' found in '{working_aprx}'!")
+        for layer_id in ww_figs_to_layers.get(fig_id): # TODO generalize ww
             # Find the existing undefined layer and copy its symbology
-            undefined_layer = fig1a_map.listLayers(f"{layer_id}_*")[0]
-            symbology = undefined_layer.symbology
-            fig1a_map.removeLayer(undefined_layer)
+            symbology = None
+            if ww_layers_to_format[layer_id] in ["tif",]:
+                undefined_layer = map.listLayers(f"*{layer_id}*")[0]
+                symbology = undefined_layer.symbology
+                map.removeLayer(undefined_layer)
+            elif ww_layers_to_format[layer_id] in ["csv",]:
+                undefined_table = map.listTables(f"*{layer_id}*")[0]
+                map.removeTable(undefined_table)
 
-            # Find the new raster layer source
+            # Find the new layer source
             new_layer_path = find_layer_file(args.date, layer_id, prompt_user=args.prompt_user)
 
             # Check if new raster contains zero-valued cells instead of NoData
-            if contains_zero_value_cells(new_layer_path):
+            if new_layer_path.endswith(".tif") and contains_zero_value_cells(new_layer_path):
                 # Remove zero-valued cells
                 nulled_path = new_layer_path.split(".tif")[0] + "_nulled.tif"
                 zero_to_no_data(new_layer_path, nulled_path, prompt_user=args.prompt_user, verbose=args.verbose)
                 new_layer_path = nulled_path
 
             # Set the data source and update the symbology
-            fig1a_map.addDataFromPath(new_layer_path)
-            layer = fig1a_map.listLayers(f"{layer_id}_*")[0]
-            layer.symbology = symbology
+            map.addDataFromPath(new_layer_path)
+            if ww_layers_to_format[layer_id] in ["tif",]:
+                layer = map.listLayers(f"*{layer_id}*")[0]
+                layer.symbology = symbology
 
         # Export the layout to JPEG
-        fig1a = aprx.listLayouts()[0]
-        fig1a.name = f"{args.date}_{args.report_type}_Fig{fig_id}"
+        layout = aprx.listLayouts(f"*{fig_id}*")[0]
+        if not layout:
+            # TODO error handling
+            pass
+        layout.name = f"{args.date}_{args.report_type}_Fig{fig_id}"
         output_dir = os.path.join(output_parent_dir, f"{args.date}_{args.report_type}_JPEGmaps")
         os.makedirs(output_dir, exist_ok=True)
-        fig1a.exportToJPEG(output_dir+"/"+fig1a.name+".jpg")
+        layout.exportToJPEG(output_dir+"/"+layout.name+".jpg")
 
     # TODO: automatically zip the JPEGmaps folder at the end?
 
