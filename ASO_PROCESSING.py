@@ -28,7 +28,7 @@ data_folder = r"M:/SWE/WestWide/Spatial_SWE/ASO/2025/data_testing/"
 basin_textFile = r"M:\SWE\WestWide\Spatial_SWE\ASO\ASO_Metadata\State_Basin.txt"
 basinList = []
 snotel_shp = r"W:\Spatial_SWE\ASO\ASO_Metadata\WW_CDEC_SNOTEL_geon83.shp"
-cdec_shp = ""
+cdec_shp = r"W:\data\Snow_Instruments\pillows\SNM_CDEC_SNOTEL_geow84_20241125.shp"
 modelStatsCSV = f"M:/SWE/WestWide/Spatial_SWE/ASO/2025/data_testing/ASO_SNOTEL_DifferenceStats.csv"
 
 # open basin file for list
@@ -44,7 +44,9 @@ zips_to_process = os.listdir(toProcessFolder)
 for zip_file in zips_to_process:
     if zip_file.endswith(".zip"):
         zip_file_path = os.path.join(toProcessFolder, zip_file)
+        print(zip_file_path)
 
+        ## add something here that is only unzips if the file doesn't already exist
         # # get SWE file from zip folder
         extract_zip(zip_path=zip_file_path, ext=search_tag, output_folder=data_folder)
         print("file moved")
@@ -74,6 +76,7 @@ for file in asoSWE:
 
             # get state associated with basin
             basin_state = basin_state_map.get(basinName, None)
+            print(basin_state)
             # checking for domains
             if basin_state == "CA":
                 domain = "SNM"
@@ -92,7 +95,74 @@ for file in asoSWE:
                                        projIn, zonalRaster)
 
                 # find the snotels that are within a raster file
-                gdf_final, site_id_list = get_points_within_raster(pillow_shp, data_folder + file, id_column="site_id")
+                gdf_final, site_id_list = get_points_within_raster(pillow_shp, data_folder + file, id_column="Site_ID")
+
+                end_cdec = datetime.strptime(startDate, "%Y%b%d")
+                start_cdec = end_cdec - timedelta(days=7)
+                start_SNM = start_cdec.strftime("%Y%m%d")
+                end_SNM = end_cdec.strftime("%Y%m%d")
+                cdec_ws = "W:/Spatial_SWE/ASO/2025/data_testing/cdec_comparisons/"
+                cdec_merged = download_and_merge_cdec_pillow_data(start_date=start_SNM, end_date=end_SNM,
+                                                                  cdec_ws=cdec_ws,
+                                                                  output_csv_filename=f"cdec_snowPillows_{end_SNM}.csv")
+
+                cdec_subset = cdec_merged[cdec_merged["ID"].isin(site_id_list)]
+                cdec_subset.to_csv(cdec_ws + f"cdec_snowPillows_{end_SNM}_{basinName}.csv")
+
+                swe_cols = [col for col in cdec_subset.columns if col.endswith("_SWE")]
+                daily_avg = cdec_subset[swe_cols].mean(axis=0, skipna=True)
+                avg_df = daily_avg.reset_index()
+                avg_df.columns = ["date", "avg_SWE"]
+                avg_df["date"] = avg_df["date"].str.replace("_SWE", "")
+                first_mean = avg_df["avg_SWE"].iloc[0]
+                last_mean = avg_df["avg_SWE"].iloc[-1]
+                SWE_Difference = (last_mean - first_mean)
+                percent_change = ((last_mean - first_mean) / first_mean) * 100
+                direction = "positive" if percent_change > 0 else "negative" if percent_change < 0 else "no change"
+
+                trends = {}
+                for i, row in cdec_subset.iterrows():
+                    station = row["Station"]
+                    first_val = row[swe_cols].dropna().iloc[0]
+                    last_val = row[swe_cols].dropna().iloc[-1]
+
+                    if last_val > first_val:
+                        trend = "Increasing"
+                    elif last_val < first_val:
+                        trend = "Decreasing"
+                    else:
+                        trend = "No Trend"
+
+                    trends[station] = trend
+
+                if all(t == "Increasing" for t in trends.values()):
+                    overall_trend = "Increasing"
+                elif all(t == "Decreasing" for t in trends.values()):
+                    overall_trend = "Decreasing"
+                elif all(t == "No Trend" for t in trends.values()):
+                    overall_trend = "No Trend"
+                else:
+                    overall_trend = "Mixed"
+
+                # add metrics to csv
+                all_stats.append({
+                    'Basin': basinName,
+                    'Date': startDate,
+                    'Domain': domain,
+                    'Year': startDate[:4],
+                    'GradeDirection': direction,
+                    'GradeDifference': percent_change,
+                    'SWEDifference_in': SWE_Difference,
+                    'modelRun': modelRun,
+                    'RunDate': rundate,
+                    'OverallTrend': overall_trend
+                })
+
+                ## __FUNCTION: WW fractional error layer
+                fractional_error(filename=file, input_folder=data_folder,
+                                 output_folder=compareWS + f"{rundate}_{modelRun}/",
+                                 snapRaster=snapRaster, projIn=projIn, modelRunWorkspace=modelRunWorkspace,
+                                 rundate=rundate, delete=False)
 
             else:
                 domain = "WW"
@@ -114,9 +184,7 @@ for file in asoSWE:
                 # find the snotels that are within a raster file
                 gdf_final, site_id_list = get_points_within_raster(pillow_shp, data_folder + file, id_column="site_id")
 
-            # download snotel function
-            print(startDate)
-            if domain =="WW":
+
                 #check to see if a csv exists, maybe check on the csv and the state list just be the state of the ASO flight
                 end_snotel = datetime.strptime(startDate, "%Y%b%d")
                 start_snotel = end_snotel - timedelta(days=7)
@@ -175,22 +243,12 @@ for file in asoSWE:
                         'OverallTrend': overall_trend
                     })
 
-                ## __FUNCTION: WW fractional error layer
+                ## __FUNCTION: SNM fractional error layer
                 fractional_error(filename=file, input_folder=data_folder, output_folder=compareWS + f"{rundate}_{modelRun}/",
                                  snapRaster=snapRaster, projIn=projIn, modelRunWorkspace=modelRunWorkspace,
                                  rundate=rundate, delete=False)
                 print("completed thanks")
-            if domain == "SNM":
-                # start_date = "20250403"
-                # end_date = "20250410"  # this should be in YYYYMMDD format
-                end_cdec = datetime.strptime(startDate, "%Y%m%d")
-                start_cdec = end_cdec - timedelta(days=7)
-                cdec_ws = "W:/Spatial_SWE/ASO/2025/data_testing/cdec_comparisons/"
-                cdec_merged = download_and_merge_cdec_pillow_data(start_date=start_cdec, end_date=end_cdec, cdec_ws=cdec_ws,
-                                                    output_csv_filename=f"cdec_snowPillows_{start_cdec}.csv")
 
-                print(f"\n Subsetting cdec sesnors to include only: {site_id_list}")
-                cdec_subset = cdec_merged[cdec_merged["ID"].isin(site_id_list)]
 
 if all_stats:
     stats_df = pd.DataFrame(all_stats)
