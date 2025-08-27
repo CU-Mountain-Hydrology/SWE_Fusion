@@ -29,14 +29,22 @@ ww_all_figs = {"1a","1b","2a","2b","3","4","5","6"}     # List of all figure id'
 ww_figs_to_layers = {                                   # Mapping of figure id's to layer id's
     "1a" : ["p8"],
     "1b" : ["anomRegion_table"],
+    "2a" : ["anom0_200_msk"],
+    "2b" : ["p11","huc6_anom_table_save"],
 }
-ww_layers_to_format = {                                 # Mapping of layer id's to file format (tif, csv)
+ww_layers_to_format = {                                 # Mapping of layer id's to file format (tif, csv, dbf)
     "p8" : "tif",
     "anomRegion_table" : "csv",
+    "anom0_200_msk" : "tif",
+    "p11" : "tif",
+    "huc6_anom_table_save" : "dbf",
 }
 ww_layers_to_dirs = {                                   # Mapping of figure id's to data source directory
     "p8" : "*UseThis",
     "anomRegion_table" : "*UseAvg",
+    "anom0_200_msk" : "*UseAvg",
+    "p11" : "*UseAvg",
+    "huc6_anom_table_save" : "*UseAvg",
 }
 #########################
 #       END CONFIG      #
@@ -182,7 +190,7 @@ def main():
                 undefined_layer = map.listLayers(f"*{layer_id}*")[0]
                 symbology = undefined_layer.symbology
                 map.removeLayer(undefined_layer)
-            elif ww_layers_to_format[layer_id] in ["csv",]:
+            elif ww_layers_to_format[layer_id] in ["csv","dbf"]:
                 undefined_table = map.listTables(f"*{layer_id}*")[0]
                 map.removeTable(undefined_table)
 
