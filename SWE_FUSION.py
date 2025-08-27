@@ -94,6 +94,7 @@ watermask = "M:/SWE/WestWide//data/mask/watermask_outdated/outdated/WW/Albers/WW
 glacierMask = "M:/SWE/WestWide/data/mask/glacierMask/glims_glacierMask_null_GT10_final.tif"
 band_zones = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
 watershed_zones = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
+
 ## run SNODAS for WW
 SNODAS_Processing(report_date=report_date, RunName=RunName, NOHRSC_workspace=WW_NOHRSC_workspace, results_workspace=WW_results_workspace,
                      projin=projin, projout=projout, Cellsize=Cellsize, snapRaster=snapRaster, watermask=watermask, glacierMask=glacierMask,
@@ -107,6 +108,17 @@ SNODAS_Processing(report_date=report_date, RunName=RunName, NOHRSC_workspace=SNM
 # run R model
 
 # run sensors code
+## sensor_code variables:
+user = "Emma"
+report_date = "20250315"
+pillow_date = "15Mar2025"
+domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"]
+workspaceBase = fr"M:/SWE/WestWide/Spatial_SWE/WW_regression/"
+model_workspace = fr"W:/Spatial_SWE/WW_regression/RT_report_data/ModelWS_Test/"
+print("\nProcessing GeoPackage")
+geopackage_to_shapefile(report_date=report_date, pillow_date=pillow_date, model_run=model_run,
+                        user=user, domainList=domainList, model_workspace=model_workspace,
+                        results_workspace=WW_results_workspace)
 
 # run tables and layers
 print('\nRunning Tables and Layers Code for all domains')
