@@ -115,10 +115,30 @@ pillow_date = "15Mar2025"
 domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"]
 workspaceBase = fr"M:/SWE/WestWide/Spatial_SWE/WW_regression/"
 model_workspace = fr"W:/Spatial_SWE/WW_regression/RT_report_data/ModelWS_Test/"
+watershed_shapefile = "M:/SWE/WestWide/data/hydro/WW_Basins_noSNM_notahoe_albn83_sel_new.shp"
+band_shapefile = "M:/SWE/WestWide/data/hydro/WW_BasinsBanded_noSNM_notahoe_albn83_sel_new.shp"
+case_field_wtrshd = "SrtName"
+case_field_band = "SrtNmeBand"
+projIn = arcpy.SpatialReference(4269)
+projOut = arcpy.SpatialReference(102039)
+case_field_wtrshd
 print("\nProcessing GeoPackage")
 geopackage_to_shapefile(report_date=report_date, pillow_date=pillow_date, model_run=model_run,
                         user=user, domainList=domainList, model_workspace=model_workspace,
                         results_workspace=WW_results_workspace)
+
+print('\nProcessing and sorting the sensors ... ')
+merge_sort_sensors_surveys(report_date=report_date, results_workspace=WW_results_workspace, surveys="N", difference="N",
+                           watershed_shapefile=watershed_shapefile, band_shapefile=band_shapefile, projOut=projOut, merge="Y",
+                           domainList=domainList)
+
+print('\nProcessing and sorting the sensors for the Sierra... ')
+SNM_results_workspace = rf"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{report_date}_results_ET/"
+SNM_sensors = rf"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{report_date}_results_ET/{report_date}_sensors_SNM.shp"
+merge_sort_sensors_surveys(report_date=report_date, results_workspace=SNM_results_workspace, surveys="N", difference="N",
+                           watershed_shapefile=watershed_shapefile, case_field_wtrshd=case_field_wtrshd, band_shapefile=band_shapefile,
+                           case_field_band=case_field_band, projOut=projOut, projIn=projIn,
+                            merge="N", domain_shapefile=SNM_sensors)
 
 # run tables and layers
 print('\nRunning Tables and Layers Code for all domains')
