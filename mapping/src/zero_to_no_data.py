@@ -29,6 +29,8 @@ def find_raster_files(path: str, verbose = True, warn = True) -> list[str]:
     :type verbose: bool
     :param warn: Enable warning messages. Default: True
     :type warn: bool
+    :return: List of common ArcGIS Pro raster file paths
+    :rtype: list[str]
     """
     if not os.path.exists(path):
         if warn: print(f"find_raster_files warning: Raster file does not exist: {path}")
@@ -86,13 +88,13 @@ def contains_zero_value_cells(raster_filepath: str, verbose = True) -> bool:
         zero_mask = Con(raster == 0, 1)
         has_zero = int(arcpy.management.GetCount(zero_mask)[0]) > 0
 
-        if verbose:
-            print("Cells with value 0 found!" if has_zero else "No cells with value 0 found!")
+        if verbose: print("Cells with value 0 found." if has_zero else "No cells with value 0 found.")
 
         return has_zero
     finally:
         # Always check the extension back in, even on crash or error. ArcPy does not handle this automatically.
         arcpy.CheckInExtension("Spatial")
+
 
 def zero_to_no_data(input_raster_filepath: str, output_raster_filepath: str = None, prompt_user = True, verbose = True) -> None:
     """
