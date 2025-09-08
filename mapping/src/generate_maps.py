@@ -74,7 +74,53 @@ ww_fig_data = {                                         # Dictionary of metadata
             ],
             "3d": []
         }
-    }
+    },
+    "4": {
+        "maps": {
+            "4a": [
+                {"layer": "p8", "format": "tif", "dir": "*UseThis"}, # TODO: In the template, this is not from UseThis or UseAvg?
+                # TODO: 3 more standalone tables in the template: zonal_stats and watersheds_elev_utm_stat
+            ],
+            "4b": [
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg"},
+            ],
+            "4c": [
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg"},
+                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg"},
+            ],
+            "4d": []
+        }
+    },
+    "5": {
+        "maps": {
+            "5a": [
+                {"layer": "p8", "format": "tif", "dir": "*UseThis"}
+            ],
+            "5b": [
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg"}
+            ],
+            "5c": [
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg"},
+                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg"},
+            ],
+            "5d": []
+        }
+    },
+    "6": {
+        "maps": {
+            "6a": [
+                {"layer": "p8", "format": "tif", "dir": "*UseThis"}
+            ],
+            "6b": [
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg"}
+            ],
+            "6c": [
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg"},
+                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg"},
+            ],
+            "6d": []
+        }
+    },
 }
 
 #########################
@@ -190,6 +236,7 @@ def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True
                     except ValueError: pass
                 # TODO: option to remember this choice in the future e.g. always use the p*custom_name.tif pattern if multiple exist and no "nulled"
                 layer_file = layer_files[int(result)-1]
+                print(f"Using {layer_file}")
             elif warn:
                 # Use the first layer file found
                 print(f"find_layer_file warning: Multiple files matching pattern '{layer_id}' found in '{layer_dir}'. Using {layer_files[0]}")
@@ -246,8 +293,7 @@ def main():
                 new_layer_path = find_layer_file(args.date, layer_info, prompt_user=args.prompt_user)
 
                 # Special handling for rasters with zero-valued cells
-                # TODO: Don't check for zero-valued cells when the path ends with "_nulled.tif"
-                if new_layer_path.endswith(".tif") and contains_zero_value_cells(new_layer_path):
+                if new_layer_path.endswith(".tif") and not new_layer_path.endswith("_nulled.tif") and contains_zero_value_cells(new_layer_path):
                     nulled_path = new_layer_path.replace(".tif", "_nulled.tif")
                     zero_to_no_data(new_layer_path, nulled_path, prompt_user=args.prompt_user, verbose=args.verbose)
                     new_layer_path = nulled_path
