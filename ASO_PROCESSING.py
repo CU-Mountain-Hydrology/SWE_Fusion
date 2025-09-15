@@ -18,7 +18,8 @@ print("modules imported")
 
 ## model run variables
 rundate = "20250526"
-modelRun = "fSCA_RT_CanAdj_rcn_noSW_woCCR"
+SNM_modelRun = "RT_CanAdj_rcn_noSW_woCCR_UseAvg"
+WW_modelRun = "fSCA_RT_CanAdj_rcn_noSW_woCCR"
 
 # set parameters for zip extraction
 toProcessFolder = r"M:/SWE/WestWide/Spatial_SWE/ASO/2025/toProcess/"
@@ -88,10 +89,10 @@ for file in asoSWE:
                 pillow_shp = cdec_shp
 
                 print(f"Basin: {basinName}, State: {basin_state}, Domain: {domain}")
-                modelRunWorkspace = rf"M:/SWE/{fullDomain}/Spatial_SWE/{domain}_regression/RT_report_data/{rundate}_results/{modelRun}/"
+                modelRunWorkspace = rf"M:/SWE/{fullDomain}/Spatial_SWE/{domain}_regression/RT_report_data/{rundate}_results/{SNM_modelRun}/"
 
                 # process ASO comparison
-                process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspace, compareWS, snapRaster,
+                process_aso_comparison(file, rundate, SNM_modelRun, data_folder, modelRunWorkspace, compareWS, snapRaster,
                                        projIn, zonalRaster)
 
                 # find the snotels that are within a raster file
@@ -123,15 +124,21 @@ for file in asoSWE:
                 trends = {}
                 for i, row in cdec_subset.iterrows():
                     station = row["Station"]
-                    first_val = row[swe_cols].dropna().iloc[0]
-                    last_val = row[swe_cols].dropna().iloc[-1]
+                    valid_values = row[swe_cols].dropna()
 
-                    if last_val > first_val:
-                        trend = "Increasing"
-                    elif last_val < first_val:
-                        trend = "Decreasing"
+                    if valid_values.empty:
+                        trend = "No Data"
+
                     else:
-                        trend = "No Trend"
+                        first_val = valid_values.iloc[0]
+                        last_val = valid_values.iloc[-1]
+
+                        if last_val > first_val:
+                            trend = "Increasing"
+                        elif last_val < first_val:
+                            trend = "Decreasing"
+                        else:
+                            trend = "No Trend"
 
                     trends[station] = trend
 
@@ -153,14 +160,14 @@ for file in asoSWE:
                     'GradeDirection': direction,
                     'GradeDifference': percent_change,
                     'SWEDifference_in': SWE_Difference,
-                    'modelRun': modelRun,
+                    'modelRun': SNM_modelRun,
                     'RunDate': rundate,
                     'OverallTrend': overall_trend
                 })
 
                 ## __FUNCTION: WW fractional error layer
                 fractional_error(filename=file, input_folder=data_folder,
-                                 output_folder=compareWS + f"{rundate}_{modelRun}/",
+                                 output_folder=compareWS + f"{rundate}_{SNM_modelRun}/",
                                  snapRaster=snapRaster, projIn=projIn, modelRunWorkspace=modelRunWorkspace,
                                  rundate=rundate, delete=False)
 
@@ -175,10 +182,10 @@ for file in asoSWE:
                 pillow_shp = snotel_shp
 
                 print(f"Basin: {basinName}, State: {basin_state}, Domain: {domain}")
-                modelRunWorkspace = rf"M:/SWE/{fullDomain}/Spatial_SWE/{domain}_regression/RT_report_data/{rundate}_results/{modelRun}/"
+                modelRunWorkspace = rf"M:/SWE/{fullDomain}/Spatial_SWE/{domain}_regression/RT_report_data/{rundate}_results/{WW_modelRun}/"
 
                 # process ASO comparison
-                process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspace, compareWS, snapRaster,
+                process_aso_comparison(file, rundate, WW_modelRun, data_folder, modelRunWorkspace, compareWS, snapRaster,
                                        projIn, zonalRaster)
 
                 # find the snotels that are within a raster file
@@ -238,13 +245,13 @@ for file in asoSWE:
                         'GradeDirection': direction,
                         'GradeDifference': percent_change,
                         'SWEDifference_in': SWE_Difference,
-                        'modelRun': modelRun,
+                        'modelRun': WW_modelRun,
                         'RunDate': rundate,
                         'OverallTrend': overall_trend
                     })
 
                 ## __FUNCTION: SNM fractional error layer
-                fractional_error(filename=file, input_folder=data_folder, output_folder=compareWS + f"{rundate}_{modelRun}/",
+                fractional_error(filename=file, input_folder=data_folder, output_folder=compareWS + f"{rundate}_{WW_modelRun}/",
                                  snapRaster=snapRaster, projIn=projIn, modelRunWorkspace=modelRunWorkspace,
                                  rundate=rundate, delete=False)
                 print("completed thanks")
