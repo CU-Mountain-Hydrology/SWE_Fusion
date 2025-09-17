@@ -17,7 +17,7 @@ from shapefile import NODATA
 print("modules imported")
 
 ## model run variables
-rundate = "20250526"
+rundate = "20250503"
 SNM_modelRun = "RT_CanAdj_rcn_noSW_woCCR_UseAvg"
 WW_modelRun = "fSCA_RT_CanAdj_rcn_noSW_woCCR"
 
@@ -88,8 +88,9 @@ for file in asoSWE:
                 snotelWorkspace = "W:/Spatial_SWE/ASO/2025/data_testing/snotel_comparisons/cdec_metaData.csv"
                 pillow_shp = cdec_shp
 
-                print(f"Basin: {basinName}, State: {basin_state}, Domain: {domain}")
+                print(f"\nBasin: {basinName}, State: {basin_state}, Domain: {domain}")
                 modelRunWorkspace = rf"M:/SWE/{fullDomain}/Spatial_SWE/{domain}_regression/RT_report_data/{rundate}_results/{SNM_modelRun}/"
+                print(f"Workspace: {modelRunWorkspace}")
 
                 # process ASO comparison
                 process_aso_comparison(file, rundate, SNM_modelRun, data_folder, modelRunWorkspace, compareWS, snapRaster,
