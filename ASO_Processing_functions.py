@@ -163,7 +163,7 @@ def fractional_error(filename, input_folder, output_folder, snapRaster, projIn, 
 
         # Calculate fractional error
         p8_input = os.path.join(modelRunWorkspace, f"p8_{rundate}_noneg.tif")
-        FracError = Raster(p8_input) / (1 + Raster(agg_output))
+        FracError = Raster(p8_input) - Raster(agg_output) / Raster(agg_output)
         FracError.save(error_output)
 
         if delete is True or delete == "True":
