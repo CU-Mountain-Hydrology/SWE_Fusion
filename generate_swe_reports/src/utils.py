@@ -5,6 +5,7 @@ Library containing utility functions
     - ``confirm_process``: Confirms with the user if the current process should continue, and exits if not
     - ``copy_files``: Copies a list of files to a directory
     - ``delete_files``: Deletes all files from a list
+    # TODO: crop function docs
 
 """
 
@@ -79,3 +80,26 @@ def delete_files(files: list[str], verbose=True, warn = True) -> None:
             if verbose: print(f"Deleted file: {file}")
         except OSError as e:
             if warn: print(f"delete_files warning: Could not delete file {file}: {e}")
+
+
+from PIL import Image, ImageChops
+def crop_whitespace(input_filepath: str, output_filepath: str = None) -> None:
+    # TODO: docs
+
+    if output_filepath is None:
+        output_filepath = input_filepath
+
+    image = Image.open(input_filepath)
+    # TODO: error handling
+    image = image.convert("RGB")
+
+    background = Image.new("RGB", image.size, (255, 255, 255))
+    diff = Image.eval(ImageChops.difference(image, background), lambda px: px > 10)
+    bbox = diff.getbbox()
+
+    if bbox:
+        cropped = image.crop(bbox)
+        cropped.save(output_filepath)
+        print(f"Cropped image saved to {output_filepath}")
+    else:
+        print(f"Image did not contain any whitespace.")

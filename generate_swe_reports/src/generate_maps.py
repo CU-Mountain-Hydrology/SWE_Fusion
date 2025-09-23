@@ -128,6 +128,7 @@ ww_fig_data = {                                         # Dictionary of metadata
 #########################
 
 from zero_to_no_data import *
+from utils import crop_whitespace
 import argparse
 import re # Regular Expression
 import os # Operating System
@@ -244,26 +245,20 @@ def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True
     return layer_file
 
 
-def main():
-    # Parse input arguments and flags, see top of file for argument usage examples
-    parser = argparse.ArgumentParser()
-    parser.add_argument("report_type", type=str, help="Acceptable report types: WW")
-    parser.add_argument("date", type=int, help="Date to process (YYYYMMDD)")
-    parser.add_argument("--figs", default="all", type=str, help="Regex pattern(s) for figure names to generate")
-    parser.add_argument("-p","--preview", action="store_true", help="Preview the generated maps")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output messages")
-    parser.add_argument("-u", "--prompt_user", action="store_true", help="Prompt the user before overwriting or automatically selecting files")
-    args = parser.parse_args()
+def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose: bool, prompt_user: bool):
+    # TODO: docs
 
     # Interpret --figs flag and return a list of figure names to generate
-    fig_list = interpret_figs(args.figs, args.report_type)
+    fig_list = interpret_figs(figs, report_type)
+    print(f"Generating the following figures: {fig_list}")
 
     # Clone the template aprx to a temporary directory
     temp_dir = tempfile.mkdtemp()
     working_aprx = os.path.join(temp_dir, "working_aprx.aprx")
     shutil.copyfile(template_aprx, working_aprx)
-    aprx = arcpy.mp.ArcGISProject(working_aprx) # Open the working aprx in ArcPy
+    aprx = arcpy.mp.ArcGISProject(working_aprx)  # Open the working aprx in ArcPy
     for fig_id in fig_list:
+        print(f"Generating maps for fig {fig_id}...")
         fig_data = ww_fig_data.get(fig_id)
         if not fig_data:
             raise ValueError(f"No metadata found for figure '{fig_id}'")
@@ -290,12 +285,13 @@ def main():
                     _map.removeTable(undefined_table)
 
                 # Find the new layer source
-                new_layer_path = find_layer_file(args.date, layer_info, prompt_user=args.prompt_user)
+                new_layer_path = find_layer_file(date, layer_info, prompt_user=prompt_user)
 
                 # Special handling for rasters with zero-valued cells
-                if new_layer_path.endswith(".tif") and not new_layer_path.endswith("_nulled.tif") and contains_zero_value_cells(new_layer_path):
+                if new_layer_path.endswith(".tif") and not new_layer_path.endswith(
+                        "_nulled.tif") and contains_zero_value_cells(new_layer_path):
                     nulled_path = new_layer_path.replace(".tif", "_nulled.tif")
-                    zero_to_no_data(new_layer_path, nulled_path, prompt_user=args.prompt_user, verbose=args.verbose)
+                    zero_to_no_data(new_layer_path, nulled_path, prompt_user=prompt_user, verbose=verbose)
                     new_layer_path = nulled_path
 
                 # Set the data source and update the symbology
@@ -308,16 +304,37 @@ def main():
         layout = aprx.listLayouts(f"*{fig_id}*")[0]
         if not layout:
             raise ValueError(f"No layout matching '{fig_id}' found in '{working_aprx}'!")
-        layout.name = f"{args.date}_{args.report_type}_Fig{fig_id}"
+        layout.name = f"{date}_{report_type}_Fig{fig_id}"
 
-        output_dir = os.path.join(output_parent_dir, f"{args.date}_{args.report_type}_JPEGmaps")
+        output_dir = os.path.join(output_parent_dir, f"{date}_{report_type}_JPEGmaps")
         os.makedirs(output_dir, exist_ok=True)
-        layout.exportToJPEG(os.path.join(output_dir, layout.name + ".jpg"))
-
-    # TODO: automatically zip the JPEGmaps folder at the end?
+        layout.exportToJPEG(os.path.join(output_dir, layout.name + ".jpg"), resolution=300)
+        print(f"Finished generating maps for fig {fig_id}.")
 
     # Clean up
     del aprx
+
+def main():
+    # Parse input arguments and flags, see top of file for argument usage examples
+    parser = argparse.ArgumentParser()
+    parser.add_argument("report_type", type=str, help="Acceptable report types: WW")
+    parser.add_argument("date", type=int, help="Date to process (YYYYMMDD)")
+    parser.add_argument("--figs", default="all", type=str, help="Regex pattern(s) for figure names to generate")
+    parser.add_argument("-p","--preview", action="store_true", help="Preview the generated maps")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output messages")
+    parser.add_argument("-u", "--prompt_user", action="store_true", help="Prompt the user before overwriting or automatically selecting files")
+    args = parser.parse_args()
+
+    # Generate each figure as specified by --figs
+    generate_maps(args.report_type, args.date, args.figs, args.preview, args.verbose, args.prompt_user)
+
+    # Crop the whitespace of each map in the output directory
+    output_dir = os.path.join(output_parent_dir, f"{args.date}_{args.report_type}_JPEGmaps")
+    for jpeg_map in glob.glob(os.path.join(output_dir, "*.jpg")):
+        print(f"Cropping {jpeg_map} ...")
+        crop_whitespace(jpeg_map)
+
+    # TODO: add support for preview flag
 
 if __name__ == '__main__':
     main()
