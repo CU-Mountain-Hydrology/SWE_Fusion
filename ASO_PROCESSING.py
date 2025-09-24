@@ -17,7 +17,7 @@ from shapefile import NODATA
 print("modules imported")
 
 ## model run variables
-rundate = "20250503"
+rundate = "20250427"
 SNM_modelRun = "RT_CanAdj_rcn_noSW_woCCR_UseAvg"
 WW_modelRun = "fSCA_RT_CanAdj_rcn_noSW_woCCR"
 
@@ -25,7 +25,6 @@ WW_modelRun = "fSCA_RT_CanAdj_rcn_noSW_woCCR"
 toProcessFolder = r"M:/SWE/WestWide/Spatial_SWE/ASO/2025/toProcess/"
 # zip_file_path = r"W:\Spatial_SWE\ASO\2025\ASO_BlueRiver_2025May24_AllData_and_Reports.zip"
 search_tag = "swe_50m.tif"
-data_folder = r"M:/SWE/WestWide/Spatial_SWE/ASO/2025/data_testing/"
 basin_textFile = r"M:\SWE\WestWide\Spatial_SWE\ASO\ASO_Metadata\State_Basin.txt"
 basinList = []
 snotel_shp = r"W:\Spatial_SWE\ASO\ASO_Metadata\WW_CDEC_SNOTEL_geon83.shp"
@@ -40,21 +39,25 @@ with open(basin_textFile, 'r') as f:
         basin = row[0].strip('"')
         state = row[1].strip('"')
         basin_state_map[basin] = state
+        # print(state)
 
 zips_to_process = os.listdir(toProcessFolder)
 for zip_file in zips_to_process:
     if zip_file.endswith(".zip"):
         zip_file_path = os.path.join(toProcessFolder, zip_file)
         print(zip_file_path)
-
-        ## add something here that is only unzips if the file doesn't already exist
-        # # get SWE file from zip folder
-        extract_zip(zip_path=zip_file_path, ext=search_tag, output_folder=data_folder)
-        print("file moved")
-
         name = zip_file.split("_")[1]
         basinList.append(name)
-        print(basinList)
+        print(name)
+        basin_state = basin_state_map.get(name, None)
+
+
+        data_folder = r"M:/SWE/WestWide/Spatial_SWE/ASO/2025/data_testing/"
+        ## add something here that is only unzips if the file doesn't already exist
+        extract_zip(zip_path=zip_file_path, ext=search_tag, output_folder=data_folder)
+        # print("file moved")
+
+print(basinList)
 
 # get basin and basin info from aso folder
 all_stats = []

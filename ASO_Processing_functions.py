@@ -140,7 +140,7 @@ def fractional_error(filename, input_folder, output_folder, snapRaster, projIn, 
     """
     # Set snap raster
     arcpy.env.snapRaster = snapRaster
-
+    print(f"\nProcessing {filename} fractional error")
     # Create file paths
     input_path = input_folder + filename
     proj_output = output_folder + f"{filename[:-4]}_proj_50.tif"
@@ -154,16 +154,20 @@ def fractional_error(filename, input_folder, output_folder, snapRaster, projIn, 
         # Project raster
         arcpy.ProjectRaster_management(
             input_path, proj_output, snapRaster,
-            "NEAREST", "50 50", "", "", projIn
+            "NEAREST", "50 50", "", "", projIn, "NO_VERTICAL"
         )
 
         # Aggregate raster
+        print(f"Proj output: {proj_output}")
+        print(f"input path: {input_path}")
+        print(f"Agg output: {agg_output}")
+        print(proj_output)
         outAgg = Aggregate(proj_output, 10, "MEAN", "TRUNCATE", "DATA")
         outAgg.save(agg_output)
 
         # Calculate fractional error
         p8_input = os.path.join(modelRunWorkspace, f"p8_{rundate}_noneg.tif")
-        FracError = Raster(p8_input) - Raster(agg_output) / Raster(agg_output)
+        FracError = (Raster(p8_input) - Raster(agg_output)) / Raster(agg_output)
         FracError.save(error_output)
 
         if delete is True or delete == "True":
