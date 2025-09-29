@@ -1,8 +1,10 @@
 # TODO: docs
-
 import argparse
+import glob
+import os
 from pathlib import Path
-from jinja2 import Template
+import pandas as pd
+from jinja2 import Template, Environment, FileSystemLoader
 from generate_maps import generate_maps
 from datetime import datetime
 
@@ -16,6 +18,7 @@ def generate_ww_report(date: int):
         template = Template(f.read())
 
     maps_dir = PROJECT_ROOT / "output"  / f"{date}_WW_JPEGmaps"
+    tables_dir = PROJECT_ROOT / "output"  / f"{date}_WW_TEXtables"
 
     context = {
         "instaar_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "INSTAAR_Logo.png").replace("\\", "/"),
@@ -30,6 +33,7 @@ def generate_ww_report(date: int):
         "fig4_path": str(maps_dir / f"{date}_WW_Fig4.jpg").replace("\\", "/"),
         "fig5_path": str(maps_dir / f"{date}_WW_Fig5.jpg").replace("\\", "/"),
         "fig6_path": str(maps_dir / f"{date}_WW_Fig6.jpg").replace("\\", "/"),
+        "table1_path": str(tables_dir / "table_01.tex").replace("\\", "/"),
     }
 
     rendered_tex = template.render(**context)
@@ -51,6 +55,39 @@ def main():
     # Generate maps
     # TODO: only if JPEGmaps folder doesnt exist?
     # generate_maps("WW", args.date, "all", False, args.verbose, args.prompt_user)
+
+    # Generate tables from CSV
+    date_str = str(args.date)
+    report_dir = fr"W:\documents\{date_str[:4]}_RT_Reports\{date_str}_RT_Report"
+    use_this_dir = glob.glob(os.path.join(report_dir, "*UseThis"))[0]
+    table_dir = os.path.join(use_this_dir, "Tables", "forUpload")
+    output_tables_dir = Path(__file__).parent.parent / "output" / f"{args.date}_WW_TEXtables"
+    output_tables_dir.mkdir(parents=True, exist_ok=True)
+
+    for table_id in ["01"]:
+        matches = glob.glob(os.path.join(table_dir, f"*{table_id}.csv"))
+        # TODO: error handling
+        table = matches[0]
+
+        df = pd.read_csv(table)
+        headers = {
+            "% of Average": ["3/15", "3/31"],
+            "SWE (in)": ["3/15", "3/31"],
+            "": ["SCA"],
+            " ": ["Vol. (AF)"],
+            "   ": ["Area (mi$^2$)"],
+            "Pillows": ["3/15", "3/31"],
+            "Surveys": ["3/31"],
+        }
+        templates_dir = Path(__file__).parent.parent / "report_templates"
+        env = Environment(loader=FileSystemLoader(str(templates_dir)))
+        template = env.get_template("TEMPLATE_SWE_Table.tex")
+
+        latex_table = template.render(df=df, headers=headers)
+
+        output_table = output_tables_dir / f"table_{table_id}.tex"
+        with open(output_table, "w") as f:
+            f.write(latex_table)
 
     # Generate report
     generate_ww_report(args.date)
