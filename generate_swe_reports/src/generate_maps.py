@@ -212,8 +212,8 @@ def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True
     layer_files = glob.glob(os.path.join(layer_dir, f"*{layer_id}*.{file_type}"))
     if not layer_files:
         raise FileNotFoundError(f"No file matching pattern '{layer_id}' found in '{layer_dir}'!")
-
     layer_file = layer_files[0]
+
     if len(layer_files) > 1:
         # If one of the multiple layer files ends with "nulled", use it
         for file in layer_files:
@@ -328,9 +328,13 @@ def main():
     # Generate each figure as specified by --figs
     generate_maps(args.report_type, args.date, args.figs, args.preview, args.verbose, args.prompt_user)
 
-    # Crop the whitespace of each map in the output directory
+    # Crop the whitespace of each generated map
     output_dir = os.path.join(output_parent_dir, f"{args.date}_{args.report_type}_JPEGmaps")
-    for jpeg_map in glob.glob(os.path.join(output_dir, "*.jpg")):
+    for fig_id in interpret_figs(args.figs, args.report_type):
+        matches = glob.glob(os.path.join(output_dir, f"*{fig_id}.jpg"))
+        if not matches:
+            raise FileNotFoundError(f"No file matching pattern '*{fig_id}' found in '{output_dir}'!")
+        jpeg_map = matches[0]
         print(f"Cropping {jpeg_map} ...")
         crop_whitespace(jpeg_map)
 
