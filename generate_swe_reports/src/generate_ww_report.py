@@ -8,6 +8,14 @@ from jinja2 import Template, Environment, FileSystemLoader
 from generate_maps import generate_maps
 from datetime import datetime
 
+table_data = {
+    "01" : "Pacific Northwest",
+    "02" : "North Continental",
+    "03" : "South Continental",
+    "04a": "Intermountain",
+    "04b": "Intermountain",
+}
+
 def generate_ww_report(date: int):
     # TODO: docs
 
@@ -33,7 +41,11 @@ def generate_ww_report(date: int):
         "fig4_path": str(maps_dir / f"{date}_WW_Fig4.jpg").replace("\\", "/"),
         "fig5_path": str(maps_dir / f"{date}_WW_Fig5.jpg").replace("\\", "/"),
         "fig6_path": str(maps_dir / f"{date}_WW_Fig6.jpg").replace("\\", "/"),
-        "table1_path": str(tables_dir / "table_01.tex").replace("\\", "/"),
+        "table1_path": str(tables_dir / f"{date}_WW_Table01.tex").replace("\\", "/"),
+        "table2_path": str(tables_dir / f"{date}_WW_Table02.tex").replace("\\", "/"),
+        "table3_path": str(tables_dir / f"{date}_WW_Table03.tex").replace("\\", "/"),
+        "table4a_path": str(tables_dir / f"{date}_WW_Table04a.tex").replace("\\", "/"),
+        "table4b_path": str(tables_dir / f"{date}_WW_Table04b.tex").replace("\\", "/"),
     }
 
     rendered_tex = template.render(**context)
@@ -64,7 +76,7 @@ def main():
     output_tables_dir = Path(__file__).parent.parent / "output" / f"{args.date}_WW_TEXtables"
     output_tables_dir.mkdir(parents=True, exist_ok=True)
 
-    for table_id in ["01"]:
+    for table_id in list(table_data.keys()):
         matches = glob.glob(os.path.join(table_dir, f"*{table_id}.csv"))
         # TODO: error handling
         table = matches[0]
@@ -83,9 +95,9 @@ def main():
         env = Environment(loader=FileSystemLoader(str(templates_dir)))
         template = env.get_template("TEMPLATE_SWE_Table.tex")
 
-        latex_table = template.render(df=df, headers=headers)
+        latex_table = template.render(df=df, title=table_data[table_id], headers=headers)
 
-        output_table = output_tables_dir / f"table_{table_id}.tex"
+        output_table = output_tables_dir / f"{args.date}_WW_Table{table_id}.tex"
         with open(output_table, "w") as f:
             f.write(latex_table)
 

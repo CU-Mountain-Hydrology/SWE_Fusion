@@ -3,10 +3,10 @@
 \fontsize{8}{10}
 \begin{longtable}{@{}l{% for group, subcols in headers.items() %}{% for _ in subcols %}c{% endfor %}{% endfor %}}
     \toprule
-    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{c}{\large{Pacific Northwest SWE Report for 3/31/2025}} \\
+    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{c}{\large{ {{ title }} SWE Report for 3/31/2025}} \\
     \specialrule{0.3pt}{0pt}{0pt}
     {% for group, subcols in headers.items() %}
-      & \multicolumn{ {{ subcols|length }} }{c}{ {{ group | replace('%', '\\%') }} }
+        & \multicolumn{ {{ subcols|length }} }{c}{ {{ group | replace('%', '\\%') }} }
     {% endfor %} \\
     \cmidrule(lr){2-3} % % of Average
     \cmidrule(lr){4-5} % SWE (in)
@@ -14,17 +14,18 @@
     \cmidrule(lr){11-11} % Surveys
     Basin
     {% for i, group in headers.items() %}
-      {% for sub in group %}
-        & {{ sub | replace('%', '\\%') }}
-      {% endfor %}
+        {% for sub in group %}
+            & {{ sub | replace('%', '\\%') }}
+        {% endfor %}
     {% endfor %} \\
     \midrule
     \endfirsthead
 
-    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{c}{Pacific Northwest SWE Report for 3/31/2025} \\
     \toprule
+    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{c}{\large{ {{ title }} SWE Report for 3/31/2025}} \\
+    \specialrule{0.3pt}{0pt}{0pt}
     {% for group, subcols in headers.items() %}
-      & \multicolumn{ {{ subcols|length }} }{c}{ {{ group | replace('%', '\\%') }} }
+        & \multicolumn{ {{ subcols|length }} }{c}{ {{ group | replace('%', '\\%') }} }
     {% endfor %} \\
     \cmidrule(lr){2-3}
     \cmidrule(lr){4-5}
@@ -32,26 +33,29 @@
     \cmidrule(lr){11-11}
     Basin
     {% for i, group in headers.items() %}
-      {% for sub in group %}
-        & {{ sub | replace('%', '\\%') }}
-      {% endfor %}
+        {% for sub in group %}
+            & {{ sub | replace('%', '\\%') }}
+        {% endfor %}
     {% endfor %} \\
     \midrule
     \endhead
 
-  \midrule
-  \multicolumn{ {{ 1 + df.shape[1]-1 }} }{r}{\textit{Continued on next page}} \\
-  \endfoot
+    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{l}{
+        \small*Basin boundaries were derived from a combination of NRCS basins and HUC8 boundaries.%
+        \hfill \textit{Continued on next page}
+    } \\
+    \bottomrule
+    \endfoot
 
-  \bottomrule
-  \endlastfoot
+    \bottomrule
+    \endlastfoot
 
-  {% for row in df.iloc[1:].itertuples(index=False) %}
-  {{ row[0] | replace('%', '\\%') }}
-  {% for val in row[1:] %}
-    & {{ ("NA" if (val != val) else val) | replace('%', '\\%') }}
-  {% endfor %} \\
-  \specialrule{0.1pt}{4pt}{4pt}
-{% endfor %}
-  \multicolumn{ {{ 1 + df.shape[1]-1 }} }{l}{\small*Basin boundaries were derived from a combination of NRCS basins and HUC8 boundaries.} \\
+    {% for row in df.iloc[1:].itertuples(index=False) %}
+        {{ row[0] | replace('%', '\\%') | replace('_', '\\_') }}
+        {% for val in row[1:] %}
+            & {{ ("NA" if (val != val) else val) | replace('%', '\\%') }}
+        {% endfor %} \\
+    \specialrule{0.1pt}{4pt}{4pt}
+    {% endfor %}
+    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{l}{\small*Basin boundaries were derived from a combination of NRCS basins and HUC8 boundaries.} \\
 \end{longtable}
