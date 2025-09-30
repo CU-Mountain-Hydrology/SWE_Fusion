@@ -6,6 +6,7 @@ Library containing utility functions
     - ``copy_files``: Copies a list of files to a directory
     - ``delete_files``: Deletes all files from a list
     # TODO: crop function docs
+    # TODO: merge_csv function docs
 
 """
 
@@ -103,3 +104,27 @@ def crop_whitespace(input_filepath: str, output_filepath: str = None) -> None:
         print(f"Cropped image saved to {output_filepath}")
     else:
         print(f"Image did not contain any whitespace.")
+
+
+def merge_swe_csv(input_filepath_1: str, input_filepath_2: str, output_filepath: str) -> None:
+    """
+    # TODO: docs
+    """
+    with open(input_filepath_1, "r") as csv1, open(input_filepath_2, "r") as csv2:
+        lines1 = csv1.readlines()
+        lines2 = csv2.readlines()
+
+    # First two rows are headers
+    header = lines1[:2]
+
+    data1 = lines1[2:]
+    data2 = lines2[2:]
+
+    # Merge
+    merged_lines = header + data1 + data2
+
+    # Save merged CSV
+    with open(output_filepath, "w") as output:
+        output.writelines(merged_lines)
+
+    print(f"Merged SWE table saved to {output_filepath}")

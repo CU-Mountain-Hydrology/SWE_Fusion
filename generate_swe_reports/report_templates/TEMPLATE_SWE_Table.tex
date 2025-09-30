@@ -1,9 +1,10 @@
 \setlength{\tabcolsep}{2pt}
 \renewcommand{\arraystretch}{1.5}
 \fontsize{8}{10}
-\begin{longtable}{@{}l{% for group, subcols in headers.items() %}{% for _ in subcols %}c{% endfor %}{% endfor %}}
+
+\begin{longtable}{@{}p{5.1cm}{% for group, subcols in headers.items() %}{% for _ in subcols %}c{% endfor %}{% endfor %}}
     \toprule
-    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{c}{\large{ {{ title }} SWE Report for 3/31/2025}} \\
+    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{c}{\large{ {{ title }} SWE Report for {{ date[4:6]|int }}/{{ date[6:8]|int }}/{{ date[0:4] }} }} \\
     \specialrule{0.3pt}{0pt}{0pt}
     {% for group, subcols in headers.items() %}
         & \multicolumn{ {{ subcols|length }} }{c}{ {{ group | replace('%', '\\%') }} }
@@ -12,7 +13,7 @@
     \cmidrule(lr){4-5} % SWE (in)
     \cmidrule(lr){9-10} % Pillows
     \cmidrule(lr){11-11} % Surveys
-    Basin
+    \makecell[l]{Basin}
     {% for i, group in headers.items() %}
         {% for sub in group %}
             & {{ sub | replace('%', '\\%') }}
@@ -22,7 +23,7 @@
     \endfirsthead
 
     \toprule
-    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{c}{\large{ {{ title }} SWE Report for 3/31/2025}} \\
+    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{c}{\large{ {{ title }} SWE Report for {{ date[4:6]|int }}/{{ date[6:8]|int }}/{{ date[0:4] }} }} \\
     \specialrule{0.3pt}{0pt}{0pt}
     {% for group, subcols in headers.items() %}
         & \multicolumn{ {{ subcols|length }} }{c}{ {{ group | replace('%', '\\%') }} }
@@ -31,7 +32,7 @@
     \cmidrule(lr){4-5}
     \cmidrule(lr){9-10}
     \cmidrule(lr){11-11}
-    Basin
+    \makecell[l]{Basin}
     {% for i, group in headers.items() %}
         {% for sub in group %}
             & {{ sub | replace('%', '\\%') }}
@@ -51,11 +52,22 @@
     \endlastfoot
 
     {% for row in df.iloc[1:].itertuples(index=False) %}
-        {{ row[0] | replace('%', '\\%') | replace('_', '\\_') }}
+        {% set text = row[0] | replace('%', '\\%') | replace('_', '\\_') %}
+        {% if text|length > 30 %}
+            {% set mid = (text|length // 2) %}
+            {% set split_idx = (
+                (text.rfind('-', 0, mid) if text.rfind('-', 0, mid) != -1 else
+                 text.rfind('\\_', 0, mid) if text.rfind('\\_', 0, mid) != -1 else
+                 mid)
+            ) %}
+            \makecell[l]{ {{ text[:split_idx+1] }} \\ {{ text[split_idx+1:] }} \vspace*{0.5em} }
+        {% else %}
+            \makecell[l]{ {{ text }} }
+        {% endif %}
         {% for val in row[1:] %}
             & {{ ("NA" if (val != val) else val) | replace('%', '\\%') }}
         {% endfor %} \\
-    \specialrule{0.1pt}{4pt}{4pt}
+        \specialrule{0.1pt}{4pt}{4pt}
     {% endfor %}
     \multicolumn{ {{ 1 + df.shape[1]-1 }} }{l}{\small*Basin boundaries were derived from a combination of NRCS basins and HUC8 boundaries.} \\
 \end{longtable}

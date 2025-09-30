@@ -7,13 +7,13 @@ import pandas as pd
 from jinja2 import Template, Environment, FileSystemLoader
 from generate_maps import generate_maps
 from datetime import datetime
+from utils import merge_swe_csv
 
 table_data = {
     "01" : "Pacific Northwest",
     "02" : "North Continental",
     "03" : "South Continental",
-    "04a": "Intermountain",
-    "04b": "Intermountain",
+    "04": "Intermountain",
 }
 
 def generate_ww_report(date: int):
@@ -44,12 +44,11 @@ def generate_ww_report(date: int):
         "table1_path": str(tables_dir / f"{date}_WW_Table01.tex").replace("\\", "/"),
         "table2_path": str(tables_dir / f"{date}_WW_Table02.tex").replace("\\", "/"),
         "table3_path": str(tables_dir / f"{date}_WW_Table03.tex").replace("\\", "/"),
-        "table4a_path": str(tables_dir / f"{date}_WW_Table04a.tex").replace("\\", "/"),
-        "table4b_path": str(tables_dir / f"{date}_WW_Table04b.tex").replace("\\", "/"),
+        "table4_path": str(tables_dir / f"{date}_WW_Table04.tex").replace("\\", "/"),
     }
 
     rendered_tex = template.render(**context)
-    output_tex = PROJECT_ROOT / "output" / "weekly_report.tex"
+    output_tex = PROJECT_ROOT / "output" / f"0WW_SWE_Report_{date}.tex"
     with open(output_tex, "w", encoding="utf-8") as f:
         f.write(rendered_tex)
 
@@ -76,26 +75,35 @@ def main():
     output_tables_dir = Path(__file__).parent.parent / "output" / f"{args.date}_WW_TEXtables"
     output_tables_dir.mkdir(parents=True, exist_ok=True)
 
+    # Merge tables 04a and 04b into a single table
+    table04a = os.path.join(table_dir, f"INMT_{args.date}_Table04a.csv")
+    table04b = os.path.join(table_dir, f"INMT_{args.date}_Table04b.csv")
+    table04_output = os.path.join(table_dir, f"INMT_{args.date}_Table04.csv")
+    if not os.path.exists(table04_output):
+        merge_swe_csv(table04a, table04b,table04_output)
+
     for table_id in list(table_data.keys()):
         matches = glob.glob(os.path.join(table_dir, f"*{table_id}.csv"))
         # TODO: error handling
         table = matches[0]
 
         df = pd.read_csv(table)
+        previous_date = df.iloc[0,1].strip("%").replace(" Avg.", "")
+        current_date = df.iloc[0,2].strip("%").replace(" Avg.", "")
         headers = {
-            "% of Average": ["3/15", "3/31"],
-            "SWE (in)": ["3/15", "3/31"],
+            "% of Average": [previous_date, current_date],
+            "SWE (in)": [previous_date, current_date],
             "": ["SCA"],
             " ": ["Vol. (AF)"],
             "   ": ["Area (mi$^2$)"],
-            "Pillows": ["3/15", "3/31"],
-            "Surveys": ["3/31"],
+            "Pillows": [previous_date, current_date],
+            "Surveys": [current_date],
         }
         templates_dir = Path(__file__).parent.parent / "report_templates"
         env = Environment(loader=FileSystemLoader(str(templates_dir)))
         template = env.get_template("TEMPLATE_SWE_Table.tex")
 
-        latex_table = template.render(df=df, title=table_data[table_id], headers=headers)
+        latex_table = template.render(df=df, title=table_data[table_id], headers=headers, date=str(args.date))
 
         output_table = output_tables_dir / f"{args.date}_WW_Table{table_id}.tex"
         with open(output_table, "w") as f:
