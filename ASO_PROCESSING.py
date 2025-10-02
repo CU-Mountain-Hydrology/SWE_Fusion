@@ -17,7 +17,7 @@ from shapefile import NODATA
 print("modules imported")
 
 ## model run variables
-rundate = "20250427"
+rundate = "20250420"
 SNM_modelRun = "RT_CanAdj_rcn_noSW_woCCR_UseAvg"
 WW_modelRun = "fSCA_RT_CanAdj_rcn_noSW_woCCR"
 
