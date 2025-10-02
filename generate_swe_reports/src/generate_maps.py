@@ -10,7 +10,7 @@ Automatically generates report maps in ArcPy using post-processed rasters.
 
 **Options:**
     - ``--figs=REGEX``: Regex for figures to generate (default: all).
-      Example: ``--figs=1a`` or ``--figs=1*,2a,3``
+      Example: ``--figs=1a`` or ``--figs=1*,2a,3`` or ``--figs=none``
     - ``--preview``, ``-p``: Open the generated JPG maps upon completion
     - ``--verbose``, ``-v``: Enable verbose output messages
     - ``--prompt_user``, ``-u``: Prompt user before overwriting files or automatically selecting layer files
@@ -147,6 +147,7 @@ def interpret_figs(figs: str, report_type: str) -> list[str]:
     :rtype: list[str]
     """
     # Determine list of figures based on report type
+    all_figs = set()
     match report_type:
         case 'WW':
             all_figs = set(ww_fig_data.keys())
@@ -158,9 +159,12 @@ def interpret_figs(figs: str, report_type: str) -> list[str]:
     fig_list = set()
 
     for pattern in patterns:
+        pattern = pattern.lower()
         # Shortcut search when all figs are specified
         if pattern in ["all","."]:
             return sorted(all_figs)
+        elif pattern in ["none",""]:
+            return []
 
         # Modify regular expression syntax to better support * wildcard
         regex_pattern = "^" + re.escape(pattern).replace("\\*", ".*") + "$"
@@ -174,7 +178,10 @@ def interpret_figs(figs: str, report_type: str) -> list[str]:
                 pattern_found = True
         if not pattern_found:
             # Pattern does not match any name in all_figs
-            raise Exception(f"--figs pattern {pattern} not recognized!")
+            if pattern == "0":
+                raise Exception(f"--figs pattern '0' not recognized! Did you mean 'none'?")
+            else:
+                raise Exception(f"--figs pattern '{pattern}' not recognized!")
 
     return sorted(fig_list)
 
