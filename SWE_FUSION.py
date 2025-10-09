@@ -59,7 +59,6 @@ print("\nProcessing fSCA data...")
 # run DMFSCA (look into r version of this code)
 
 # download sensors (look into r version of this code and see if we can have a python version)
-
 if surveys == "Y":
     print("\nGetting CDEC Surveys")
     download_cdec_snow_surveys(report_date=report_date, survey_workspace=survey_workspace,
@@ -147,11 +146,11 @@ tables_and_layers(user=user, year=year, report_date=report_date, mean_date=mean_
 
 print('\nRunning Tables and Layers Code for Sierra')
 
-# run vetting code
-
 # ASO Bias correction
 # if biasCorrection = TK
     # list of methods
     # loops through methods
 
     # runs vetting code again
+
+# Run vetting code
