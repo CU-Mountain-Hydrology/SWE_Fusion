@@ -462,8 +462,6 @@ def download_and_merge_snotel_data(id_list, state_list, start_date, end_date, ou
 
 import pandas as pd
 from datetime import datetime, timedelta
-
-
 def download_and_merge_cdec_pillow_data(start_date, end_date, cdec_ws, output_csv_filename):
     """
     Download CDEC PAGE6 snow pillow data from start_date to end_date
