@@ -136,6 +136,7 @@ import glob # OS Pattern Searching
 import tempfile
 import shutil
 import arcpy
+from datetime import datetime
 
 def interpret_figs(figs: str, report_type: str) -> list[str]:
     """
@@ -312,6 +313,13 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
         if not layout:
             raise ValueError(f"No layout matching '{fig_id}' found in '{working_aprx}'!")
         layout.name = f"{date}_{report_type}_Fig{fig_id}"
+
+        # Change date text
+        text_elements = layout.listElements("TEXT_ELEMENT")
+        for element in text_elements:
+            if "date" in element.name.lower():
+                formatted_date = datetime.strptime(str(date), "%Y%m%d").strftime("%B %d, %Y")
+                element.text = f"{formatted_date}"
 
         output_dir = os.path.join(output_parent_dir, f"{date}_{report_type}_JPEGmaps")
         os.makedirs(output_dir, exist_ok=True)
