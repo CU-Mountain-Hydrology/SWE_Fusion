@@ -29,48 +29,49 @@ layer_formats = ["tif",]                                # List of all layer file
 table_formats = ["csv","dbf",]                          # List of all standalone table file formats
 ww_fig_data = {                                         # Dictionary of metadata for all figures in the WestWide reports
     # The top level contains each figure id as it appears in the report, followed by an id for each map-frame within that
-    # figure. For each map, the files that need updated are specified with an id such as "p8", and its format as well as
-    # source directory (*UseThis or *UseAvg) are specified.
+    # figure. For each map, the files that need updated are specified with an id such as "p8", and its format, source
+    # directory (*UseThis or *UseAvg), and labelling type (None, Anno, or Layer) are specified. Anno means there is a
+    # separate annotation text that needs updated while Layer means some layer is joined to this source and has labels on.
     "1a": {
         "maps": {
             "1a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis"}
+                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}
             ]
         }
     },
     "1b": {
         "maps": {
             "1b": [
-                {"layer": "anomRegion_table", "format": "csv", "dir": "*UseAvg"}
+                {"layer": "anomRegion_table", "format": "csv", "dir": "*UseAvg", "label": "Anno"}
             ]
         }
     },
     "2a": {
         "maps": {
             "2a" : [
-                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg"}
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
             ]
         }
     },
     "2b": {
         "maps": {
             "2b": [
-                {"layer": "p11", "format": "tif", "dir": "*UseAvg"},
-                {"layer": "huc6_anom_table_save", "format": "dbf", "dir": "*UseAvg"},
+                {"layer": "p11", "format": "tif", "dir": "*UseAvg", "label": "None"},
+                {"layer": "huc6_anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["WW_HUC6_albn83","name"]},
             ]
         }
     },
     "3": {
         "maps": {
             "3a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis"}
+                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}
             ],
             "3b": [
-                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg"}
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
             ],
             "3c": [
-                {"layer": "p9", "format": "tif", "dir": "*UseAvg"},
-                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg"}, # TODO: NOT huc6_anom_table_save, will find both when parsing
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
+                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]}, # TODO: NOT huc6_anom_table_save, will find both when parsing
             ],
             "3d": []
         }
@@ -78,15 +79,15 @@ ww_fig_data = {                                         # Dictionary of metadata
     "4": {
         "maps": {
             "4a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis"}, # TODO: In the template, this is not from UseThis or UseAvg?
+                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}, # TODO: In the template, this is not from UseThis or UseAvg?
                 # TODO: 3 more standalone tables in the template: zonal_stats and watersheds_elev_utm_stat
             ],
             "4b": [
-                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg"},
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"},
             ],
             "4c": [
-                {"layer": "p9", "format": "tif", "dir": "*UseAvg"},
-                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg"},
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
+                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
             ],
             "4d": []
         }
@@ -94,14 +95,14 @@ ww_fig_data = {                                         # Dictionary of metadata
     "5": {
         "maps": {
             "5a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis"}
+                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}
             ],
             "5b": [
-                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg"}
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
             ],
             "5c": [
-                {"layer": "p9", "format": "tif", "dir": "*UseAvg"},
-                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg"},
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
+                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
             ],
             "5d": []
         }
@@ -109,14 +110,14 @@ ww_fig_data = {                                         # Dictionary of metadata
     "6": {
         "maps": {
             "6a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis"}
+                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}
             ],
             "6b": [
-                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg"}
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
             ],
             "6c": [
-                {"layer": "p9", "format": "tif", "dir": "*UseAvg"},
-                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg"},
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
+                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
             ],
             "6d": []
         }
@@ -192,7 +193,7 @@ def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True
     Finds the specific layer file to use
 
     :param date: Date of report in YYYYMMDD format
-    :param layer_info: Dictionary containing the layer id, format, and directory
+    :param layer_info: Dictionary containing the layer id, format, directory, and label type
     :param prompt_user: Enable prompting the user when selecting between multiple options. Default: True
     :param warn: Enable warning messages. Default: True
     :return: Path to the layer file
@@ -281,6 +282,7 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
             for layer_info in layers:
                 layer_id = layer_info["layer"]
                 file_type = layer_info["format"]
+                label = layer_info["label"]
 
                 # Find and remove undefined placeholder layers/tables
                 symbology = None
@@ -302,11 +304,61 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                     zero_to_no_data(new_layer_path, nulled_path, prompt_user=prompt_user, verbose=verbose)
                     new_layer_path = nulled_path
 
-                # Set the data source and update the symbology
-                _map.addDataFromPath(new_layer_path)
-                if file_type in layer_formats:
-                    layer = _map.listLayers(f"*{layer_id}*")[0]
-                    layer.symbology = symbology
+                # Update labels
+                if label == "None":
+                    # Set the data source
+                    _map.addDataFromPath(new_layer_path)
+
+                    # Update layer symbology
+                    if file_type in layer_formats:
+                        layer = _map.listLayers(f"*{layer_id}*")[0]
+                        layer.symbology = symbology
+                elif label == "Anno":
+                    pass
+                elif isinstance(label, list): # Layer pattern
+                    label_pattern = label[0]
+                    join_field = label[1]
+
+                    # Create new table view and join it to label layer
+                    _map.addTable(arcpy.management.MakeTableView(new_layer_path, f"{layer_id}")[0])
+                    label_layers = _map.listLayers(f"*{label_pattern}*")
+                    if not label_layers:
+                        raise ValueError("No layers matching pattern '*{label_pattern}*' found in '{_map.name}'")
+                    if len(label_layers) > 1:
+                        if prompt_user:
+                            # Ask the user to select which file to use
+                            print(f"Multiple layers matching pattern '*{label_pattern}*' found in '{_map.name}'.")
+                            for i, file in enumerate(label_layers):
+                                print(f"\t{i + 1}. {file}")
+                            while True:
+                                print(f"Enter a number from 1 to {len(label_layers)}:", end=" ")
+                                result = input()
+                                try:
+                                    result = int(result)
+                                    if result in range(1, len(label_layers) + 1): break
+                                except ValueError:
+                                    pass
+                            label_layer = label_layers[int(result) - 1]
+                            print(f"Using {label_layer}")
+                        else:
+                            print(f"Warning: Multiple layers matching pattern '*{label_pattern}*' found in "
+                                  f"'{_map.name}'. Using {label_layers[0]}.")
+                            label_layer = label_layers[0]
+                    else:
+                        label_layer = label_layers[0]
+
+                    # Remove existing joins with the label layer
+                    try:
+                        arcpy.management.RemoveJoin(label_layer)
+                    except:
+                        pass
+
+                    # Create new join between label_layer and source table
+                    arcpy.management.AddJoin(label_layer, join_field, layer_id, join_field)
+                    label_layer.showLabels = True
+                else:
+                    raise Exception(f"Invalid label type '{label}' for layer '{layer_id}' in map '{_map.name}'!")
+
 
         # Export the layout to JPEG
         layout = aprx.listLayouts(f"*{fig_id}*")[0]
