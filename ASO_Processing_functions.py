@@ -109,7 +109,7 @@ def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspa
 
         # Zonal stats for % difference
         zonal_table_perc = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_byBands.dbf")
-        ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", perc_diff_path, zonal_table_perc, "", "ALL")
+        ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", perc_diff_path, zonal_table_perc, "DATA","ALL")
         arcpy.ExportTable_conversion(zonal_table_perc, zonal_table_perc.replace(".dbf", ".csv"))
 
         # Zonal stats for ASO mask

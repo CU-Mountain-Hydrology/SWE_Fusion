@@ -152,3 +152,68 @@ results_df = pd.DataFrame(all_results)
 
 if out_csv == "Y":
     results_df.to_csv(csv_outFile, index=False)
+
+
+############################################
+# start of new function: Bias correction and fix
+############################################
+# PARAMETERS
+# P8 layer
+# method
+
+# get unqiue main groups make a list
+results_df
+
+# loop through list:
+## for group in unique_list:
+    # loop through "Basin" only if "MainGroup" is group:
+    # get fraction error layer for Row name, row name = method:
+
+
+    # LRMfix = Raster(LRMlayer) / (1 + Raster(fracError_v4))
+    # newFrac = Con(IsNull(Raster(fracError_layer)), 0, Raster(fracError_layer))
+    # newFix = Con(newFrac == -1, Raster(LRMlayer), LRMfix)
+    # newFix.save(FixLayerWorkspace + f"{RTdate}_{Basin}_LRMFix_final.tif")
+    # print("fix completed")
+
+    ## add fix final to a list
+    # mosaic all fix final together
+
+    ## extract main group by mask
+    ## Con Is Null with the Fix
+
+    # run vetting code for sensors only
+    # check if running code should be surveys
+    # output df:
+    # domain = WW/SNM
+    # RT date = date
+    # basin = "main_Group"
+    # aso_bains = list of basins in unique list
+    # Method_error tuple = ('method', number)
+    # Method_AF tuple = ('method', AF)
+    # Method_path tuple = ('method', 'file path')
+
+############################################
+# start of new function: select bias correction layer
+############################################
+# open csv
+# select for only date
+# isolate the basin column and any column that has _error
+# go through each row and select the lowest error method
+# give a list of: the winningest group, plot a chart on the error differences per basin and AF values pre and post bias correction
+# PROMPT: which option to chose
+
+## Make final layer
+### select all the method file paths
+## do a Con IsNull for the rest of the model run.
+
+
+
+
+
+
+
+
+
+
+

@@ -15,7 +15,7 @@ from SWE_Fusion_functions import *
 print('modules imported')
 
 # tables and layers -- establish paths
-user = "Leanne"
+user = "Olaf"
 year = "2025"
 report_date = "20250525"
 mean_date = "0528"
@@ -47,6 +47,10 @@ WW_url_file = survey_workspace + r"stateSurveyURLS.txt"
 NRCS_shp = survey_workspace + "20240114_nrcs_course.shp"
 WW_state_list = ["AZ", "CO", "ID", "MT", "NV", "NM", "OR", "SD", "UT", "WA", "WY"]
 
+####################################
+# Processing Starts Now
+####################################
+
 # make results and reports directory
 os.makedirs(WW_results_workspace + f"{report_date}_results_ET", exist_ok=True)
 os.makedirs(SNM_results_workspace + f"{report_date}_results_ET", exist_ok=True)
@@ -54,7 +58,7 @@ print("\nResults directories made")
 
 #process fSCA
 print("\nProcessing fSCA data...")
-# fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaWS, proj_in, snap_raster, extent, proj_out)
+#fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaWS, proj_in, snap_raster, extent, proj_out)
 
 # run DMFSCA (look into r version of this code)
 
@@ -68,9 +72,6 @@ if surveys == "Y":
     print("\nGetting WW Surveys")
     download_snow_surveys(report_date=report_date, surveyWorkspace=survey_workspace, results_workspace=WW_results_workspace,
                           WW_url_file=WW_url_file, NRCS_shp=NRCS_shp, WW_state_list=WW_state_list)
-
-# run SNODAS code --> need to make a function
-report_date = "20250525"
 
 ## Use this run name when creating SNODAS for fSCA, nt for final model output
 RunName = "RT_CanAdj_rcn_noSW_woCCR_nofscamsk"
@@ -107,6 +108,7 @@ SNODAS_Processing(report_date=report_date, RunName=RunName, NOHRSC_workspace=SNM
 # run R model
 
 # run sensors code
+
 ## sensor_code variables:
 user = "Emma"
 report_date = "20250315"

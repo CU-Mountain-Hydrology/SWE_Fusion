@@ -564,7 +564,10 @@ def extract_zip(zip_path, ext, output_folder):
                     print(f"Moved: {src_file} → {dst_file}")
 
     # Clean up temp folder
-    shutil.rmtree(temp_extract_path)
+    try:
+        shutil.rmtree(temp_extract_path)
+    except OSError:
+        print(f"Temp folder not removed (may be locked): {temp_extract_path}")
 
 # safely read in a shapefile
 import geopandas as gpd
