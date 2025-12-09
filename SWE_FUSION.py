@@ -58,7 +58,7 @@ print("\nResults directories made")
 
 #process fSCA
 print("\nProcessing fSCA data...")
-#fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaWS, proj_in, snap_raster, extent, proj_out)
+# fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaWS, proj_in, snap_raster, extent, proj_out)
 
 # run DMFSCA (look into r version of this code)
 
@@ -105,9 +105,9 @@ SNODAS_Processing(report_date=report_date, RunName=RunName, NOHRSC_workspace=SNM
                      band_zones=band_zones, watershed_zones=watershed_zones, unzip_SNODAS="N")
 
 ## Maybe this section should be looped through CCR and woCCR
-# run R model
-
 # run sensors code
+
+# run R model
 
 ## sensor_code variables:
 user = "Emma"
@@ -147,6 +147,10 @@ tables_and_layers(user=user, year=year, report_date=report_date, mean_date=mean_
                   prev_model_run=prev_model_run, masking=masking, bias=bias)
 
 print('\nRunning Tables and Layers Code for Sierra')
+
+# sensor vetting function
+## prompt for best model run with sensor counts and % error
+
 
 # ASO Bias correction
 # if biasCorrection = TK
