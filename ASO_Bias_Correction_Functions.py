@@ -256,8 +256,6 @@ for basin in mainBasins:
 
 
 
-
-
     # run vetting code for sensors only
     # check if running code should be surveys
     # output df:
