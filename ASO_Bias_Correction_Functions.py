@@ -6,7 +6,7 @@ import shutil
 from arcpy.sa import *
 from arcpy import *
 from datetime import datetime
-from Vetting_functions import *
+# from Vetting_functions import *
 print('modules imported')
 
 # parameters
@@ -21,12 +21,13 @@ grade_amount = -10
 sensorTrend = "Mixed"
 SNOTEL = "Decreasing"
 domains = ['SNM', 'SOCN']
-basinList = ["SouthPlatte", "Uinta"]
+basinList = ["SouthPlatte", "Uinta", "Kings"]
 output_csv = "Y"
 csv_outFile = r"W:/Spatial_SWE/ASO/2025/data_testing/FracError_data_test.csv"
 asoCatalog = r"W:/Spatial_SWE/ASO/2025/data_testing/ASO_SNOTEL_DifferenceStats.csv"
 basin_List = r"W:/Spatial_SWE/ASO/ASO_Metadata/ASO_in_Basin.txt"
-# fracErrorWorkspace = "W:/Spatial_SWE/ASO/2025/data_testing/"
+fracErrorWorkspace = "W:/Spatial_SWE/ASO/2025/data_testing/"
+domainList = r"M:\SWE\WestWide\Spatial_SWE\ASO\ASO_Metadata\State_Basin.txt"
 results_workspace = f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/"
 
 ## function for fix
@@ -68,13 +69,33 @@ def bias_correction_selection(rundate, basin_List, domainList, method_list, frac
             # store in dictionary
             mapping[before] = after_items
 
+    state_mapping = {}
+    with open(domainList, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            basin_name, state = line.split("|")
+            basin_name = basin_name.strip().strip('"')
+            state = state.strip().strip('"')
+            state_mapping[basin_name] = state
+
     # set the list
     all_results = []
-
     for main_group, sub_items in mapping.items():
-        print(f"Main group: {main_group}")
         for item in sub_items:
             print(f"{item}")
+
+            state = state_mapping.get(item, "Unknown")
+            print(f"Basin: {item}, State: {state}")
+#
+            #establish domain
+            if state == "CA":
+                domain = "SNM"
+            else:
+                domain = "WW"
+
+            # read through CSV
             aso_df = pd.read_csv(asoCatalog)
             if item in aso_df['Basin'].values:
                 if currentYear is True:
@@ -87,6 +108,7 @@ def bias_correction_selection(rundate, basin_List, domainList, method_list, frac
                     'ModelDate': rundate,
                     'MainGroup': main_group,
                     'Basin': item,
+                    'Domain': domain,
                     'RECENT': None,
                     'GRADE': None,
                     'SENSOR_PATTERN': None,
@@ -183,6 +205,11 @@ def bias_correction_selection(rundate, basin_List, domainList, method_list, frac
         results_df.to_csv(csv_outFile, index=False)
     return results_df
 
+# USAGE
+results_df = bias_correction_selection(rundate=rundate, basin_List=basin_List, domainList=domainList, method_list=method_list,
+                                           fracErrorWorkspace=fracErrorWorkspace, output_csv=output_csv, csv_outFile=csv_outFile,
+                                           currentYear=True, grade_amount=grade_amount, sensorTrend=sensorTrend, SNOTEL=SNOTEL,
+                                           grade=grade, grade_range=grade_range)
 
 ############################################
 # start of new function: Bias correction and fix
@@ -279,7 +306,7 @@ for basin in mainBasins:
                                        "",
                                        "32_BIT_FLOAT", "", 1, "LAST", "FIRST")
 
-# 
+
 
 
     # run vetting code for sensors only

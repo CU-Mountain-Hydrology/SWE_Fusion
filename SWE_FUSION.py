@@ -12,6 +12,7 @@ import geopandas as gpd
 import os
 from tables_layers_testing_code import *
 from SWE_Fusion_functions import *
+from ASO_Bias_Correction_Functions import *
 print('modules imported')
 
 # tables and layers -- establish paths
@@ -151,12 +152,41 @@ print('\nRunning Tables and Layers Code for Sierra')
 # sensor vetting function
 ## prompt for best model run with sensor counts and % error
 
-
+biasCorrection = "Y"
 # ASO Bias correction
-# if biasCorrection = TK
-    # list of methods
-    # loops through methods
+rundate = "20250503"
+ModelRun = "fSCA_RT_CanAdj_rcn_noSW_woCCR"
+currentYear = True
+current_year = datetime.now().year
+method_list = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
+grade = "positive"
+grade_range = False
+grade_amount = -10
+sensorTrend = "Mixed"
+SNOTEL = "Decreasing"
+domains = ['SNM', 'SOCN']
+basinList = ["SouthPlatte", "Uinta", "Kings"]
+output_csv = "Y"
+csv_outFile = r"W:/Spatial_SWE/ASO/2025/data_testing/FracError_data_test.csv"
+asoCatalog = r"W:/Spatial_SWE/ASO/2025/data_testing/ASO_SNOTEL_DifferenceStats.csv"
+basin_List = r"W:/Spatial_SWE/ASO/ASO_Metadata/ASO_in_Basin.txt"
+fracErrorWorkspace = "W:/Spatial_SWE/ASO/2025/data_testing/"
+domainList = r"M:\SWE\WestWide\Spatial_SWE\ASO\ASO_Metadata\State_Basin.txt"
+results_workspace = f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/"
 
-    # runs vetting code again
+if biasCorrection == "Y":
+    # list of methods
+    results_df = bias_correction_selection(rundate=rundate, basin_List=basin_List, domainList=domainList, method_list=method_list,
+                                           fracErrorWorkspace=fracErrorWorkspace, output_csv=output_csv, csv_outFile=csv_outFile,
+                                           currentYear=True, grade_amount=grade_amount, sensorTrend=sensorTrend, SNOTEL=SNOTEL,
+                                           grade=grade, grade_range=grade_range)
+
+    # do the bias correction
+
+    # run the vetting
+    ## go into the folder
+    ## make a list of unique starts to the file names
+    ## if file name starts with that
+
 
 # Run vetting code
