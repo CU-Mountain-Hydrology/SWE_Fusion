@@ -59,7 +59,7 @@ print("\nResults directories made")
 
 #process fSCA
 print("\nProcessing fSCA data...")
-# fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaWS, proj_in, snap_raster, extent, proj_out)
+#fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaWS, proj_in, snap_raster, extent, proj_out)
 
 # run DMFSCA (look into r version of this code)
 
