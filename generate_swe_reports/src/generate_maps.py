@@ -25,7 +25,7 @@ product_source_dir = r"U:\EricG\testing_Directory"      # Parent directory of th
 output_parent_dir = "../output/"                        # Directory the figures will be exported to
 
 # Figure configs
-layer_formats = ["tif",]                                # List of all layer file formats used in the ww_fig_data dict
+layer_formats = ["tif","shp"]                           # List of all layer file formats
 table_formats = ["csv","dbf",]                          # List of all standalone table file formats
 ww_fig_data = {                                         # Dictionary of metadata for all figures in the WestWide reports
     # The top level contains each figure id as it appears in the report, followed by an id for each map-frame within that
@@ -122,6 +122,77 @@ ww_fig_data = {                                         # Dictionary of metadata
             "6d": []
         }
     },
+}
+
+snm_fig_data = {
+    "0": {
+        "maps": {
+            "regions": [
+                {"layer": "anomRegion_table", "format": "csv", "dir": "*UseAvg", "label": "Anno"}
+            ]
+        }
+    },
+    "1": {
+        "maps": {
+            "real_time_swe": [
+                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}
+            ],
+            "anomaly": [
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
+            ],
+            "watershed_map": [
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"}
+            ]
+        }
+    },
+    "2": {
+        "maps": {
+            "ASO_SWE_diff": [
+                # TODO: not sure how to automate updating ASO diff layers
+            ]
+        }
+    },
+    # Fig 3 is just fig 1 from the previous report, nothing to do here
+    "4": {
+        "maps": {
+            "real_time_swe_fires": [
+                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}
+            ]
+        }
+    },
+    "5": {
+        "maps": {
+            "TC_MODIS_image": [
+                # TODO: not sure how to automate MODIS layer
+            ]
+        }
+    },
+    "6": {
+        "maps": {
+            "SNODAS_swe": [
+                {"layer": "Cp_m_albn83_clp", "format": "tif", "dir": "SNODAS", "label": "None"}
+            ],
+            "SNODAS_diff": [
+                {"layer": "SNODAS_Regress", "format": "tif", "dir": "*UseThis", "label": "None"}
+            ],
+            "SNODAS_swe_overlap": [
+                {"layer": "both", "format": "tif", "dir": "SNODAS", "label": "None"}
+            ]
+        }
+    },
+    "7": {
+        "maps": {
+            "mean_swe": [
+                {"layer": "mean_msk", "format": "tif", "dir": "*UseThis", "label": "None"},
+                # TODO: add support for shp files
+                {"layer": "Zero_sensors", "format": "shp", "dir": "", "label": "None"},
+                {"layer": "sensors_SNM", "format": "shp", "dir": "", "label": "None"},
+                {"layer": "Zero_CCR", "format": "shp", "dir": "", "label": "None"},
+                {"layer": "CCR", "format": "shp", "dir": "", "label": "None"},
+            ],
+            "banded_elev": []
+        }
+    }
 }
 
 #########################
@@ -253,6 +324,11 @@ def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True
 
     return layer_file
 
+def get_modis_date(date: int) -> int:
+    # TODO: Go through all snapshot-date files in the directory and use ... most recent? idk how they are decided
+    # Then format into YYYYMMDD
+    return 20250326
+
 
 def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose: bool, prompt_user: bool):
     # TODO: docs
@@ -305,7 +381,7 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                     new_layer_path = nulled_path
 
                 # Update labels
-                if label == "None":
+                if label == "None" or label == "" or label == [] or not label:
                     # Set the data source
                     _map.addDataFromPath(new_layer_path)
 
@@ -313,8 +389,14 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                     if file_type in layer_formats:
                         layer = _map.listLayers(f"*{layer_id}*")[0]
                         layer.symbology = symbology
+
                 elif label == "Anno":
+                    # Find annotation layer in map
+                    # Maybe label:"anno_layer_pattern"
+                    # Parse imported layer in python? Can it do dbf?
+                    # Set text accordingly
                     pass
+
                 elif isinstance(label, list): # Layer pattern
                     label_pattern = label[0]
                     join_field = label[1]
@@ -370,7 +452,15 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
         text_elements = layout.listElements("TEXT_ELEMENT")
         for element in text_elements:
             if "date" in element.name.lower():
-                formatted_date = datetime.strptime(str(date), "%Y%m%d").strftime("%B %d, %Y")
+                if "date_modis" in element.name.lower():
+                    modis_date = get_modis_date(date)
+                    formatted_date = datetime.strptime(str(modis_date), "%Y%m%d").strftime("%B %d, %Y")
+                    pass
+                elif "date_noyear" in element.name.lower(): # January 01
+                    formatted_date = datetime.strptime(str(date), "%Y%m%d").strftime("%B %d")
+                else: # January 01, 2000
+                    formatted_date = datetime.strptime(str(date), "%Y%m%d").strftime("%B %d, %Y")
+
                 element.text = f"{formatted_date}"
 
         output_dir = os.path.join(output_parent_dir, f"{date}_{report_type}_JPEGmaps")
