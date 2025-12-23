@@ -144,13 +144,18 @@ merge_sort_sensors_surveys(report_date=report_date, results_workspace=SNM_result
                             merge="N", domain_shapefile=SNM_sensors)
 
 # run tables and layers
-print('\nRunning Tables and Layers Code for all domains')
-tables_and_layers(user=user, year=year, report_date=report_date, mean_date=mean_date, prev_report_date=prev_report_date, model_run=model_run,
-                  prev_model_run=prev_model_run, masking=masking, bias=bias)
+modelruns = ['CCR', 'woCCR']
+for model in modelruns:
+    print('\nRunning Tables and Layers Code for all domains')
+    tables_and_layers(user=user, year=year, report_date=report_date, mean_date=mean_date, prev_report_date=prev_report_date, model_run=model_run,
+                      prev_model_run=prev_model_run, masking=masking, bias=bias)
 
-print('\nRunning Tables and Layers Code for Sierra')
+    print('\nRunning Tables and Layers Code for Sierra')
 
 # sensor vetting function
+
+
+
 ## prompt for best model run with sensor counts and % error
 
 biasCorrection = "Y"
@@ -221,17 +226,8 @@ if biasCorrection == "Y":
             raster = BC_path + f"{name}_{method}_BC_fix_albn83.tif"
 
             if os.path.exists(raster):
-                bias_correction_vetting(
-                    raster=raster,
-                    point=surveys,
-                    swe_col="SWE_m",
-                    id_col="Station_Id",
-                    rundate="20250503",
-                    name=name,
-                    method=method,
-                    out_csv=out_csv,
-                    folder=folder,
-                    control_raster=control_raster
+                bias_correction_vetting(raster=raster, point=surveys, swe_col="SWE_m", id_col="Station_Id", rundate="20250503",
+                    name=name, method=method, out_csv=out_csv, folder=folder, control_raster=control_raster
                 )
 
     # run the vetting

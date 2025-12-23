@@ -312,6 +312,7 @@ import os
 import shutil
 import arcpy
 import math
+import glob
 from arcpy.sa import *
 
 def bias_correct(results_workspace, ModelRun, method, rundate, results_df, shapefile_workspace):
@@ -351,13 +352,32 @@ def bias_correct(results_workspace, ModelRun, method, rundate, results_df, shape
                 print(f"Skipping sub-basin {row['Basin']} because {method} value is empty")
                 continue
 
-            fraErr_path = str(fraErr) + ".tif"
-            print(f"Basin: {basin} | Sub-Basin: {sub_basin} | fracErr_path: {fraErr_path}")
+            fraErr_dir = os.path.dirname(str(fraErr))
+            fraErr_basename = os.path.basename(str(fraErr))
+
+            # Pattern: starts with basename, ends with swe_50m_fraErr.tif
+            # This will match: ASO_BoulderCreek_2025Apr09*swe_50m_fraErr.tif
+            search_pattern = os.path.join(fraErr_dir, f"{fraErr_basename[:-19]}*swe_50m_fraErr.tif")
+
+            print(f"Basin: {basin} | Sub-Basin: {sub_basin} | Search pattern: {search_pattern}")
 
             basinSHP = f"{shapefile_workspace}ASO_{sub_basin}_albn83.shp"
 
+            matching_files = glob.glob(search_pattern)
+
+            if matching_files:
+                for fraErr_path in matching_files:
+                    print(f"Found file: {fraErr_path}")
+
+                    if os.path.exists(fraErr_path):
+                        print("File exists!")
+                        # Your processing code here
+            else:
+                print(f"No files found matching pattern: {search_pattern}")
+
             if os.path.exists(fraErr_path):
-                print("File exists!")
+
+                print(f"Basin: {basin} | Sub-Basin: {sub_basin} | fracErr_path: {fraErr_path}")
 
                 # Create p8 mask if it doesn't exist
                 mask_path = f"{results_workspace}ASO_BiasCorrect_{ModelRun}/p8_{rundate}_noneg_msk.tif"
@@ -428,7 +448,6 @@ methods = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
 for method in methods:
     print(f"\nprocessing method:", method)
     bias_correct(results_workspace, ModelRun, method, rundate, results_df, shapefile_workspace)
-
 
 
 
