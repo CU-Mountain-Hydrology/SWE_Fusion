@@ -13,6 +13,7 @@ import os
 from tables_layers_testing_code import *
 from SWE_Fusion_functions import *
 from ASO_Bias_Correction_Functions import *
+from Vetting_functions import *
 print('modules imported')
 
 # tables and layers -- establish paths
@@ -182,6 +183,56 @@ if biasCorrection == "Y":
                                            grade=grade, grade_range=grade_range)
 
     # do the bias correction
+    methods = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
+
+    for method in methods:
+        print(f"\nprocessing method:", method)
+        bias_correct(results_workspace, ModelRun, method, rundate, results_df, shapefile_workspace)
+
+    folder = r"W:\Spatial_SWE\WW_regression\RT_report_data\20250503_results_ET\ASO_BiasCorrect_fSCA_RT_CanAdj_rcn_noSW_woCCR/"
+    prefix = "20250503"
+    unique_names = set()  # use a set to keep unique values
+    file_mapping = {}
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            if file.startswith(prefix):
+                # Split by "_" and take the first two parts
+                parts = file.split("_")
+                if len(parts) >= 2:
+                    name = "_".join(parts[:2])
+                    unique_names.add(name)
+
+    # Convert to list if needed
+    unique_names = list(unique_names)
+    print(unique_names)
+
+    print("\nFull file names by prefix:")
+    for name, files in file_mapping.items():
+        print(f"{name}:")
+        for f in files:
+            print(f"  {f}")
+
+    methods = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
+    for method in methods:
+        print(f"\nMethod: {method}"'')
+        BC_path = folder + f"/{method}/"
+        for name in unique_names:
+            print(f"Name: {name}")
+            raster = BC_path + f"{name}_{method}_BC_fix_albn83.tif"
+
+            if os.path.exists(raster):
+                bias_correction_vetting(
+                    raster=raster,
+                    point=surveys,
+                    swe_col="SWE_m",
+                    id_col="Station_Id",
+                    rundate="20250503",
+                    name=name,
+                    method=method,
+                    out_csv=out_csv,
+                    folder=folder,
+                    control_raster=control_raster
+                )
 
     # run the vetting
     ## go into the folder
