@@ -315,7 +315,7 @@ import math
 import glob
 from arcpy.sa import *
 
-def bias_correct(results_workspace, ModelRun, method, rundate, results_df, shapefile_workspace):
+def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_df, shapefile_workspace):
     """
     Performs bias correction for ASO SWE data.
 
@@ -327,6 +327,12 @@ def bias_correct(results_workspace, ModelRun, method, rundate, results_df, shape
         results_df (DataFrame): DataFrame containing 'MainGroup', 'Basin', and method column.
         shapefile_workspace (str): Path to shapefiles.
     """
+    # first filter by domain
+    # Filter by domain if specified
+    if domain is not None:
+        results_df = results_df[results_df['Domain'] == domain].copy()
+        print(f"Filtered to domain: {domain}")
+
     # Make directories
     os.makedirs(f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/", exist_ok=True)
     os.makedirs(f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/Fix_Files/", exist_ok=True)

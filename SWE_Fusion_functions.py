@@ -635,9 +635,9 @@ def get_points_within_raster(shapefile_path, raster_path, id_column="site_id"):
     return gdf_final, site_id_list
 
 
-def tables_and_layers(user, year, report_date, mean_date, prev_report_date, model_run, prev_model_run, masking, watershed_zones,
+def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_run, masking, watershed_zones,
                       band_zones, HUC6_zones, region_zones, case_field_wtrshd, case_field_band, watermask, glacierMask, snapRaster_geon83,
-                      snapRaster_albn83, projGEO, projALB, ProjOut_UTM, bias):
+                      snapRaster_albn83, projGEO, projALB, ProjOut_UTM, bias, prev_report_date=None, prev_model_run=None):
 
     # set code parameters
     where_clause = """"POLY_AREA" > 100"""
@@ -668,7 +668,7 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
     if bias == "Y":
         outWorkspace = resultsWorkspace + RunNameMod + "/"
 
-    meanWorkspace = workspaceBase + "mean_2001_2021_Nodmfsca/"
+    # meanWorkspace = workspaceBase + "mean_2001_2021_Nodmfsca/"
     prevRepWorkspace = workspaceBase + f"RT_report_data/{prev_report_date}_results/{prev_model_run}/"
 
     meanMask = outWorkspace + f"{mean_date}_mean_msk.tif"
@@ -797,7 +797,7 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
             MODWorkspace = fr"H:/WestUS_Data/Regress_SWE/{domain}/{user}/StationSWERegressionV2/"
             arcpy.env.snapRaster = snapRaster_geon83
             arcpy.env.cellSize = snapRaster_geon83
-            modelTIF = MODWorkspace + f"data/outputs/{model_run}/{domain}_phvrcn_{report_date}.tif"
+            modelTIF = MODWorkspace + f"data/outputs/{model_run}/{domain}_phvrcn_{report_date}_nofscamsk.tif"
 
             # extract by mask
             outCut = ExtractByMask(modelTIF, clipFilesWorkspace + f"WW_{domain}_cutline_v2.shp", 'INSIDE')
@@ -927,22 +927,22 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
                                          "ALL")
     arcpy.AddField_management(SWEbandtable, "SWE_IN", "DOUBLE", "", "", "",
                               "", "NULLABLE", "NON_REQUIRED")
-    arcpy.AddField_management(SWEbandtable100, "SWE_IN", "DOUBLE", "", "", "",
-                              "", "NULLABLE", "NON_REQUIRED")
+    # arcpy.AddField_management(SWEbandtable100, "SWE_IN", "DOUBLE", "", "", "",
+    #                           "", "NULLABLE", "NON_REQUIRED")
     arcpy.AddField_management(SWEtable, "SWE_IN", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
     arcpy.AddField_management(SWEbandtable, "AREA_MI2", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
     arcpy.AddField_management(SWEtable, "AREA_MI2", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
-    arcpy.AddField_management(SWEbandtable100, "VOL_M3", "DOUBLE", "#", "#", "#",
-                              "#", "NULLABLE", "NON_REQUIRED", "#")
+    # arcpy.AddField_management(SWEbandtable100, "VOL_M3", "DOUBLE", "#", "#", "#",
+    #                           "#", "NULLABLE", "NON_REQUIRED", "#")
     arcpy.AddField_management(SWEbandtable, "VOL_M3", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
     arcpy.AddField_management(SWEtable, "VOL_M3", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
-    arcpy.AddField_management(SWEbandtable100, "VOL_AF", "DOUBLE", "#", "#", "#",
-                              "#", "NULLABLE", "NON_REQUIRED", "#")
+    # arcpy.AddField_management(SWEbandtable100, "VOL_AF", "DOUBLE", "#", "#", "#",
+    #                           "#", "NULLABLE", "NON_REQUIRED", "#")
     arcpy.AddField_management(SWEbandtable, "VOL_AF", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
     arcpy.AddField_management(SWEtable, "VOL_AF", "DOUBLE", "#", "#", "#",
@@ -950,7 +950,7 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
     print("fields added")
     # calculate fields
     arcpy.CalculateField_management(SWEbandtable, "SWE_IN", "!MEAN! * 39.370079", "PYTHON")
-    arcpy.CalculateField_management(SWEbandtable100, "SWE_IN", "!MEAN! * 39.370079", "PYTHON")
+    # arcpy.CalculateField_management(SWEbandtable100, "SWE_IN", "!MEAN! * 39.370079", "PYTHON")
     arcpy.CalculateField_management(SWEtable, "SWE_IN", "!MEAN! * 39.370079", "PYTHON")
 
     # Calculate area in sq miles
@@ -960,17 +960,17 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
     # Calculate volume in cubic meters
     arcpy.CalculateField_management(SWEbandtable, "VOL_M3", "!MEAN! * !AREA!", "PYTHON")
     arcpy.CalculateField_management(SWEtable, "VOL_M3", "!MEAN! * !AREA!", "PYTHON")
-    arcpy.CalculateField_management(SWEbandtable100, "VOL_M3", "!MEAN! * !AREA!", "PYTHON")
+    # arcpy.CalculateField_management(SWEbandtable100, "VOL_M3", "!MEAN! * !AREA!", "PYTHON")
 
     # Calculate volume in acre feet
-    arcpy.CalculateField_management(SWEbandtable100, "VOL_AF", "!VOL_M3! * 0.000810714", "PYTHON")
+    # arcpy.CalculateField_management(SWEbandtable100, "VOL_AF", "!VOL_M3! * 0.000810714", "PYTHON")
     arcpy.CalculateField_management(SWEbandtable, "VOL_AF", "!VOL_M3! * 0.000810714", "PYTHON")
     arcpy.CalculateField_management(SWEtable, "VOL_AF", "!VOL_M3! * 0.000810714", "PYTHON")
 
     ### Sort by bandname and watershed name, 2 tables
     arcpy.Sort_management(SWEbandtable, SWEbandtable_save, [[case_field_band, "ASCENDING"]])
     arcpy.Sort_management(SWEtable, SWEtable_save, [[case_field_wtrshd, "ASCENDING"]])
-    arcpy.Sort_management(SWEbandtable100, SWEbandtable100_save, [["Value", "ASCENDING"]])
+    # arcpy.Sort_management(SWEbandtable100, SWEbandtable100_save, [["Value", "ASCENDING"]])
 
     ## work on SCA tables
     arcpy.AddField_management(scabandtable, "Percent", "DOUBLE", "", "", "",
@@ -1089,10 +1089,6 @@ def tables_and_layers(user, year, report_date, mean_date, prev_report_date, mode
     band_df = pd.DataFrame(band_dbf)
     band_df.to_csv(BandtableJoinCSV, index=False)
 
-    band100_dbf = gpd.read_file(SWEbandtable100_save)
-    band100_df = pd.DataFrame(band100_dbf)
-    band100_df.to_csv(Band100TableCSV)
-
     anom_dbf = gpd.read_file(anomTable_save)
     anom_df = pd.DataFrame(anom_dbf)
     anom_df.to_csv(anomWtshdTableCSV, index=False)
@@ -1117,9 +1113,9 @@ import pandas as pd
 import geopandas as gpd
 
 
-def tables_and_layers_SNM(year, rundate, mean_date, prev_report_date, WW_model_run, previous_model_run, SNM_results_workspace, watershed_zones, band_zones, region_zones,
+def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_workspace, watershed_zones, band_zones, region_zones,
                           case_field_wtrshd, case_field_band, watermask, glacier_mask, domain_mask, run_type, snap_raster, WW_results_workspace,
-                          Difference, bias_model_run=None):
+                          Difference, bias_model_run=None, prev_report_date=None, previous_model_run=None):
     # create directory
     prevRepWorkspace = SNM_results_workspace + f"{prev_report_date}_results/{previous_model_run}/"
     where_clause = """"POLY_AREA" > 100"""
@@ -1135,25 +1131,25 @@ def tables_and_layers_SNM(year, rundate, mean_date, prev_report_date, WW_model_r
     # case_field_band = "SrtNmeBand"
 
     if run_type == "Normal":
-        arcpy.CreateFolder_management(SNM_results_workspace + f"/{rundate}_results/", WW_model_run)
-        outWorkspace = SNM_results_workspace + f"/{rundate}_results/" + WW_model_run + "/"
+        arcpy.CreateFolder_management(SNM_results_workspace + f"/{rundate}_results_ET/", WW_model_run)
+        outWorkspace = SNM_results_workspace + f"/{rundate}_results_ET/" + WW_model_run + "/"
         print("model run workspace created")
 
     if run_type == "Vetting":
-        outWorkspace = SNM_results_workspace + f"/{rundate}_results/" + WW_model_run + "/"
+        outWorkspace = SNM_results_workspace + f"/{rundate}_results_ET/" + WW_model_run + "/"
 
     if run_type == "Bias":
-        outWorkspace = SNM_results_workspace + f"/{rundate}_results/" + bias_model_run + "/"
-    SNM_results_workspace + f"/{rundate}_results/"
+        outWorkspace = SNM_results_workspace + f"/{rundate}_results_ET/" + bias_model_run + "/"
+    SNM_results_workspace + f"/{rundate}_results_ET/"
 
     ## project and clip SNODAS
-    SNODASWorkspace = SNM_results_workspace + f"/{rundate}_results/" + "SNODAS/"
+    SNODASWorkspace = SNM_results_workspace + f"/{rundate}_results_ET/" + "SNODAS/"
     ClipSNODAS = SNODASWorkspace + "SWE_" + rundate + "_Cp_m_albn83_clp.tif"
     SWE_Diff = outWorkspace + "SNODAS_Regress_" + rundate + ".tif"
 
     meanMask = outWorkspace + f"{mean_date}_mean_msk.tif"
     MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.0d/NRT_FSCA_WW_N83/{year}/{rundate}.tif"
-    MODSCAG_tif_plus_proj_WW = WW_results_workspace + f"{rundate}_results/{WW_model_run}/" + f"fSCA_{rundate}_albn83.tif"
+    MODSCAG_tif_plus_proj_WW = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"fSCA_{rundate}_albn83.tif"
     MODSCAG_tif_plus_proj = outWorkspace + f"SNM_fSCA_{rundate}_albn83.tif"
 
     # define snow-no snow layer
@@ -1171,16 +1167,16 @@ def tables_and_layers_SNM(year, rundate, mean_date, prev_report_date, WW_model_r
     snowPolyElim = outWorkspace + f"modscag_{rundate}_snowline_Sel_elim.shp"
 
     # define snow pillow gpkg
-    meanMap_proj_WW = WW_results_workspace + f"{rundate}_results/{WW_model_run}/" + f"WW_{mean_date}_mean_albn83.tif"
+    meanMap_proj_WW = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"WW_{mean_date}_mean_albn83.tif"
     meanMap_proj = outWorkspace + f"SNM_{mean_date}_mean_albn83.tif"
     meanMapMask = outWorkspace + f"SNM_{mean_date}_mean_msk_albn83.tif"
     lastRast = prevRepWorkspace + f"p8_{prev_report_date}_noneg.tif"
     DiffRaster = outWorkspace + f"Diff_{rundate}_{prev_report_date}.tif"
 
     ## define rasters
-    WW_product8 = WW_results_workspace + f"{rundate}_results/{WW_model_run}/" + f"p8_{rundate}_noneg.tif"
-    rcn_glacMask_WW = WW_results_workspace + f"{rundate}_results/{WW_model_run}/" + f"WW_{rundate}_phvrcn_mos_masked.tif"
-    rcn_raw_proj_WW = WW_results_workspace + f"{rundate}_results/{WW_model_run}/" + f"WW_{rundate}_phvrcn_albn83.tif"
+    WW_product8 = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"p8_{rundate}_noneg.tif"
+    rcn_glacMask_WW = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"WW_{rundate}_phvrcn_mos_masked.tif"
+    rcn_raw_proj_WW = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"WW_{rundate}_phvrcn_albn83.tif"
     WW_p8_SNM = outWorkspace + f"WW_p8_{rundate}_noneg.tif"
     rcnFinal = outWorkspace + f"phvrcn_{rundate}_final.tif"
     product7 = outWorkspace + f"p7_{rundate}.tif"
@@ -1327,8 +1323,8 @@ def tables_and_layers_SNM(year, rundate, mean_date, prev_report_date, WW_model_r
         Diff_rgrs.save(DiffRaster)
 
     # create difference with SNODAS
-    Diff_SNODAS = Raster(ClipSNODAS) - Raster(product8)
-    Diff_SNODAS.save(SWE_Diff)
+    # Diff_SNODAS = Raster(ClipSNODAS) - Raster(product8)
+    # Diff_SNODAS.save(SWE_Diff)
 
     print("creating mean mask")
     MeanMapMsk = Raster(meanMap_proj) * Raster(watermask)
@@ -1365,15 +1361,11 @@ def tables_and_layers_SNM(year, rundate, mean_date, prev_report_date, WW_model_r
                                          "ALL")
     arcpy.AddField_management(SWEbandtable, "SWE_IN", "DOUBLE", "", "", "",
                               "", "NULLABLE", "NON_REQUIRED")
-    arcpy.AddField_management(SWEbandtable100, "SWE_IN", "DOUBLE", "", "", "",
-                              "", "NULLABLE", "NON_REQUIRED")
     arcpy.AddField_management(SWEtable, "SWE_IN", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
     arcpy.AddField_management(SWEbandtable, "AREA_MI2", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
     arcpy.AddField_management(SWEtable, "AREA_MI2", "DOUBLE", "#", "#", "#",
-                              "#", "NULLABLE", "NON_REQUIRED", "#")
-    arcpy.AddField_management(SWEbandtable100, "VOL_M3", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
     arcpy.AddField_management(SWEbandtable, "VOL_M3", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
@@ -1388,7 +1380,6 @@ def tables_and_layers_SNM(year, rundate, mean_date, prev_report_date, WW_model_r
 
     # calculate fields
     arcpy.CalculateField_management(SWEbandtable, "SWE_IN", "!MEAN! * 39.370079", "PYTHON")
-    arcpy.CalculateField_management(SWEbandtable100, "SWE_IN", "!MEAN! * 39.370079", "PYTHON")
     arcpy.CalculateField_management(SWEtable, "SWE_IN", "!MEAN! * 39.370079", "PYTHON")
 
     # Calculate area in sq miles
@@ -1398,17 +1389,14 @@ def tables_and_layers_SNM(year, rundate, mean_date, prev_report_date, WW_model_r
     # Calculate volume in cubic meters
     arcpy.CalculateField_management(SWEbandtable, "VOL_M3", "!MEAN! * !AREA!", "PYTHON")
     arcpy.CalculateField_management(SWEtable, "VOL_M3", "!MEAN! * !AREA!", "PYTHON")
-    arcpy.CalculateField_management(SWEbandtable100, "VOL_M3", "!MEAN! * !AREA!", "PYTHON")
 
     # Calculate volume in acre feet
-    arcpy.CalculateField_management(SWEbandtable100, "VOL_AF", "!VOL_M3! * 0.000810714", "PYTHON")
     arcpy.CalculateField_management(SWEbandtable, "VOL_AF", "!VOL_M3! * 0.000810714", "PYTHON")
     arcpy.CalculateField_management(SWEtable, "VOL_AF", "!VOL_M3! * 0.000810714", "PYTHON")
 
     ### Sort by bandname and watershed name, 2 tables
     arcpy.Sort_management(SWEbandtable, SWEbandtable_save, [[case_field_band, "ASCENDING"]])
     arcpy.Sort_management(SWEtable, SWEtable_save, [[case_field_wtrshd, "ASCENDING"]])
-    arcpy.Sort_management(SWEbandtable100, SWEbandtable100_save, [["Value", "ASCENDING"]])
 
     ## work on SCA tables
     arcpy.AddField_management(scabandtable, "Percent", "DOUBLE", "", "", "",
@@ -1534,8 +1522,8 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
 
     ##### Set automatic local variables
     arcpy.CreateFolder_management(resultsWorkspace, "SNODAS")
-    product8 = SWEWorkspace + f"p8_{report_date}_noneg.tif"
-    arcpy.CopyRaster_management(RegressSWE, product8)
+    # product8 = SWEWorkspace + f"p8_{report_date}_noneg.tif"
+    # arcpy.CopyRaster_management(RegressSWE, product8)
 
     # unzip and move HDR file
     if unzip_SNODAS == "Y":
@@ -1578,7 +1566,7 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
     SWE_both = SWEWorkspace + f"SWE_{report_date}_both.tif"
 
     ###### End of setting up variables
-    print("Creating masked SWE: " + product8)
+    # print("Creating masked SWE: " + product8)
     arcpy.env.workspace = SNODASWorkspace
 
     if unzip_SNODAS == "Y":
@@ -1730,10 +1718,12 @@ def geopackage_to_shapefile(report_date, pillow_date, model_run, user, domainLis
 import arcpy
 import pandas as pd
 import geopandas as gpd
+import warnings
 
 def merge_sort_sensors_surveys(report_date, results_workspace, surveys, difference, watershed_shapefile, case_field_wtrshd,
                                band_shapefile, case_field_band, merge, projOut, projIn=None, domainList=None, domain_shapefile=None,
                                prev_report_date=None, prev_results_workspace=None):
+
     # Set up snow pillow and snow survey shapefiles
     snowPillow_merge = results_workspace + f"{report_date}_sensors_WW_merge.shp"
     snowSurveys = results_workspace + f"{report_date}_surveys.shp"
@@ -1794,7 +1784,7 @@ def merge_sort_sensors_surveys(report_date, results_workspace, surveys, differen
         arcpy.Project_management(snowPillow_merge, snowPillow_proj, projOut)
 
     if merge == "N":
-        snowPillow_proj = results_workspace + f"{report_date}_sensors_albn83.shp"
+        snowPillow_proj = results_workspace + f"SNM_{report_date}_sensors_albn83.shp"
         IntersctLst = [snowPillow_proj, watershed_shapefile]
         IntersctLstBand = [snowPillow_proj, band_shapefile]
         arcpy.Project_management(domain_shapefile, snowPillow_proj, projOut, "", projIn)
