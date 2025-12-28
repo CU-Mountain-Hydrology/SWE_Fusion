@@ -237,3 +237,90 @@ def bias_correction_vetting(raster, point, swe_col, id_col, rundate, name, metho
             df.to_csv(out_csv, index=False)
         else:
             print("CONTROL exists")
+
+
+import os
+import pandas as pd
+import rasterio
+import arcpy
+from arcpy.sa import ExtractByMask
+####################################
+#FUNCTIONS
+####################################
+def model_domain_vetting(raster, point, swe_col, id_col, rundate, domain, modelRun, out_csv):
+    """
+    Process a raster, compute SWE statistics, and optionally update CSV.
+
+    Parameters:
+        raster (str): Path to raster to process.
+        point (str): Path to point shapefile with SWE measurements.
+        swe_col (str): Column name in point shapefile for observed SWE.
+        id_col (str): Column name in point shapefile for site ID.
+        rundate (str): Run date string for output.
+        domain (str): Basin name or unique identifier.
+        method (str): Method name (e.g., "RECENT").
+        out_csv (str): Path to output CSV.
+
+    Returns:
+        None. Updates CSV in place.
+    """
+
+    if not os.path.exists(raster):
+        print(f"Raster not found: {raster}")
+        return
+
+    # Load points within raster
+    from SWE_Fusion_functions import get_points_within_raster
+    gdf_pts, site_ids = get_points_within_raster(point, raster, id_column=id_col)
+
+    # Sample raster values
+    raster_vals = []
+    with rasterio.open(raster) as src:
+        for _, row in gdf_pts.iterrows():
+            x, y = row.geometry.x, row.geometry.y
+            val = list(src.sample([(x, y)]))[0][0]
+            raster_vals.append(val)
+
+    # Filter out zero SWE points
+    zero_swe = gdf_pts[gdf_pts[swe_col] == 0]
+    if len(zero_swe) > 0:
+        print("Number of Station IDs with zero SWE:", len(zero_swe[id_col].tolist()))
+    gdf_pts_filtered = gdf_pts[gdf_pts[swe_col] != 0].copy()
+
+    # Align indexes
+    raster_vals_series = pd.Series(raster_vals, index=gdf_pts.index)
+    gdf_pts_filtered["raster_value"] = raster_vals_series.loc[gdf_pts_filtered.index]
+
+    # Compute error metrics
+    gdf_pts_filtered["percent_error"] = ((gdf_pts_filtered["raster_value"] - gdf_pts_filtered[swe_col]) /
+                                         gdf_pts_filtered[swe_col]) * 100
+    gdf_pts_filtered["abs_percent_error"] = gdf_pts_filtered["percent_error"].abs()
+    gdf_pts_filtered["error"] = gdf_pts_filtered["raster_value"] - gdf_pts_filtered[swe_col]
+    gdf_pts_filtered["abs_error"] = gdf_pts_filtered["error"].abs()
+
+    avg_percent_error = gdf_pts_filtered["percent_error"].mean()
+    avg_abs_percent_error = gdf_pts_filtered["abs_percent_error"].mean()
+    avg_error = gdf_pts_filtered["error"].mean()
+    mae = gdf_pts_filtered["abs_error"].mean()
+    max_val = float(arcpy.management.GetRasterProperties(raster, "MAXIMUM").getOutput(0))
+
+    # Create error frame
+    error_frame = {
+        'rundate': rundate,
+        'Domain': domain,
+        'ModelRun': modelRun,
+        'Avg.Perc.Error': avg_percent_error,
+        'Avg.Abs.Perc.Error': avg_abs_percent_error,
+        'Avg.Error': avg_error,
+        'MAE': mae,
+        'Max Value': max_val,
+    }
+
+    # Update CSV
+    if os.path.isfile(out_csv):
+        df = pd.read_csv(out_csv)
+        new_df = pd.DataFrame([error_frame])
+        df = pd.concat([df, new_df], ignore_index=True)
+    else:
+        df = pd.DataFrame([error_frame])
+    df.to_csv(out_csv, index=False)
