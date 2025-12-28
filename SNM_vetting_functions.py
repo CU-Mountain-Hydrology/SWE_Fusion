@@ -22,7 +22,7 @@ print('modules imported')
 # set model run info
 # WW_modelRun = "RT_CanAdj_rcn_noSW_woCCR_nofscamsk"
 # modelRun = "ASO_FixLayers_RT_CanAdj_rcn_noSW_woCCR_nofscamsk"
-bias_model_run =
+# bias_model_run =
 previous_model_run = "ASO_FixLayers_RT_CanAdj_rcn_noSW_woCCR_UseThis"
 
 # set code parameters
