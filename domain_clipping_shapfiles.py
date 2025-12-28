@@ -18,10 +18,10 @@ print("modules imported")
 ##############################################################
 
 # Set the compression environment to NONE.
-arcpy.env.compression = "NONE"
+# arcpy.env.compression = "NONE"
 
-startDate = datetime(2000, 11, 1)
-endDate = datetime(2000, 11, 3)
+startDate = datetime(2004, 4, 18)
+endDate = datetime(2024, 11, 1)
 start_yyyymmdd = startDate.strftime("%Y%m%d")
 end_yyyymmdd = endDate.strftime("%Y%m%d")
 
@@ -33,7 +33,7 @@ output_folder = r"H:/WestUS_Data/Regress_SWE/HistoricalDaily/"
 current = startDate
 while current <= endDate:
     current_yyyymmdd = current.strftime("%Y%m%d")
-    cutLinesWorkspace = mainWorkspace + f"April1_Mean/cliplines/"
+    # cutLinesWorkspace = mainWorkspace + f"April1_Mean/cliplines/"
     clipFilesWorkspace = "M:/SWE/WestWide/data/boundaries/Domains/DomainCutLines/complete/"
     projGEO = arcpy.SpatialReference(4269)
     projALB = arcpy.SpatialReference(102039)
@@ -48,7 +48,6 @@ while current <= endDate:
     os.makedirs(date_dir, exist_ok=True)
 
     for domain in domains:
-        print(f"Processing {domain}")
         arcpy.env.snapRaster = snapRaster_geon83
         arcpy.env.cellSize = snapRaster_geon83
         arcpy.env.outputCoordinateSystem = projGEO
@@ -56,24 +55,28 @@ while current <= endDate:
         file = folder + f"{domain}_phvrcn_{current_yyyymmdd}_fscamsk.tif"
 
         if os.path.exists(file):
-
+            print(f"Processing {domain}")
             # extract by mask
             outCut = ExtractByMask(file, clipFilesWorkspace + f"WW_{domain}_cutline_v2.shp", 'INSIDE')
-            outCut.save(date_dir + f"{domain}_phvrcn_{current_yyyymmdd}_fscamsk_clp.tif")
+            outCut.save(date_dir + f"/{domain}_phvrcn_{current_yyyymmdd}_fscamsk_clp.tif")
             print(f"{domain} clipped for {current_yyyymmdd}")
 
         else:
-            print(f"\n{file} DOES NOT EXIST")
+            print(f"{file} DOES NOT EXIST")
 
     # mosaic all tifs together
-    arcpy.env.snapRaster = snapRaster_geon83
-    arcpy.env.cellSize = snapRaster_geon83
-    arcpy.env.outputCoordinateSystem = projGEO
-    outCutsList = [os.path.join(date_dir, f) for f in os.listdir(date_dir) if f.endswith(f"{current_yyyymmdd}_fscamsk_clp.tif")]
-    arcpy.MosaicToNewRaster_management(outCutsList, year_dir, f"WW_phvrcn_{current_yyyymmdd}_fscamsk_clp.tif",
-                                       projGEO, "32_BIT_FLOAT", ".005 .005", "1", "LAST")
-    print('mosaicked raster created. ')
+    if not os.path.exists(file):
+        print('not date, moving on')
+    else:
+        arcpy.env.snapRaster = snapRaster_geon83
+        arcpy.env.cellSize = snapRaster_geon83
+        arcpy.env.outputCoordinateSystem = projGEO
+        outCutsList = [os.path.join(date_dir, f) for f in os.listdir(date_dir) if f.endswith(f"{current_yyyymmdd}_fscamsk_clp.tif")]
+        arcpy.MosaicToNewRaster_management(outCutsList, year_dir, f"/WW_phvrcn_{current_yyyymmdd}_fscamsk_clp.tif",
+                                           projGEO, "32_BIT_FLOAT", ".005 .005", "1", "LAST")
+        print('mosaicked raster created. ')
 
 
     # move to next date
     current += timedelta(days=1)
+    print(rf"new current date = {current}")
