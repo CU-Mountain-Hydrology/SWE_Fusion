@@ -1387,14 +1387,23 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
     prod8Msk = anomnoneg_Mask / Raster(domain_mask)
     prod8Msk.save(anom0_100msk)
 
-    outBandTable = ZonalStatisticsAsTable(band_zones, case_field_band, product8, SWEbandtable, "DATA",
+    ZonalStatisticsAsTable(band_zones, case_field_band, product8, SWEbandtable, "DATA",
                                           "MEAN")
-    outSWETable = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, product8, SWEtable, "DATA",
+    ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, product8, SWEtable, "DATA",
                                          "MEAN")
-    outSCABand = ZonalStatisticsAsTable(band_zones, case_field_band, modscag_per, scabandtable, "DATA",
+    ZonalStatisticsAsTable(band_zones, case_field_band, modscag_per, scabandtable, "DATA",
                                         "ALL")
-    outSCAWtshd = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, modscag_per, scatable, "DATA",
+    ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, modscag_per, scatable, "DATA",
                                          "ALL")
+
+    # outBandTable = ZonalStatisticsAsTable(band_zones, case_field_band, product8, SWEbandtable, "DATA",
+    #                                       "MEAN")
+    # outSWETable = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, product8, SWEtable, "DATA",
+    #                                      "MEAN")
+    # outSCABand = ZonalStatisticsAsTable(band_zones, case_field_band, modscag_per, scabandtable, "DATA",
+    #                                     "ALL")
+    # outSCAWtshd = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, modscag_per, scatable, "DATA",
+    #                                      "ALL")
     arcpy.AddField_management(SWEbandtable, "SWE_IN", "DOUBLE", "", "", "",
                               "", "NULLABLE", "NON_REQUIRED")
     arcpy.AddField_management(SWEtable, "SWE_IN", "DOUBLE", "#", "#", "#",
@@ -1561,13 +1570,19 @@ def clear_arcpy_locks():
     # Reset workspace to None
     arcpy.env.workspace = None
     arcpy.env.scratchWorkspace = None
+    arcpy.env.extent = None
+    arcpy.env.snapRaster = None
+    arcpy.env.cellSize = None
+
+    # clear in-memory
+    arcpy.Delete_management("in_memory")
 
     # Force Python garbage collection multiple times
     for _ in range(3):
         gc.collect()
 
     # Small delay to allow file system to release locks
-    time.sleep(1)
+    time.sleep(3)
 
     # Reset geoprocessing environment
     arcpy.ResetEnvironments()

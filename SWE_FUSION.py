@@ -143,13 +143,9 @@ if surveys_use == "Y":
 ## sensor_code variables:
 workspaceBase = fr"M:/SWE/WestWide/Spatial_SWE/WW_regression/"
 model_workspace = fr"H:/WestUS_Data/Regress_SWE/"
-# watershed_shapefile = "M:/SWE/WestWide/data/hydro/WW_Basins_noSNM_notahoe_albn83_sel_new.shp"
-# band_shapefile = "M:/SWE/WestWide/data/hydro/WW_BasinsBanded_noSNM_notahoe_albn83_sel_new.shp"
 case_field_wtrshd = "SrtName"
 case_field_band = "SrtNmeBand"
-# projIn = arcpy.SpatialReference(4269)
-# projOut = arcpy.SpatialReference(102039)
-# case_field_wtrshd =
+
 print("\nProcessing GeoPackage")
 geopackage_to_shapefile(report_date=rundate, pillow_date=pillow_date, model_run=model_woCCR,
                         user=user, domainList=domainList, model_workspace=model_workspace,
@@ -179,19 +175,29 @@ SNODAS_Processing(report_date=rundate, RunName=model_woCCR, NOHRSC_workspace=WW_
 
 # run tables and layers
 modelRuns = [model_woCCR, model_wCCR]
-for model in modelRuns:
 
-    print(f'\nRunning Tables and Layers Code for all domains for {model}')
-    tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model, masking="N", watershed_zones=WW_watershed_zones,
-                      band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,
-                      case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83,
-                      snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, bias="N")
+print(f'\nRunning Tables and Layers Code for all domains for {model_woCCR}')
+tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_woCCR, masking="N", watershed_zones=WW_watershed_zones,
+                  band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,
+                  case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83,
+                  snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, bias="N")
 
-
+# clear memory
 sleep(30)
 print('done sleeping')
-
 clear_arcpy_locks()
+
+print(f'\nRunning Tables and Layers Code for all domains for {model_wCCR}')
+tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_wCCR, masking="N", watershed_zones=WW_watershed_zones,
+                  band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,
+                  case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83,
+                  snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, bias="N")
+
+# clear memory
+sleep(30)
+print('done sleeping')
+clear_arcpy_locks()
+
 
 # Run SNODAS for SNM
 print("SNODAS for SNM...")
@@ -202,22 +208,38 @@ SNODAS_Processing(report_date=rundate, RunName=model_woCCR, NOHRSC_workspace=WW_
                   band_zones=SNM_band_zones, watershed_zones=SNM_watershed_zones, unzip_SNODAS="N")
 
 
-for model in modelRuns:
+print(f'\nRunning Tables and Layers Code for Sierra {model_woCCR}...')
 
-    print(f'\nRunning Tables and Layers Code for Sierra {model}...')
-    # SNM_results_workspace = rf"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/"
-    tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model, SNM_results_workspace=SNM_results_workspace,
-                          watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
-                          case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
-                          glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
-                          snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
-                          Difference="N")
+clear_arcpy_locks()
+print('memory cleared')
+# SNM_results_workspace = rf"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/"
+tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_woCCR, SNM_results_workspace=SNM_results_workspace,
+                      watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
+                      case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
+                      glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
+                      snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
+                      Difference="N")
+# clear memory
+clear_arcpy_locks()
+sleep(30)
+print('memory cleared again')
+print(f'\nRunning Tables and Layers Code for Sierra {model_wCCR}...')
+tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_wCCR, SNM_results_workspace=SNM_results_workspace,
+                      watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
+                      case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
+                      glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
+                      snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
+                      Difference="N")
+# clear memory
+clear_arcpy_locks()
+sleep(30)
+print('memory cleared again')
 
 # sensor vetting function
 # parameters
 domains = ["SNM", "PNW", "INMT", "SOCN", "NOCN"]
 clipbox_WS = "M:/SWE/WestWide/data/boundaries/Domains/DomainShapefiles/"
-surveys_use ="N"
+# surveys_use ="N"
 # resultsWorkspace = f"W:/Spatial_SWE/WW_regression/RT_report_data/"
 
 print('folder created')
