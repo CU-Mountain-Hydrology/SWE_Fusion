@@ -940,14 +940,35 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     SWEboth.save(SWE_both)
 
     print("create zonal stats and tables")
-    outBandTable = ZonalStatisticsAsTable(band_zones, case_field_band, product8, SWEbandtable, "DATA",
+    # outBandTable = ZonalStatisticsAsTable(band_zones, case_field_band, product8, SWEbandtable, "DATA",
+    #                                       "MEAN")
+    # outSWETable = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, product8, SWEtable, "DATA",
+    #                                      "MEAN")
+    # outSCABand = ZonalStatisticsAsTable(band_zones, case_field_band, modscag_per, scabandtable, "DATA",
+    #                                     "ALL")
+    # outSCAWtshd = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, modscag_per, scatable, "DATA",
+    #                                      "ALL")
+    ZonalStatisticsAsTable(band_zones, case_field_band, product8, SWEbandtable, "DATA",
                                           "MEAN")
-    outSWETable = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, product8, SWEtable, "DATA",
+    arcpy.Delete_management("in-memory")
+    import gc
+    gc.collect()
+
+    ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, product8, SWEtable, "DATA",
                                          "MEAN")
-    outSCABand = ZonalStatisticsAsTable(band_zones, case_field_band, modscag_per, scabandtable, "DATA",
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
+    ZonalStatisticsAsTable(band_zones, case_field_band, modscag_per, scabandtable, "DATA",
                                         "ALL")
-    outSCAWtshd = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, modscag_per, scatable, "DATA",
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
+    ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, modscag_per, scatable, "DATA",
                                          "ALL")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     arcpy.AddField_management(SWEbandtable, "SWE_IN", "DOUBLE", "", "", "",
                               "", "NULLABLE", "NON_REQUIRED")
     # arcpy.AddField_management(SWEbandtable100, "SWE_IN", "DOUBLE", "", "", "",
@@ -1739,8 +1760,8 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
 
     # Do zonal stats for real time swe layer table
     print("creating zonal stats for SNODAS swe = " + SWEtable)
-    outswetbl = ZonalStatisticsAsTable(band_zones, "SrtNmeBand", ClipSNODAS, SWEbandtable, "DATA", "MEAN")
-    outswetbl2 = ZonalStatisticsAsTable(watershed_zones, "SrtName", ClipSNODAS, SWEtable, "DATA", "MEAN")
+    ZonalStatisticsAsTable(band_zones, "SrtNmeBand", ClipSNODAS, SWEbandtable, "DATA", "MEAN")
+    ZonalStatisticsAsTable(watershed_zones, "SrtName", ClipSNODAS, SWEtable, "DATA", "MEAN")
 
     # Add SWE in inches fields to 2 tables above
     arcpy.AddField_management(SWEbandtable, "SWE_IN", "FLOAT", "#", "#", "#",

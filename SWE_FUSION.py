@@ -150,6 +150,9 @@ print("\nProcessing GeoPackage")
 geopackage_to_shapefile(report_date=rundate, pillow_date=pillow_date, model_run=model_woCCR,
                         user=user, domainList=domainList, model_workspace=model_workspace,
                         results_workspace=WW_results_workspace + f"/{rundate}_results_ET/")
+# clear memory
+sleep(30)
+clear_arcpy_locks()
 
 print('\nProcessing and sorting the sensors for West Wide ... ')
 merge_sort_sensors_surveys(report_date=rundate, results_workspace=WW_results_workspace + f"/{rundate}_results_ET/", surveys="N", difference="N",
@@ -157,13 +160,9 @@ merge_sort_sensors_surveys(report_date=rundate, results_workspace=WW_results_wor
                            case_field_band=case_field_band, band_shapefile=WW_band_shapefile, projOut=projALB, merge="Y",
                            domainList=domainList)
 
-print('\nProcessing and sorting the sensors for the Sierra... ')
-# SNM_results_workspace = rf"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/"
-SNM_sensors = rf"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/{rundate}_sensors_SNM.shp"
-merge_sort_sensors_surveys(report_date=rundate, results_workspace=SNM_results_workspace + f"/{rundate}_results_ET/", surveys="N", difference="N",
-                           watershed_shapefile=SNM_watershed_shapefile, case_field_wtrshd=case_field_wtrshd, band_shapefile=SNM_band_shapefile,
-                           case_field_band=case_field_band, projOut=projALB, projIn=projGEO,
-                            merge="N", domain_shapefile=SNM_sensors)
+# clear memory
+sleep(30)
+clear_arcpy_locks()
 #
 # run SNODAS for WW
 print("SNODAS for WW...")
@@ -175,6 +174,9 @@ SNODAS_Processing(report_date=rundate, RunName=model_woCCR, NOHRSC_workspace=WW_
 
 # run tables and layers
 modelRuns = [model_woCCR, model_wCCR]
+# clear memory
+sleep(30)
+clear_arcpy_locks()
 
 print(f'\nRunning Tables and Layers Code for all domains for {model_woCCR}')
 tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_woCCR, masking="N", watershed_zones=WW_watershed_zones,
@@ -198,6 +200,13 @@ sleep(30)
 print('done sleeping')
 clear_arcpy_locks()
 
+print('\nProcessing and sorting the sensors for the Sierra... ')
+# SNM_results_workspace = rf"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/"
+SNM_sensors = rf"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/{rundate}_sensors_SNM.shp"
+merge_sort_sensors_surveys(report_date=rundate, results_workspace=SNM_results_workspace + f"/{rundate}_results_ET/", surveys="N", difference="N",
+                           watershed_shapefile=SNM_watershed_shapefile, case_field_wtrshd=case_field_wtrshd, band_shapefile=SNM_band_shapefile,
+                           case_field_band=case_field_band, projOut=projALB, projIn=projGEO,
+                            merge="N", domain_shapefile=SNM_sensors)
 
 # Run SNODAS for SNM
 print("SNODAS for SNM...")
@@ -210,7 +219,10 @@ SNODAS_Processing(report_date=rundate, RunName=model_woCCR, NOHRSC_workspace=WW_
 
 print(f'\nRunning Tables and Layers Code for Sierra {model_woCCR}...')
 
+# clear memory
+sleep(30)
 clear_arcpy_locks()
+
 print('memory cleared')
 # SNM_results_workspace = rf"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/"
 tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_woCCR, SNM_results_workspace=SNM_results_workspace,
@@ -220,8 +232,10 @@ tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_
                       snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
                       Difference="N")
 # clear memory
-clear_arcpy_locks()
+# clear memory
 sleep(30)
+clear_arcpy_locks()
+
 print('memory cleared again')
 print(f'\nRunning Tables and Layers Code for Sierra {model_wCCR}...')
 tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_wCCR, SNM_results_workspace=SNM_results_workspace,
