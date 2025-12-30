@@ -973,47 +973,80 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
                               "", "NULLABLE", "NON_REQUIRED")
     # arcpy.AddField_management(SWEbandtable100, "SWE_IN", "DOUBLE", "", "", "",
     #                           "", "NULLABLE", "NON_REQUIRED")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     arcpy.AddField_management(SWEtable, "SWE_IN", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     arcpy.AddField_management(SWEbandtable, "AREA_MI2", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     arcpy.AddField_management(SWEtable, "AREA_MI2", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     # arcpy.AddField_management(SWEbandtable100, "VOL_M3", "DOUBLE", "#", "#", "#",
     #                           "#", "NULLABLE", "NON_REQUIRED", "#")
     arcpy.AddField_management(SWEbandtable, "VOL_M3", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     arcpy.AddField_management(SWEtable, "VOL_M3", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     # arcpy.AddField_management(SWEbandtable100, "VOL_AF", "DOUBLE", "#", "#", "#",
     #                           "#", "NULLABLE", "NON_REQUIRED", "#")
     arcpy.AddField_management(SWEbandtable, "VOL_AF", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     arcpy.AddField_management(SWEtable, "VOL_AF", "DOUBLE", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     print("fields added")
     # calculate fields
     arcpy.CalculateField_management(SWEbandtable, "SWE_IN", "!MEAN! * 39.370079", "PYTHON")
-    # arcpy.CalculateField_management(SWEbandtable100, "SWE_IN", "!MEAN! * 39.370079", "PYTHON")
     arcpy.CalculateField_management(SWEtable, "SWE_IN", "!MEAN! * 39.370079", "PYTHON")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
 
     # Calculate area in sq miles
     arcpy.CalculateField_management(SWEbandtable, "AREA_MI2", "0.00000038610216 * !AREA!", "PYTHON")
     arcpy.CalculateField_management(SWEtable, "AREA_MI2", "0.00000038610216 * !AREA!", "PYTHON")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
 
     # Calculate volume in cubic meters
     arcpy.CalculateField_management(SWEbandtable, "VOL_M3", "!MEAN! * !AREA!", "PYTHON")
     arcpy.CalculateField_management(SWEtable, "VOL_M3", "!MEAN! * !AREA!", "PYTHON")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
     # arcpy.CalculateField_management(SWEbandtable100, "VOL_M3", "!MEAN! * !AREA!", "PYTHON")
 
     # Calculate volume in acre feet
     # arcpy.CalculateField_management(SWEbandtable100, "VOL_AF", "!VOL_M3! * 0.000810714", "PYTHON")
     arcpy.CalculateField_management(SWEbandtable, "VOL_AF", "!VOL_M3! * 0.000810714", "PYTHON")
     arcpy.CalculateField_management(SWEtable, "VOL_AF", "!VOL_M3! * 0.000810714", "PYTHON")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
 
     ### Sort by bandname and watershed name, 2 tables
     arcpy.Sort_management(SWEbandtable, SWEbandtable_save, [[case_field_band, "ASCENDING"]])
     arcpy.Sort_management(SWEtable, SWEtable_save, [[case_field_wtrshd, "ASCENDING"]])
+    arcpy.Delete_management("in-memory")
+    gc.collect()
     # arcpy.Sort_management(SWEbandtable100, SWEbandtable100_save, [["Value", "ASCENDING"]])
 
     ## work on SCA tables
@@ -1021,9 +1054,13 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
                               "", "NULLABLE", "NON_REQUIRED")
     arcpy.AddField_management(scatable, "Percent", "DOUBLE", "", "", "",
                               "", "NULLABLE", "NON_REQUIRED")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
     # calculate percent
     arcpy.CalculateField_management(scabandtable, "Percent", "( !SUM! / !COUNT! ) * 100", "PYTHON", "")
     arcpy.CalculateField_management(scatable, "Percent", "( !SUM! / !COUNT! ) * 100", "PYTHON", "")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
 
     # sort
     arcpy.Sort_management(scabandtable, scabandtable_save, [[case_field_band, "ASCENDING"]])
@@ -1035,6 +1072,8 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     meanzmap = ZonalStatistics(watershed_zones, case_field_wtrshd, meanMapMask, "MEAN", "DATA")
     swezmap.save(SWEzoneMap)
     meanzmap.save(MeanzoneMap)
+    arcpy.Delete_management("in-memory")
+    gc.collect()
 
     # NEED TO ADD IN MEAN MASK
     print("creating product 9...")
