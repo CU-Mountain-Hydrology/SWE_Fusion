@@ -209,7 +209,7 @@ merge_sort_sensors_surveys(report_date=rundate, results_workspace=SNM_results_wo
                             merge="N", domain_shapefile=SNM_sensors)
 
 # Run SNODAS for SNM
-print("SNODAS for SNM...")
+print("\nSNODAS for SNM...")
 SNODAS_Processing(report_date=rundate, RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
                   results_workspace=SNM_results_workspace,
                   projin=projGEO, projout=projALB, Cellsize=500, snapRaster=SNM_snapRaster_albn83,

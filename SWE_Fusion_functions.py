@@ -1447,14 +1447,28 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
     prod8Msk = anomnoneg_Mask / Raster(domain_mask)
     prod8Msk.save(anom0_100msk)
 
+    arcpy.Delete_management("in-memory")
+    gc.collect()
     ZonalStatisticsAsTable(band_zones, case_field_band, product8, SWEbandtable, "DATA",
                                           "MEAN")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, product8, SWEtable, "DATA",
                                          "MEAN")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     ZonalStatisticsAsTable(band_zones, case_field_band, modscag_per, scabandtable, "DATA",
                                         "ALL")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, modscag_per, scatable, "DATA",
                                          "ALL")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
 
     # outBandTable = ZonalStatisticsAsTable(band_zones, case_field_band, product8, SWEbandtable, "DATA",
     #                                       "MEAN")
@@ -1801,20 +1815,28 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
     print("creating zonal stats for SNODAS swe = " + SWEtable)
     ZonalStatisticsAsTable(band_zones, "SrtNmeBand", ClipSNODAS, SWEbandtable, "DATA", "MEAN")
     ZonalStatisticsAsTable(watershed_zones, "SrtName", ClipSNODAS, SWEtable, "DATA", "MEAN")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
 
     # Add SWE in inches fields to 2 tables above
     arcpy.AddField_management(SWEbandtable, "SWE_IN", "FLOAT", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
     arcpy.AddField_management(SWEtable, "SWE_IN", "FLOAT", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
 
     # Calculate SWE in inches from meters
     arcpy.CalculateField_management(SWEbandtable, "SWE_IN", "!MEAN! * 39.370079", "PYTHON")
     arcpy.CalculateField_management(SWEtable, "SWE_IN", "!MEAN! * 39.370079", "PYTHON")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
 
     # Sort by bandname and watershed name, 2 tables
     arcpy.Sort_management(SWEbandtable, SWEbandtable_save, [["SrtNmeBand", "ASCENDING"]])
     arcpy.Sort_management(SWEtable, SWEtable_save, [["SrtName", "ASCENDING"]])
+    arcpy.Delete_management("in-memory")
+    gc.collect()
 
     # print("Creating SNODAS and Regress diff layers ...")
     # SNODAS1000 = Con(Raster(ClipSNODAS) > 0.001, 1000, 0)
@@ -1832,6 +1854,8 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
     snodas_wtshd_dbf = gpd.read_file(SWEtable_save)
     snodas_wtshd_df = pd.DataFrame(snodas_wtshd_dbf)
     snodas_wtshd_df.to_csv(SWEtableCSV, index=False)
+    arcpy.Delete_management("in-memory")
+    gc.collect()
 
     snodas_band_dbf = gpd.read_file(SWEbandtable_save)
     snodas_band_df = pd.DataFrame(snodas_band_dbf)
@@ -1882,6 +1906,7 @@ import arcpy
 import pandas as pd
 import geopandas as gpd
 import warnings
+import gc
 
 def merge_sort_sensors_surveys(report_date, results_workspace, surveys, difference, watershed_shapefile, case_field_wtrshd,
                                band_shapefile, case_field_band, merge, projOut, projIn=None, domainList=None, domain_shapefile=None,
@@ -1962,8 +1987,14 @@ def merge_sort_sensors_surveys(report_date, results_workspace, surveys, differen
 
     ## Create statistics
     arcpy.Statistics_analysis(SensorWtshdInt, SensorWtshdIntStat, "SWE_In MEAN", case_field_wtrshd)
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     arcpy.AddField_management(SensorWtshdIntStat, "SWE_freq", "TEXT", "#", "#",
                               "#", "#", "NULLABLE", "NON_REQUIRED", "#")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     arcpy.CalculateField_management(SensorWtshdIntStat, "SWE_freq",
                                     '"{} ( {} )".format(round( !MEAN_SWE_I! ,1) , !FREQUENCY! )', "PYTHON", "")
     if surveys == "Y":
@@ -1981,9 +2012,14 @@ def merge_sort_sensors_surveys(report_date, results_workspace, surveys, differen
         arcpy.Intersect_analysis(IntersctLstBandSurvey, SnwSurvBandWtshdInt, "ALL", "-1 Unknown", "POINT")
 
     arcpy.Statistics_analysis(SensorBandWtshdInt, SensorBandWtshdIntStat, "SWE_In MEAN", case_field_band)
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     arcpy.AddField_management(SensorBandWtshdIntStat, "SWE_freq", "TEXT", "#", "#",
                               "#", "#", "NULLABLE", "NON_REQUIRED",
                               "#")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
     ## Calculate Field
     arcpy.CalculateField_management(SensorBandWtshdIntStat, "SWE_freq",
                                     '"{} ( {} )".format(round( !MEAN_SWE_I! ,1) , !FREQUENCY! )', "PYTHON", "")
