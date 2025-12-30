@@ -676,7 +676,7 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     MODSCAG_tif_plus_proj = outWorkspace + f"fSCA_{report_date}_albn83.tif"
 
     ## project and clip SNODAS
-    SNODASWorkspace = outWorkspace + f"/{report_date}_results_ET/" + "SNODAS/"
+    SNODASWorkspace = resultsWorkspace + "SNODAS/"
     ClipSNODAS = SNODASWorkspace + "SWE_" + report_date + "_Cp_m_albn83_clp.tif"
     SWE_Diff = outWorkspace + "SNODAS_Regress_" + report_date + ".tif"
     SWE_both = outWorkspace + f"SWE_{report_date}_both.tif"
@@ -884,23 +884,6 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     arcpy.Select_analysis(mod_poly_utm, snowPolySel, where_clause)
     arcpy.EliminatePolygonPart_management(snowPolySel, snowPolyElim, "AREA", part_area, "0", "CONTAINED_ONLY")
 
-    ## add SNODAS
-    # create difference with SNODAS
-    Diff_SNODAS = Raster(ClipSNODAS) - Raster(product8)
-    Diff_SNODAS.save(SWE_Diff)
-
-    # create overlap layers
-    print("Creating SNODAS and Regress diff layers ...")
-    SNODAS1000 = Con(Raster(ClipSNODAS) > 0.001, 1000, 0)
-    RSWE100 = Con(Raster(product8) > 0.001, 100, 0)
-
-    ## Then add them together to create a layer showing where they overlap and
-    ## where they're different
-    SWEboth = SNODAS1000 + RSWE100
-
-    ## Then save both layers
-    SWEboth.save(SWE_both)
-
     print(f"creating masked SWE product")
     if bias == "N":
         rcn_LT_200 = SetNull(Raster(rcnFinal) > 200, rcnFinal)
@@ -938,6 +921,23 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     anomnoneg = connoeg * Raster(watermask)
     anomnoneg_Mask = anomnoneg * Raster(glacierMask)
     anomnoneg_Mask.save(anom0_100msk)
+
+    ## add SNODAS
+    # create difference with SNODAS
+    Diff_SNODAS = Raster(ClipSNODAS) - Raster(product8)
+    Diff_SNODAS.save(SWE_Diff)
+
+    # create overlap layers
+    print("Creating SNODAS and Regress diff layers ...")
+    SNODAS1000 = Con(Raster(ClipSNODAS) > 0.001, 1000, 0)
+    RSWE100 = Con(Raster(product8) > 0.001, 100, 0)
+
+    ## Then add them together to create a layer showing where they overlap and
+    ## where they're different
+    SWEboth = SNODAS1000 + RSWE100
+
+    ## Then save both layers
+    SWEboth.save(SWE_both)
 
     print("create zonal stats and tables")
     outBandTable = ZonalStatisticsAsTable(band_zones, case_field_band, product8, SWEbandtable, "DATA",
@@ -1543,13 +1543,41 @@ import gzip
 import shutil
 from arcpy.sa import *
 
+
+def clear_arcpy_locks():
+    """Clear all ArcPy file locks and reset environment"""
+    import gc
+    import time
+
+    # Clear all environment settings
+    arcpy.ClearEnvironment("workspace")
+    arcpy.ClearEnvironment("scratchWorkspace")
+    arcpy.ClearEnvironment("extent")
+    arcpy.ClearEnvironment("snapRaster")
+    arcpy.ClearEnvironment("cellSize")
+    arcpy.ClearEnvironment("mask")
+    arcpy.ClearEnvironment("outputCoordinateSystem")
+
+    # Reset workspace to None
+    arcpy.env.workspace = None
+    arcpy.env.scratchWorkspace = None
+
+    # Force Python garbage collection multiple times
+    for _ in range(3):
+        gc.collect()
+
+    # Small delay to allow file system to release locks
+    time.sleep(1)
+
+    # Reset geoprocessing environment
+    arcpy.ResetEnvironments()
+
 def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
                          projin, projout, Cellsize, snapRaster, watermask, glacierMask, band_zones, watershed_zones, unzip_SNODAS):
     SNODASWorkspace = NOHRSC_workspace + f"SNODAS_{report_date}/"
     SWEWorkspaceBase = results_workspace + f"{report_date}_results_ET/{RunName}/"
     resultsWorkspace = results_workspace +f"{report_date}_results_ET/"
     SWEWorkspace = results_workspace + f"{report_date}_results_ET/SNODAS/"
-    arcpy.env.workspace = SWEWorkspace
 
     ## Set regression SWE image for the same date
     # RegressSWE = SWEWorkspaceBase + f"p8_{report_date}_noneg.tif"
@@ -1575,10 +1603,11 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
     SWEtableCSV = SWEWorkspace +f"{report_date}_SNODAS_swe_table.csv"
 
     ###### End of setting up variables
-    arcpy.env.workspace = SNODASWorkspace
+
 
     # unzip and move HDR file
     if unzip_SNODAS == "Y":
+        arcpy.env.workspace = SNODASWorkspace
         gz_datFile = SNODASWorkspace + f"us_ssmv11034tS__T0001TTNATS{report_date}05HP001.dat.gz"
         gz_unzipDat = SNODASWorkspace + f"us_ssmv11034tS__T0001TTNATS{report_date}05HP001.dat"
 
@@ -1615,28 +1644,45 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
             ## Get rid of -9999 values and change to NODATA values
             NoData = SetNull(Raster(OutTif) == -9999, OutTif)
             NoData.save(OutSNODASplus)
-    else:
-        # Source file is in the NOHRSC workspace (where WW already processed it)
-        source_SNODAS = SNODASWorkspace + OutSNODAS
 
-        # # Check if source file exists
-        # if arcpy.Exists(source_SNODAS):
-        #     print(f"Copying: {source_SNODAS}")
-        #     print(f"To: {OutSNODASplus}")
-        #     arcpy.CopyRaster_management(source_SNODAS, OutSNODASplus)
-        #     print("SNODAS file copied successfully")
-        # else:
-        #     raise FileNotFoundError(
-        #         f"ERROR: Source SNODAS file not found!\n"
-        #         f"Expected: {source_SNODAS}\n"
-        #         f"Make sure you run with unzip_SNODAS='Y' first to create the source file."
-        #     )
+        arcpy.env.workspace = None
+
+    arcpy.env.workspace = None
+    arcpy.ClearEnvironment("workspace")
+    arcpy.ClearEnvironment("extent")
+
+    import gc
+    gc.collect()
+    import time
+    time.sleep(2)
+
+    # Verify source file exists
+    print(f"Checking source file: {OutSNODASplus}")
+    if not arcpy.Exists(OutSNODASplus):
+        raise FileNotFoundError(f"ERROR: Source SNODAS file not found: {OutSNODASplus}")
 
     ## Copy to floating point raster
-    print(FloatSNODAS)
-    # arcpy.CopyRaster_management(OutSNODASplus, FloatSNODAS, "", "", "-2147483648", "NONE", "NONE", "32_BIT_FLOAT",
-    #                             "NONE", "NONE")
-    arcpy.CopyRaster_management(OutSNODASplus, FloatSNODAS)
+    # print(f"Copying to: {FloatSNODAS}")
+    ## Copy to floating point raster
+    if os.path.exists(FloatSNODAS):
+        print(f"{FloatSNODAS} exists")
+    if not os.path.exists(FloatSNODAS):
+        print(f"Copying to: {FloatSNODAS}")
+        arcpy.CopyRaster_management(OutSNODASplus, FloatSNODAS)
+    # arcpy.CopyRaster_management(OutSNODASplus, FloatSNODAS)
+
+    # Verify source file exists
+    print(f"Checking source file: {OutSNODASplus}")
+    if not arcpy.Exists(OutSNODASplus):
+        raise FileNotFoundError(f"ERROR: Source SNODAS file not found: {OutSNODASplus}")
+
+
+
+    ## Copy to floating point raster
+    # print(FloatSNODAS)
+    # # arcpy.CopyRaster_management(OutSNODASplus, FloatSNODAS, "", "", "-2147483648", "NONE", "NONE", "32_BIT_FLOAT",
+    # #                             "NONE", "NONE")
+    # arcpy.CopyRaster_management(OutSNODASplus, FloatSNODAS)
 
     print("Creating SWE in meters ...")
 
@@ -1658,7 +1704,7 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
                                    "", "", projin)
 
     # set extent and apply masks
-    arcpy.env.extent = snapRaster
+    # arcpy.env.extent = snapRaster
     SNODASwatMsk = Raster(ProjSNODAS) * Raster(watermask)
     SNODASallMsk = SNODASwatMsk * Raster(glacierMask)
 

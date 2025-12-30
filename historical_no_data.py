@@ -9,8 +9,8 @@ from sqlalchemy.sql.functions import current_date
 
 print("modules imported")
 
-startDate = datetime(2001, 5, 15)
-endDate = datetime(2001, 5, 17)
+startDate = datetime(2001, 11, 1)
+endDate = datetime(2024, 11, 1)
 start_yyyymmdd = startDate.strftime("%Y%m%d")
 end_yyyymmdd = endDate.strftime("%Y%m%d")
 domains = ["SNM", "PNW", "INMT", "SOCN", "NOCN"]

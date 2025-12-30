@@ -1,4 +1,5 @@
 # THIS IS THE CODE THAT'S THE OVERALL FUNCTION FOR MODEL POST PROCESSING
+from time import sleep
 
 # import modules
 # import modules
@@ -23,7 +24,7 @@ rundate = "20251227"
 pillow_date = "27Dec2025"
 mean_date = "1227"
 # prev_rundate = "20250517"
-model_CCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
+model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
 model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens"
 SNM_mask = "M:/SWE/WestWide/data/hydro/SNM/dwr_mask_null_albn83.tif"
 # model_run = "RT_CanAdj_rcn_noSW_woCCR_nofscamsk"
@@ -167,34 +168,43 @@ merge_sort_sensors_surveys(report_date=rundate, results_workspace=SNM_results_wo
                            watershed_shapefile=SNM_watershed_shapefile, case_field_wtrshd=case_field_wtrshd, band_shapefile=SNM_band_shapefile,
                            case_field_band=case_field_band, projOut=projALB, projIn=projGEO,
                             merge="N", domain_shapefile=SNM_sensors)
-
-# run tables and layers
-modelRuns = [model_woCCR]
-for model in modelRuns:
-    # ## run SNODAS for WW
-    print("SNODAS for WW...")
-    SNODAS_Processing(report_date=rundate, RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
+#
+# run SNODAS for WW
+print("SNODAS for WW...")
+SNODAS_Processing(report_date=rundate, RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
                       results_workspace=WW_results_workspace,
                       projin=projGEO, projout=projALB, Cellsize=500, snapRaster=snapRaster_albn83, watermask=watermask,
                       glacierMask=glacierMask,
                       band_zones=WW_band_zones, watershed_zones=WW_watershed_zones, unzip_SNODAS="Y")
 
-    print('\nRunning Tables and Layers Code for all domains')
+# run tables and layers
+modelRuns = [model_woCCR, model_wCCR]
+for model in modelRuns:
+
+    print(f'\nRunning Tables and Layers Code for all domains for {model}')
     tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model, masking="N", watershed_zones=WW_watershed_zones,
                       band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,
                       case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83,
                       snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, bias="N")
 
 
-    print('\nRunning Tables and Layers Code for Sierra')
-    # Run SNODAS for SNM
-    print("SNODAS for SNM...")
-    SNODAS_Processing(report_date=rundate, RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
-                      results_workspace=SNM_results_workspace,
-                      projin=projGEO, projout=projALB, Cellsize=500, snapRaster=SNM_snapRaster_albn83,
-                      watermask=watermask, glacierMask=glacierMask,
-                      band_zones=SNM_band_zones, watershed_zones=SNM_watershed_zones, unzip_SNODAS="N")
+sleep(30)
+print('done sleeping')
 
+clear_arcpy_locks()
+
+# Run SNODAS for SNM
+print("SNODAS for SNM...")
+SNODAS_Processing(report_date=rundate, RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
+                  results_workspace=SNM_results_workspace,
+                  projin=projGEO, projout=projALB, Cellsize=500, snapRaster=SNM_snapRaster_albn83,
+                  watermask=watermask, glacierMask=glacierMask,
+                  band_zones=SNM_band_zones, watershed_zones=SNM_watershed_zones, unzip_SNODAS="N")
+
+
+for model in modelRuns:
+
+    print(f'\nRunning Tables and Layers Code for Sierra {model}...')
     # SNM_results_workspace = rf"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/"
     tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model, SNM_results_workspace=SNM_results_workspace,
                           watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
