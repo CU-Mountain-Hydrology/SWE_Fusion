@@ -217,7 +217,7 @@ for model in modelRuns:
 # parameters
 domains = ["SNM", "PNW", "INMT", "SOCN", "NOCN"]
 clipbox_WS = "M:/SWE/WestWide/data/boundaries/Domains/DomainShapefiles/"
-surveys_use ="Y"
+surveys_use ="N"
 # resultsWorkspace = f"W:/Spatial_SWE/WW_regression/RT_report_data/"
 
 print('folder created')
@@ -234,6 +234,9 @@ for modelRun in modelRuns:
             outVettingWS_SNM = SNM_reports_workspace + f"{rundate}_RT_report_ET/{modelRun}/vetting_domains/"
             os.makedirs(outVettingWS_SNM, exist_ok=True)
 
+            # move p8 to vetting space
+            arcpy.CopyRaster_management(raster, outVettingWS_SNM + f"p8_{rundate}_noneg.tif")
+
         else:
             # extract by mask
             arcpy.env.snapRaster = snapRaster_albn83
@@ -243,7 +246,7 @@ for modelRun in modelRuns:
             surveys = WW_results_workspace + f"{rundate}_results_ET/{rundate}_surveys_albn83.shp"
 
             ## make vetting folder
-            outVettingWS_WW = f"{WW_results_workspace}/{rundate}_results_ET/{modelRun}/vetting_domains/"
+            outVettingWS_WW = f"{WW_reports_workspace}/{rundate}_results_ET/{modelRun}/vetting_domains/"
             os.makedirs(outVettingWS_WW, exist_ok=True)
             outMask = ExtractByMask(raster, clipbox_WS + f"WW_{domain}_Clipbox_albn83.shp")
             outMask.save(outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif")
@@ -252,7 +255,7 @@ for modelRun in modelRuns:
     for domain in domains:
         if domain == "SNM":
             print('domain is SNM')
-            raster = outVettingWS_SNM + f"p8_{rundate}_noneg_{domain}_clp.tif"
+            raster = outVettingWS_SNM + f"p8_{rundate}_noneg.tif"
             if surveys_use == "Y":
                 swe_col_surv = 'SWE_m'
                 id_col_surv = 'Station_Id'
