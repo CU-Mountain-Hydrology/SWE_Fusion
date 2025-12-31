@@ -1567,13 +1567,15 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
     # Sort by bandname and watershed name, 3 tables
     arcpy.Sort_management(anombandTable, anombandTable_save, [[case_field_band, "ASCENDING"]])
     arcpy.Sort_management(anomTable, anomTable_save, [[case_field_wtrshd, "ASCENDING"]])
-
+    arcpy.Delete_management("in-memory")
+    gc.collect()
     # add field for anom
     arcpy.AddField_management(anombandTable_save, "Average", "DOUBLE", "", "", "",
                               "", "NULLABLE", "NON_REQUIRED")
     arcpy.AddField_management(anomTable_save, "Average", "DOUBLE", "", "", "",
                               "", "NULLABLE", "NON_REQUIRED")
-
+    arcpy.Delete_management("in-memory")
+    gc.collect()
     # calculate field
     arcpy.CalculateField_management(anombandTable_save, "Average", f"!MEAN!", "PYTHON3")
     arcpy.CalculateField_management(anomTable_save, "Average", f"!MEAN!", "PYTHON3")

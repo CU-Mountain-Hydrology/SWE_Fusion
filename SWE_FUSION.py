@@ -16,6 +16,8 @@ from SWE_Fusion_functions import *
 # from ASO_Bias_Correction_Functions import *
 from Vetting_functions import *
 print('modules imported')
+start = time.time()
+print(f"\n START TIME: {start}")
 
 # tables and layers -- establish paths
 user = "Olaf"
@@ -263,7 +265,7 @@ for modelRun in modelRuns:
     for domain in domains:
         if domain == "SNM":
             raster = f"{SNM_results_workspace}/{rundate}_results_ET/{modelRun}/p8_{rundate}_noneg.tif"
-            sensors_SNM = SNM_results_workspace + f"{rundate}_results_ET/{rundate}_sensors_albn83.shp"
+            sensors_SNM = SNM_results_workspace + f"{rundate}_results_ET/SNM_{rundate}_sensors_albn83.shp"
             surveys_SNM = SNM_results_workspace + f"{rundate}_results_ET/{rundate}_surveys_albn83.shp"
 
             ## make vetting folder
@@ -282,7 +284,7 @@ for modelRun in modelRuns:
             surveys = WW_results_workspace + f"{rundate}_results_ET/{rundate}_surveys_albn83.shp"
 
             ## make vetting folder
-            outVettingWS_WW = f"{WW_reports_workspace}/{rundate}_results_ET/{modelRun}/vetting_domains/"
+            outVettingWS_WW = f"{WW_reports_workspace}/{rundate}_RT_report_ET/{modelRun}/vetting_domains/"
             os.makedirs(outVettingWS_WW, exist_ok=True)
             outMask = ExtractByMask(raster, clipbox_WS + f"WW_{domain}_Clipbox_albn83.shp")
             outMask.save(outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif")
@@ -298,25 +300,26 @@ for modelRun in modelRuns:
 
                 model_domain_vetting(raster=raster, point=surveys_SNM, swe_col=swe_col_surv, id_col=id_col_surv,
                                      rundate=rundate, domain=domain, modelRun=modelRun,
-                                     out_csv=outVettingWS_SNM + f"{rundate}_surveys_error.csv")
+                                     out_csv=SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_surveys_error.csv")
 
             swe_col_sens = 'pillowswe'
             id_col_sens = 'Site_ID'
             model_domain_vetting(raster=raster, point=sensors_SNM, swe_col=swe_col_sens, id_col=id_col_sens,
                                  rundate=rundate, domain=domain,
-                                 modelRun=modelRun, out_csv=outVettingWS_SNM + f"{rundate}_sensors_error.csv")
+                                 modelRun=modelRun, out_csv=SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_sensors_error.csv")
         else:
             raster = outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif"
             if surveys_use == "Y":
                 swe_col_surv = 'SWE_m'
                 id_col_surv = 'Station_Id'
 
-                model_domain_vetting(raster=raster, point=surveys, swe_col=swe_col_surv, id_col=id_col_surv, rundate=rundate, domain=domain, modelRun=modelRun, out_csv=outVettingWS_WW + f"{rundate}_surveys_error.csv")
+                model_domain_vetting(raster=raster, point=surveys, swe_col=swe_col_surv, id_col=id_col_surv, rundate=rundate,
+                                     domain=domain, modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_surveys_error.csv")
 
             swe_col_sens = 'pillowswe'
             id_col_sens = 'Site_ID'
             model_domain_vetting(raster=raster, point=sensors, swe_col=swe_col_sens, id_col=id_col_sens, rundate=rundate, domain=domain,
-                                 modelRun=modelRun, out_csv=outVettingWS_WW + f"{rundate}_sensors_error.csv")
+                                 modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_sensors_error.csv")
 #
 #
 # ## ERIC: prompt for best model run with sensor counts and % error
@@ -453,3 +456,6 @@ for modelRun in modelRuns:
 
 
 # Run vetting code
+
+end = time.time()
+print(f"\n END TIME: {end}")
