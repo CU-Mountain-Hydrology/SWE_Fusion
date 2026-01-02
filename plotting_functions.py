@@ -116,8 +116,14 @@ for name, files in file_mapping.items():
                 print(f"Skipping empty raster: {rf}")
                 continue
 
+            # Only add to lists if raster has data
             all_values.append(arr)
             final_labels.append(label)
+
+    # Check if we have any data before plotting
+    if len(all_values) == 0:
+        print(f"No valid data for {name}, skipping plots")
+        continue
 
     # create boxplot
     plt.figure(figsize=(10, 6))

@@ -20,8 +20,8 @@ print("modules imported")
 # Set the compression environment to NONE.
 # arcpy.env.compression = "NONE"
 
-startDate = datetime(2024, 11, 1)
-endDate = datetime(2025, 11, 1)
+startDate = datetime(2000, 10, 1)
+endDate = datetime(2000, 12, 31)
 start_yyyymmdd = startDate.strftime("%Y%m%d")
 end_yyyymmdd = endDate.strftime("%Y%m%d")
 
@@ -51,7 +51,7 @@ while current <= endDate:
         arcpy.env.snapRaster = snapRaster_geon83
         arcpy.env.cellSize = snapRaster_geon83
         arcpy.env.outputCoordinateSystem = projGEO
-        folder = mainWorkspace + f"{domain}/Leanne/StationSWERegressionV2/data/outputs/Hist_CanAdj_rcn_woCCR_nofscamsk_v2025/wMsk/"
+        folder = mainWorkspace + f"{domain}/Leanne/StationSWERegressionV2/data/outputs/Hist_CanAdj_rcn_woCCR_nofscamsk/wMsk/"
         file = folder + f"{domain}_phvrcn_{current_yyyymmdd}_fscamsk.tif"
 
         if os.path.exists(file):

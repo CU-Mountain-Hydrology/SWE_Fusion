@@ -577,6 +577,17 @@ def safe_read_shapefile(path):
         with fiona.open(path, 'r') as src:
             return gpd.GeoDataFrame.from_features(src, crs=src.crs)
 
+def read_raster_values(path, remove_zeros=True):
+    with rasterio.open(path) as src:
+        arr = src.read(1)
+        # remove no-data
+        if src.nodata is not None:
+            arr = arr[arr != src.nodata]
+        # remove zeros if needed
+        if remove_zeros:
+            arr = arr[arr > 0]
+    return arr
+
 import rasterio
 import os
 ##add  buffer
@@ -1563,7 +1574,8 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
     anomt = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, product9, anomTable, "DATA", "MEAN")
     anomRt = ZonalStatisticsAsTable(region_zones, "Regions", product9, anomRegionTable, "DATA", "MEAN")
     anombt = ZonalStatisticsAsTable(band_zones, case_field_band, product10, anombandTable, "DATA", "MEAN")
-
+    arcpy.Delete_management("in-memory")
+    gc.collect()
     # Sort by bandname and watershed name, 3 tables
     arcpy.Sort_management(anombandTable, anombandTable_save, [[case_field_band, "ASCENDING"]])
     arcpy.Sort_management(anomTable, anomTable_save, [[case_field_wtrshd, "ASCENDING"]])
@@ -1576,6 +1588,7 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
                               "", "NULLABLE", "NON_REQUIRED")
     arcpy.Delete_management("in-memory")
     gc.collect()
+
     # calculate field
     arcpy.CalculateField_management(anombandTable_save, "Average", f"!MEAN!", "PYTHON3")
     arcpy.CalculateField_management(anomTable_save, "Average", f"!MEAN!", "PYTHON3")
