@@ -67,6 +67,7 @@ def fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaW
 
         # Convert NetCDF to GeoTIFF
         for netCDF, geotif in zip(netCDF_list, outTIF_list):
+            print(f"Processing {netCDF}")
             layer_name = f"{geotif[:-4]}_layer"
             arcpy.MakeNetCDFRasterLayer_md(netCDF, "snow_fraction", "x", "y", layer_name, "", "", "BY_VALUE", "CENTER")
             arcpy.CopyRaster_management(layer_name, geotif, pixel_type="32_BIT_FLOAT", format="TIFF")
