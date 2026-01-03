@@ -24,20 +24,20 @@ prev_model_run = ""
 
 ## SENSOR DATA BY ELEVATION
 # get points within raster
-rundate = "20251227"
-prev_model_date = "20250526"
-
-raster = r"M:\SWE\WestWide\documents\2025_RT_Reports\20250406_RT_Report\RT_CanAdj_rcn_noSW_wCCR\p8_20250406_noneg.tif"
-prev_raster = r"M:\SWE\WestWide\documents\2025_RT_Reports\20250331_RT_Report\RT_CanAdj_rcn_noSW_wCCR\p8_20250331_noneg.tif"
-point_dataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{rundate}_results_ET\{rundate}_sensors_albn83.shp"
-prev_pointDataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{prev_model_date}_results\{prev_model_date}_sensors_albn83.shp"
-id_column = "Site_ID"
-swe_col = 'pillowswe'
-convert_meters_feet = "Y"
-convert_feet_meters = "N"
-elev_col = 'dem'
-elevation_tif = r"M:\SWE\WestWide\data\topo\ww_DEM_albn83_feet_banded_100.tif"
-elev_bins = np.arange(1500, 15000, 100, dtype=float)
+# rundate = "20260101"
+# prev_model_date = "20251227"
+#
+# raster = r"M:\SWE\WestWide\documents\2025_RT_Reports\20250406_RT_Report\RT_CanAdj_rcn_noSW_wCCR\p8_20250406_noneg.tif"
+# prev_raster = r"M:\SWE\WestWide\documents\2025_RT_Reports\20250331_RT_Report\RT_CanAdj_rcn_noSW_wCCR\p8_20250331_noneg.tif"
+# point_dataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{rundate}_results_ET\{rundate}_sensors_albn83.shp"
+# prev_pointDataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{prev_model_date}_results\{prev_model_date}_sensors_albn83.shp"
+# id_column = "Site_ID"
+# swe_col = 'pillowswe'
+# convert_meters_feet = "Y"
+# convert_feet_meters = "N"
+# elev_col = 'dem'
+# elevation_tif = r"M:\SWE\WestWide\data\topo\ww_DEM_albn83_feet_banded_100.tif"
+# elev_bins = np.arange(1500, 15000, 100, dtype=float)
 
 def pillow_date_comparison(rundate, prev_model_date, raster, point_dataset, prev_pointDataset, id_column, swe_col,
                       elev_col, output_png, convert_meters_feet=None, convert_feet_meters=None):
@@ -175,7 +175,7 @@ def swe_vs_elevation(swe_raster, elev_raster, elev_bins):
 
     return bin_centers, mean_swe
 
-def swe_elevation_step_plot(raster, prev_raster, output_png):
+def swe_elevation_step_plot(raster, prev_raster, elevation_tif, elev_bins, output_png):
     # After collecting your data, create the elevation plot
     file_list = [prev_raster, raster]
     file_labels = [prev_model_date, rundate]
@@ -192,7 +192,7 @@ def swe_elevation_step_plot(raster, prev_raster, output_png):
 
     plt.xlabel("Elevation (m)")
     plt.ylabel("Mean SWE (m)")
-    plt.title(f"SWE vs Elevation — {rundate}")
+    plt.title(f"SWE vs Elevation for {domain} — {prev_model_date} to {rundate}")
     plt.legend()
     plt.grid(alpha=0.3)
     plt.tight_layout()
@@ -239,9 +239,55 @@ def swe_elevation_step_plot(raster, prev_raster, output_png):
 
             plt.xlabel("Elevation (m)")
             plt.ylabel("SWE Difference (m)")
-            plt.title(f"SWE Difference vs Elevation — {rundate}")
+            plt.title(f"SWE Difference vs Elevation for {domain} — {prev_model_date} to {rundate}")
             plt.legend()
             plt.grid(alpha=0.3)
             plt.tight_layout()
             plt.savefig(output_png, dpi=300)
             plt.show()
+
+######################
+rundate = '20260101'
+prev_model_date = '20251227'
+current_model_run = "RT_CanAdj_rcn_wCCR_nofscamskSens_testReport"
+prev_model_run = "RT_CanAdj_rcn_wCCR_nofscamskSens"
+domains = ['INMT', 'PNW', 'SOCN', 'NOCN', 'SNM']
+prev_vetting_WS = f"W:/documents/2025_RT_Reports/{prev_model_date}_RT_report_ET/{prev_model_run}/vetting_domains/"
+vetting_WS = f"W:/documents/2026_RT_Reports/{rundate}_RT_report_ET/{current_model_run}/vetting_domains/"
+elevation_tif = r"M:\SWE\WestWide\data\topo\ww_DEM_albn83_feet_banded_100.tif"
+elev_bins = np.arange(1500, 15000, 100, dtype=float)
+
+for domain in domains:
+
+    if domain == "SNM":
+        print('analyzing Sierras')
+        prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/2025_RT_Reports/{prev_model_date}_RT_report_ET/{prev_model_run}/vetting_domains/"
+        vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/2026_RT_Reports/{rundate}_RT_report_ET/{current_model_run}/vetting_domains/"
+        raster = vetting_WS + f"p8_{rundate}_noneg.tif"
+        prev_raster = prev_vetting_WS + f"p8_{prev_model_date}_noneg.tif"
+        point_dataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{rundate}_results_ET\SNM_{rundate}_sensors_albn83.shp"
+        prev_pointDataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{prev_model_date}_results_ET\SNM_{prev_model_date}_sensors_albn83.shp"
+
+    else:
+        print(f"analyzing {domain}")
+        prev_vetting_WS = f"W:/documents/2025_RT_Reports/{prev_model_date}_RT_report_ET/{prev_model_run}/vetting_domains/"
+        vetting_WS = f"W:/documents/2026_RT_Reports/{rundate}_RT_report_ET/{current_model_run}/vetting_domains/"
+        raster = vetting_WS + f"p8_{rundate}_noneg_{domain}_clp.tif"
+        prev_raster = prev_vetting_WS + f"p8_{prev_model_date}_noneg_{domain}_clp.tif"
+        point_dataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{rundate}_results_ET\{rundate}_sensors_albn83.shp"
+        prev_pointDataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{prev_model_date}_results_ET\{prev_model_date}_sensors_albn83.shp"
+
+    ## engage plots
+    print("Plotting pillow change comparison...")
+    pillow_date_comparison(rundate=rundate, prev_model_date=prev_model_date, raster=raster, point_dataset=point_dataset,
+                           prev_pointDataset=prev_pointDataset, id_column="Site_ID", swe_col="pillowswe", elev_col="dem",
+                           output_png= vetting_WS + f"{domain}_sensor_difference.png", convert_meters_feet="Y")
+
+    print('Creating box and whiskers plot...')
+    raster_box_whisker_plot(raster=raster, prev_raster=prev_raster,
+                            domain=domain, output_png=vetting_WS + f"{domain}_{rundate}_box_whisker.png")
+
+    print('Creating elevation dtep plot...')
+    swe_elevation_step_plot(raster=raster, prev_raster=prev_raster,
+                            output_png=vetting_WS + f"{domain}_{rundate}_elevation_step.png", elevation_tif=elevation_tif,
+                            elev_bins=elev_bins)
