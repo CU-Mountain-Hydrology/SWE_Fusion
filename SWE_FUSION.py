@@ -21,13 +21,13 @@ print(f"\n START TIME: {start}")
 
 # tables and layers -- establish paths
 user = "Olaf"
-year = "2025"
-rundate = "20251227"
-pillow_date = "27Dec2025"
-mean_date = "1227"
+year = "2026"
+rundate = "20260101"
+pillow_date = "01Jan2026"
+mean_date = "0101"
 # prev_rundate = "20250517"
-model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
-model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens"
+model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens_testReport"
+model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
 SNM_mask = "M:/SWE/WestWide/data/hydro/SNM/dwr_mask_null_albn83.tif"
 # model_run = "RT_CanAdj_rcn_noSW_woCCR_nofscamsk"
 # prev_model_run = "ASO_FixLayers_fSCA_RT_CanAdj_rcn_noSW_woCCR_UseThis"
@@ -458,4 +458,5 @@ for modelRun in modelRuns:
 # Run vetting code
 
 end = time.time()
-print(f"\n END TIME: {end}")
+time_elapsed = (end - start) /60
+print(f"\n Elapsed Time: {time_elapsed} minutes")
