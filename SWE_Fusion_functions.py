@@ -1396,7 +1396,7 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
     snowPolyElim = outWorkspace + f"modscag_{rundate}_snowline_Sel_elim.shp"
 
     # define snow pillow gpkg
-    meanMap_proj_WW = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"WW_{mean_date}_mean_albn83.tif"
+    meanMap_proj_WW = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"WW_{mean_date}_mean_msk_albn83.tif"
     meanMap_proj = outWorkspace + f"SNM_{mean_date}_mean_albn83.tif"
     meanMapMask = outWorkspace + f"SNM_{mean_date}_mean_msk_albn83.tif"
     lastRast = prevRepWorkspace + f"p8_{prev_report_date}_noneg.tif"
@@ -1568,17 +1568,17 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
     SWEboth.save(SWE_both)
 
     print("creating mean mask")
-    MeanMapMsk = Raster(meanMap_proj) * Raster(watermask)
-    MeanMapALlMsk = MeanMapMsk * Raster(glacier_mask)
-    MeanMapALlMsk_2 = MeanMapALlMsk * Raster(domain_mask)
+    # MeanMapMsk = Raster(meanMap_proj) * Raster(watermask)
+    # MeanMapALlMsk = MeanMapMsk * Raster(glacier_mask)
+    MeanMapALlMsk_2 = Raster(meanMap_proj) * Raster(domain_mask)
     MeanMapALlMsk_2.save(meanMapMask)
 
     # Create GT 0 mean blended swe and make mask
-    con01 = Con(Raster(meanMapMask) > 0.00, 1, 0)
+    con01 = Con(Raster(meanMap_proj) > 0.00, 1, 0)
     con01.save(anomMask)
     #
     # # make anomoly mask
-    AnomProd = (Raster(product8) / Raster(meanMapMask)) * 100
+    AnomProd = (Raster(product8) / Raster(meanMap_proj)) * 100
     AnomProd.save(anomMap)
     print(f"anomaly map made")
 
