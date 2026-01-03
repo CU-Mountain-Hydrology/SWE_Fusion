@@ -205,109 +205,6 @@ def bias_correction_selection(rundate, basin_List, domainList, method_list, frac
         results_df.to_csv(csv_outFile, index=False)
     return results_df
 
-# USAGE
-# results_df = bias_correction_selection(rundate=rundate, basin_List=basin_List, domainList=domainList, method_list=method_list,
-#                                            fracErrorWorkspace=fracErrorWorkspace, output_csv=output_csv, csv_outFile=csv_outFile,
-#                                            currentYear=True, grade_amount=grade_amount, sensorTrend=sensorTrend, SNOTEL=SNOTEL,
-#                                            grade=grade, grade_range=grade_range)
-
-############################################
-# start of new function: Bias correction and fix
-############################################
-# PARAMETERS
-# model_run
-shapefile_workspace = "W:/data/hydro/WW/ASO_Basin_Shapefiles/"
-# method
-results_df = pd.read_csv(csv_outFile) # temp
-# method = "RECENT"
-
-# make directories
-# os.makedirs(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/")
-# os.makedirs(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/Fix_Files/")
-#
-# # copy p8 layer into outdir
-# p8Layer = f"{results_workspace}/{ModelRun}/p8_{rundate}_noneg.tif"
-# shutil.copy(p8Layer, results_workspace + f"ASO_BiasCorrect_{ModelRun}/")
-# p8_forBC = results_workspace + f"ASO_BiasCorrect_{ModelRun}/p8_{rundate}_noneg.tif"
-#
-# # get unqiue main groups make a list
-# mainBasins = results_df['MainGroup'].unique().tolist()
-# print(mainBasins)
-#
-# # loop through list:
-# for basin in mainBasins:
-#     print(f"\nbasin: {basin}")
-#     # loop through "Basin" only if "MainGroup" is group:
-#     df_group = results_df[results_df['MainGroup'] == basin]
-#
-#     # loop through the sub-basins
-#     for idx, row in df_group.iterrows():
-#         sub_basin = row["Basin"]
-#         fraErr = row[method]
-#         fraErr_path = fraErr + ".tif"
-#         print(f"Basin: {basin} | Sub-Basin: {sub_basin} | fracErr_path: {fraErr_path}")
-#         basinSHP = shapefile_workspace + f"ASO_{sub_basin}_albn83.shp"
-#         if os.path.exists(fraErr_path):
-#             print("File exists!")
-#
-#             # make a mask
-#             if os.path.isfile(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/p8_{rundate}_noneg_msk.tif"):
-#                 print("p8 mask exists, moving on")
-#             else:
-#                 p8masking = Con(Raster(p8_forBC) >= 0, 1, Raster(p8_forBC))
-#                 p8masking.save(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/p8_{rundate}_noneg_msk.tif")
-#                 print("p8 mask created")
-#
-#             # mask just the basin boundary
-#             arcpy.env.mask = results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/p8_{rundate}_noneg_msk.tif"
-#             arcpy.env.cellSize = p8_forBC
-#             arcpy.env.snapRaster = p8_forBC
-#             basinBound = ExtractByMask(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/p8_{rundate}_noneg_msk.tif", basinSHP)
-#             basinBound.save(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_msk.tif")
-#
-#             # change all -1 to -0.999
-#             newFracError = Con(Raster(fraErr_path) == -1, -0.999, Raster(fraErr_path))
-#             newFracError.save(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_fracError_v2.tif")
-#
-#             # make all no data values 0
-#             noNull = Con(IsNull(Raster(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_fracError_v2.tif")), 0, Raster(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_fracError_v2.tif"))
-#             noNull.save(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_fracError_v3.tif")
-#             print("non_zero fractional layer created")
-#
-#             # snap and clip to the extent of basin
-#             print("extracting and setting boundaries")
-#             extract_fracError = ExtractByMask(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_fracError_v3.tif", results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_msk.tif")
-#             extract_fracError.save(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_fracError_v4.tif")
-#
-#             LRMfix = Raster(p8_forBC) / (1 + Raster(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_fracError_v4.tif"))
-#             newFrac = Con(IsNull(Raster(fraErr_path)), 0, Raster(fraErr_path))
-#             newFix = Con(newFrac == -1, Raster(p8_forBC), LRMfix)
-#             newFix.save(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/Fix_Files/" + f"{rundate}_{basin}_{sub_basin}_{method}_LRMFix_final.tif")
-#             print("fix completed")
-#
-#         else:
-#             print("File NOT found.")
-#
-# # mosaic all files that are in the same main group
-# for basin in mainBasins:
-#     basinFix = []
-#     fixFiles = os.listdir(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/Fix_Files/")
-#     for file in fixFiles:
-#         if file.endswith(".tif"):
-#             if file.startswith(f"{rundate}_{basin}_"):
-#                 basinFix.append(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/Fix_Files/{file}")
-#         else:
-#             arcpy.Delete_management(file)
-#             print(file)
-#
-#     arcpy.env.snapRaster = p8_forBC
-#     arcpy.env.cellSize = p8_forBC
-#     arcpy.MosaicToNewRaster_management(basinFix, os.path.dirname(results_workspace + f"ASO_BiasCorrect_{ModelRun}/{method}/"), os.path.basename(f"{rundate}_{basin}_{method}_BC_fix_albn83.tif"),
-#                                        "",
-#                                        "32_BIT_FLOAT", "", 1, "LAST", "FIRST")
-
-
-
 import os
 import shutil
 import arcpy
@@ -447,13 +344,6 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                                                "32_BIT_FLOAT", "", 1, "LAST", "FIRST")
             print(f"Mosaicked raster saved: {out_raster}")
 
-# call
-
-methods = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
-
-for method in methods:
-    print(f"\nprocessing method:", method)
-    bias_correct(results_workspace, ModelRun, method, rundate, results_df, shapefile_workspace)
 
 
 
