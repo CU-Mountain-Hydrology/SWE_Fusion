@@ -175,88 +175,73 @@ def swe_vs_elevation(swe_raster, elev_raster, elev_bins):
 
     return bin_centers, mean_swe
 
-
-# After collecting your data, create the elevation plot
-file_list = [prev_raster, raster]
-file_labels = [prev_model_date, rundate]
-plt.figure(figsize=(10, 6))
-
-colors = ['blue', 'red', 'green', 'orange', 'purple']  # Add more if needed
-
-for i, (rf, label) in enumerate(zip(file_list, file_labels)):
-    elev_centers, mean_swe = swe_vs_elevation(rf, elevation_tif, elev_bins)
-
-    if len(elev_centers) > 0:  # only plot if data exists
-        plt.step(elev_centers, mean_swe, where='mid',
-                 label=label, color=colors[i], linewidth=2)
-
-plt.xlabel("Elevation (m)")
-plt.ylabel("Mean SWE (m)")
-plt.title(f"SWE vs Elevation — {rundate}")
-plt.legend()
-plt.grid(alpha=0.3)
-plt.tight_layout()
-# plt.savefig(vetting_output + f"{name}_biasCorrection_elevation.png", dpi=300)
-plt.show()
-
-# Elevation difference plot (for exactly 2 rasters)
-# Elevation difference plot (for exactly 2 rasters)
-if len(file_list) == 2:
+def swe_elevation_step_plot(raster, prev_raster, output_png):
+    # After collecting your data, create the elevation plot
+    file_list = [prev_raster, raster]
+    file_labels = [prev_model_date, rundate]
     plt.figure(figsize=(10, 6))
 
-    # Get data for both rasters
-    elev_centers_1, mean_swe_1 = swe_vs_elevation(file_list[0], elevation_tif, elev_bins)
-    elev_centers_2, mean_swe_2 = swe_vs_elevation(file_list[1], elevation_tif, elev_bins)
+    colors = ['blue', 'red', 'green', 'orange', 'purple']  # Add more if needed
 
-    if len(elev_centers_1) > 0 and len(elev_centers_2) > 0:
-        # Calculate difference (raster2 - raster1)
-        elev_centers = np.array(elev_centers_1)
-        swe_diff = np.array(mean_swe_2) - np.array(mean_swe_1)
+    for i, (rf, label) in enumerate(zip(file_list, file_labels)):
+        elev_centers, mean_swe = swe_vs_elevation(rf, elevation_tif, elev_bins)
 
-        # Create step plot
-        plt.step(elev_centers, swe_diff, where='mid',
-                 color='black', linewidth=2,
-                 label=f'{file_labels[1]} - {file_labels[0]}')
+        if len(elev_centers) > 0:  # only plot if data exists
+            plt.step(elev_centers, mean_swe, where='mid',
+                     label=label, color=colors[i], linewidth=2)
 
-        # Fill between zero and the difference line
-        # Blue where positive, red where negative
-        plt.fill_between(elev_centers, 0, swe_diff,
-                         where=(swe_diff >= 0),
-                         step='mid',
-                         color='blue',
-                         alpha=0.3,
-                         label='Positive difference')
+    plt.xlabel("Elevation (m)")
+    plt.ylabel("Mean SWE (m)")
+    plt.title(f"SWE vs Elevation — {rundate}")
+    plt.legend()
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(output_png, dpi=300)
+    plt.show()
 
-        plt.fill_between(elev_centers, 0, swe_diff,
-                         where=(swe_diff < 0),
-                         step='mid',
-                         color='red',
-                         alpha=0.3,
-                         label='Negative difference')
+    # Elevation difference plot (for exactly 2 rasters)
+    # Elevation difference plot (for exactly 2 rasters)
+    if len(file_list) == 2:
+        plt.figure(figsize=(10, 6))
 
-        # Add a horizontal line at zero for reference
-        plt.axhline(y=0, color='black', linestyle='--', linewidth=1, alpha=0.5)
+        # Get data for both rasters
+        elev_centers_1, mean_swe_1 = swe_vs_elevation(file_list[0], elevation_tif, elev_bins)
+        elev_centers_2, mean_swe_2 = swe_vs_elevation(file_list[1], elevation_tif, elev_bins)
 
-        plt.xlabel("Elevation (m)")
-        plt.ylabel("SWE Difference (m)")
-        plt.title(f"SWE Difference vs Elevation — {rundate}")
-        plt.legend()
-        plt.grid(alpha=0.3)
-        plt.tight_layout()
-        # plt.savefig(vetting_output + f"{name}_biasCorrection_elevation_diff.png", dpi=300)
-        plt.show()
+        if len(elev_centers_1) > 0 and len(elev_centers_2) > 0:
+            # Calculate difference (raster2 - raster1)
+            elev_centers = np.array(elev_centers_1)
+            swe_diff = np.array(mean_swe_2) - np.array(mean_swe_1)
 
-# open prev raster
-# if it's WW
-    # make a subplot for all of the raster
-    # create box and whiskers plot for the current and previous raster side by side, have all domains in one
-# if it's SNM
-    # just have one subplot
-    # create a box and whiskers plot for previous and current raster
+            # Create step plot
+            plt.step(elev_centers, swe_diff, where='mid',
+                     color='black', linewidth=2,
+                     label=f'{file_labels[1]} - {file_labels[0]}')
 
+            # Fill between zero and the difference line
+            # Blue where positive, red where negative
+            plt.fill_between(elev_centers, 0, swe_diff,
+                             where=(swe_diff >= 0),
+                             step='mid',
+                             color='blue',
+                             alpha=0.3,
+                             label='Positive difference')
 
-# check the points for this report and the last report
-# create a DF
-    # CURRENT SWE
-    # PREV SWE
-    # ELEVATION
+            plt.fill_between(elev_centers, 0, swe_diff,
+                             where=(swe_diff < 0),
+                             step='mid',
+                             color='red',
+                             alpha=0.3,
+                             label='Negative difference')
+
+            # Add a horizontal line at zero for reference
+            plt.axhline(y=0, color='black', linestyle='--', linewidth=1, alpha=0.5)
+
+            plt.xlabel("Elevation (m)")
+            plt.ylabel("SWE Difference (m)")
+            plt.title(f"SWE Difference vs Elevation — {rundate}")
+            plt.legend()
+            plt.grid(alpha=0.3)
+            plt.tight_layout()
+            plt.savefig(output_png, dpi=300)
+            plt.show()

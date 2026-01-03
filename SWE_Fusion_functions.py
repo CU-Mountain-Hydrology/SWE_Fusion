@@ -123,66 +123,204 @@ def fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaW
         # Move to next day
         start_date += timedelta(days=1)
 
+
+import arcpy
 import rasterio
 import numpy as np
 import os
-from datetime import datetime, timedelta
+
+
+def create_mean_layer(input_workspace, output_folder, dateList, start_year, end_year):
+    years = list(range(start_year, (end_year + 1)))
+
+    for date in dateList:
+        file_list = []
+        for year in years:
+            print('year ', year)
+            folder = input_workspace + str(year) + "/"
+            file = f"WW_phvrcn_{year}{date}_fscamsk_glacMask.tif"
+
+            # append to list
+            if file in os.listdir(folder):
+                file_list.append(folder + file)
+
+        arrays = []
+        meta = None
+
+        for r in file_list:
+            with rasterio.open(r) as src:
+                arr = src.read(1).astype("float32")
+
+                # Convert NoData to NaN
+                if src.nodata is not None:
+                    arr[arr == src.nodata] = np.nan
+
+                arrays.append(arr)
+
+                if meta is None:
+                    meta = src.meta.copy()
+
+        # Stack → (n_rasters, rows, cols)
+        stack = np.stack(arrays)
+        mean_raster = np.nanmean(stack, axis=0)
+        meta.update(dtype="float32", nodata=np.nan)
+        out_raster = output_folder + f"WW_{date}_fscamsk_glacMask_mean.tif"
+
+        with rasterio.open(out_raster, "w", **meta) as dst:
+            dst.write(mean_raster, 1)
+
+        print("Mean raster written:", out_raster)
 
 def calculate_dmfsca(
-    fSCA_folder,
-    output_folder,
-    wateryear_start,
-    process_start_date,
-    process_end_date
+        fSCA_folder,
+        DMFSCA_folder,
+        wateryear_start,
+        process_start_date,
+        process_end_date
 ):
-    # Create output folder if it doesn't exist
-    os.makedirs(output_folder, exist_ok=True)
+    """
+    Calculate Daily Mean fSCA using incremental weighted average.
+    Matches R code logic for efficiency.
+    """
 
-    # Sort .tif files
-    raster_files = sorted([f for f in os.listdir(fSCA_folder) if f.endswith(".tif")])
-
-    # Build dictionary mapping date -> filepath
+    # Build date -> filepath mapping (checking ALL necessary calendar years)
     raster_dict = {}
-    for f in raster_files:
-        try:
-            date_str = os.path.splitext(f)[0]
-            file_date = datetime.strptime(date_str, "%Y%m%d")
-            raster_dict[file_date] = os.path.join(fSCA_folder, f)
-        except ValueError:
+
+    # Determine which calendar years we need to scan
+    years_to_check = set()
+    current = wateryear_start
+    while current <= process_end_date:
+        years_to_check.add(current.year)
+        current += timedelta(days=1)
+
+    print(f"Water year: {wateryear_start.year}")
+    print(f"Processing: {process_start_date.strftime('%Y-%m-%d')} to {process_end_date.strftime('%Y-%m-%d')}")
+    print(f"Scanning calendar years: {sorted(years_to_check)}\n")
+
+    # Scan all relevant year folders for INPUT files
+    for year in sorted(years_to_check):
+        year_folder = os.path.join(fSCA_folder, str(year))
+
+        if not os.path.exists(year_folder):
+            print(f"Input folder not found: {year_folder}")
             continue
 
-    sorted_dates = sorted(raster_dict.keys())
+        print(f"canning input: {year_folder}")
+        raster_files = sorted([f for f in os.listdir(year_folder) if f.endswith(".tif")])
 
+        for f in raster_files:
+            try:
+                date_str = os.path.splitext(f)[0]
+                file_date = datetime.strptime(date_str, "%Y%m%d")
+                raster_dict[file_date] = os.path.join(year_folder, f)
+            except ValueError:
+                continue
+
+    # Filter to water year dates
+    sorted_dates = sorted([d for d in raster_dict.keys()
+                           if wateryear_start <= d <= process_end_date])
+
+    if not sorted_dates:
+        print("\nERROR: No valid input files found!")
+        return
+
+    print(f"\nFound {len(sorted_dates)} input files")
+    print(f"Date range: {sorted_dates[0].strftime('%Y-%m-%d')} to {sorted_dates[-1].strftime('%Y-%m-%d')}\n")
+
+    files_created = 0
+    current_output_year = None
+    current_output_folder = None
+
+    # LOOP THROUGH EACH DATE
     for current_date in sorted_dates:
-        if current_date < process_start_date or current_date > process_end_date:
+        if current_date < process_start_date:
             continue
 
-        # Get all dates from wateryear start to current date
-        date_subset = [d for d in sorted_dates if wateryear_start <= d <= current_date]
+        # DYNAMIC OUTPUT FOLDER: Changes when year changes
+        output_year = current_date.year
 
-        sum_array = None
-        count = 0
+        # If year changed, create new output folder
+        if output_year != current_output_year:
+            current_output_year = output_year
+            current_output_folder = os.path.join(DMFSCA_folder, str(output_year))
+            os.makedirs(current_output_folder, exist_ok=True)
+            print(f"YEAR CHANGED → Now processing {output_year}")
+            print(f"Output folder: {current_output_folder}")
 
-        for d in date_subset:
-            with rasterio.open(raster_dict[d]) as src:
-                data = src.read(1).astype(np.float32)
-                mask = data == src.nodata
-                data[mask] = 0
-                if sum_array is None:
-                    sum_array = np.zeros_like(data)
-                    valid_mask = np.zeros_like(data, dtype=np.int32)
-                sum_array += data
-                valid_mask += ~mask
+        current_str = current_date.strftime('%Y%m%d')
+        output_file = os.path.join(current_output_folder, f"dmfsca_{current_str}.tif")
+
+        # Skip if exists
+        if os.path.exists(output_file):
+            print(f"Already exists: {current_str}")
+            continue
+
+        # =====================================================================
+        # CASE 1: Oct 1 (dmfsca = fsca)
+        # =====================================================================
+        if current_date == wateryear_start:
+            with rasterio.open(raster_dict[current_date]) as src:
                 profile = src.profile
+                data = src.read(1)
 
-        # Calculate average
-        with np.errstate(invalid='ignore'):
-            avg_array = np.divide(sum_array, valid_mask, where=valid_mask != 0)
-            avg_array[valid_mask == 0] = profile['nodata']
+            with rasterio.open(output_file, 'w', **profile) as dst:
+                dst.write(data, 1)
 
-        out_filename = os.path.join(output_folder, f"{current_date.strftime('%Y%m%d')}_dmfsca.tif")
-        with rasterio.open(out_filename, "w", **profile) as dst:
-            dst.write(avg_array, 1)
+            print(f"Oct 1 (dmfsca=fsca): {current_str}")
+            files_created += 1
+            continue
+
+        # =====================================================================
+        # CASE 2: All other days (weighted average)
+        # =====================================================================
+        yesterday = current_date - timedelta(days=1)
+        yesterday_year = yesterday.year
+        yesterday_str = yesterday.strftime('%Y%m%d')
+
+        # Yesterday's dmfsca might be in DIFFERENT YEAR FOLDER!
+        yesterday_output_folder = os.path.join(DMFSCA_folder, str(yesterday_year))
+        yesterday_dmfsca = os.path.join(yesterday_output_folder, f"dmfsca_{yesterday_str}.tif")
+
+        if not os.path.exists(yesterday_dmfsca):
+            print(f"Skipping {current_str} (missing {yesterday_str})")
+            print(f"Expected: {yesterday_dmfsca}")
+            continue
+
+        # Read yesterday's dmfsca
+        with rasterio.open(yesterday_dmfsca) as src:
+            dmfsca_yesterday = src.read(1).astype(np.float32)
+            profile = src.profile
+            nodata = src.nodata if src.nodata is not None else -9999
+
+        # Read today's fsca
+        with rasterio.open(raster_dict[current_date]) as src:
+            fsca_today = src.read(1).astype(np.float32)
+
+        # Calculate: dmfsca = (dmfsca_yesterday × i + fsca_today) / (i + 1)
+        days_from_start = (current_date - wateryear_start).days
+
+        # Handle nodata
+        mask_yesterday = (dmfsca_yesterday == nodata) | np.isnan(dmfsca_yesterday)
+        mask_today = (fsca_today == nodata) | np.isnan(fsca_today)
+
+        dmfsca_calc = np.where(mask_yesterday, 0, dmfsca_yesterday)
+        fsca_calc = np.where(mask_today, 0, fsca_today)
+
+        # Weighted average
+        dmfsca_today = (dmfsca_calc * days_from_start + fsca_calc) / (days_from_start + 1)
+
+        # Restore nodata
+        dmfsca_today = np.where(mask_yesterday & mask_today, nodata, dmfsca_today)
+
+        # Write
+        profile.update(dtype=rasterio.float32, nodata=nodata)
+        with rasterio.open(output_file, 'w', **profile) as dst:
+            dst.write(dmfsca_today.astype(np.float32), 1)
+
+        print(f"Created: {current_str} (day {days_from_start + 1})")
+        files_created += 1
+
+    print(f"COMPLETE: Created {files_created} DMFSCA files")
 
 # downloading snow surveys
 import os
@@ -708,7 +846,7 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     snowPolyElim = outWorkspace + f"modscag_{report_date}_snowline_Sel_elim.shp"
 
     # define snow pillow gpkg
-    meanMap = meanWorkspace + f"WW_{mean_date}_mean_geon83.tif"
+    meanMap = meanWorkspace + f"WW_{mean_date}_fscamsk_glacMask_mean_geon83.tif"
     meanMap_copy = outWorkspace + f"WW_{mean_date}_mean_geon83.tif"
     meanMap_proj = outWorkspace + f"WW_{mean_date}_mean_albn83.tif"
     meanMapMask = outWorkspace + f"WW_{mean_date}_mean_msk_albn83.tif"
@@ -838,14 +976,13 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     ########################
     print(f"Processing begins...")
     ## copy in mean map
-    arcpy.CopyRaster_management(meanMap, meanMap_copy)
 
     print("Project both fSCA and phvRaster...")
     # project fSCA image
     arcpy.env.snapRaster = snapRaster_albn83
     arcpy.env.cellSize = snapRaster_albn83
     arcpy.env.extent = snapRaster_albn83
-    arcpy.ProjectRaster_management(meanMap_copy, meanMap_proj, projALB,
+    arcpy.ProjectRaster_management(meanMap, meanMapMask, projALB,
                                    "NEAREST", "500 500",
                                    "", "", projGEO)
 
@@ -912,9 +1049,9 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
         rcn_mask_final.save(product8)
 
     print("creating mean mask")
-    MeanMapMsk = Raster(meanMap_proj) * Raster(watermask)
-    MeanMapALlMsk = MeanMapMsk * Raster(glacierMask)
-    MeanMapALlMsk.save(meanMapMask)
+    # MeanMapMsk = Raster(meanMap_proj) * Raster(watermask)
+    # MeanMapALlMsk = MeanMapMsk * Raster(glacierMask)
+    # MeanMapALlMsk.save(meanMapMask)
 
     # Create GT 0 mean blended swe and make mask
     con01 = Con(Raster(meanMapMask) > 0.00, 1, 0)
