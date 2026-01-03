@@ -21,10 +21,10 @@ print(f"\n START TIME: {start}")
 
 # tables and layers -- establish paths
 user = "Olaf"
-year = "2026"
-rundate = "20260101"
-pillow_date = "01Jan2026"
-mean_date = "0101"
+year = "2025"
+rundate = "20251227"
+pillow_date = "27Dec2025"
+mean_date = "1227"
 # prev_rundate = "20250517"
 model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens_testReport"
 model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
@@ -77,18 +77,6 @@ WW_url_file = survey_workspace + r"stateSurveyURLS.txt"
 NRCS_shp = survey_workspace + "20240114_nrcs_course.shp"
 WW_state_list = ["AZ", "CO", "ID", "MT", "NV", "NM", "OR", "SD", "UT", "WA", "WY"]
 
-## FSCA VARIABLS
-# start_date =
-# end_date =
-# netCDF_WS =
-# tile_list =
-# output_fscaWS =
-# proj_in =
-# snap_raster =
-# extent =
-# proj_out =
-
-
 ## SNODAS Variables
 # RunName = "RT_CanAdj_rcn_noSW_woCCR_nofscamsk"
 SNODAS_Type = "masked"
@@ -114,12 +102,6 @@ print("\nResults directories made")
 os.makedirs(WW_reports_workspace + f"/{rundate}_RT_report_ET", exist_ok=True)
 os.makedirs(SNM_reports_workspace + f"/{rundate}_RT_report_ET", exist_ok=True)
 print("\nReports directories made")
-
-#process fSCA
-print("\nProcessing fSCA data...")
-# fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaWS, proj_in, snap_raster, extent, proj_out)
-
-# run DMFSCA (look into r version of this code)
 
 #download sensors (look into r version of this code and see if we can have a python version)
 if surveys_use == "Y":
@@ -165,7 +147,7 @@ merge_sort_sensors_surveys(report_date=rundate, results_workspace=WW_results_wor
 # clear memory
 sleep(30)
 clear_arcpy_locks()
-#
+
 # run SNODAS for WW
 print("SNODAS for WW...")
 SNODAS_Processing(report_date=rundate, RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
@@ -181,10 +163,11 @@ sleep(30)
 clear_arcpy_locks()
 
 print(f'\nRunning Tables and Layers Code for all domains for {model_woCCR}')
-tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_woCCR, masking="N", watershed_zones=WW_watershed_zones,
-                  band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,
-                  case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83,
-                  snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, bias="N")
+tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_woCCR,
+                  masking="N", watershed_zones=WW_watershed_zones, band_zones=WW_band_zones, HUC6_zones=HUC6_zones,
+                  region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,case_field_band=case_field_band,
+                  watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83, snapRaster_albn83=snapRaster_albn83,
+                  projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, bias="N")
 
 # clear memory
 sleep(30)

@@ -40,7 +40,7 @@ prev_model_run = ""
 # elev_bins = np.arange(1500, 15000, 100, dtype=float)
 
 def pillow_date_comparison(rundate, prev_model_date, raster, point_dataset, prev_pointDataset, id_column, swe_col,
-                      elev_col, output_png, convert_meters_feet=None, convert_feet_meters=None):
+                           elev_col, output_png, convert_meters_feet=None, convert_feet_meters=None):
     # get points within a raster
     gdf_pts, site_ids = get_points_within_raster(point_dataset, raster, id_column=id_column)
 
@@ -77,22 +77,36 @@ def pillow_date_comparison(rundate, prev_model_date, raster, point_dataset, prev
     # --- create stacked plots ---
     fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(15, 8), sharex=True)
 
-    # --- Top plot: paired SWE ---
-    ax1.scatter(x, df[swe_col], marker="s", label=rundate)
-    ax1.scatter(x, df[f"prev_{swe_col}"], marker="^", label=prev_model_date)
-
+    # --- Top plot: paired SWE with color-coded markers ---
     for _, row in df.iterrows():
-        line_color = "blue" if row[swe_col] > row[f"prev_{swe_col}"] else "red"
+        point_color = "blue" if row[swe_col] > row[f"prev_{swe_col}"] else "red"
+
+        # Plot both markers with the same color
+        ax1.scatter(row[elev_col], row[swe_col], marker="s", color=point_color)
+        ax1.scatter(row[elev_col], row[f"prev_{swe_col}"], marker="^", color=point_color)
+
+        # Draw connecting line
         ax1.plot(
             [row[elev_col], row[elev_col]],
             [row[swe_col], row[f"prev_{swe_col}"]],
-            color=line_color,
+            color=point_color,
             linewidth=1
         )
 
+    # Add legend with dummy artists
+    from matplotlib.lines import Line2D
+    legend_elements = [
+        Line2D([0], [0], marker='s', color='w', markerfacecolor='blue', markersize=8, label=f'{rundate} (increase)'),
+        Line2D([0], [0], marker='^', color='w', markerfacecolor='blue', markersize=8,
+               label=f'{prev_model_date} (increase)'),
+        Line2D([0], [0], marker='s', color='w', markerfacecolor='red', markersize=8, label=f'{rundate} (decline)'),
+        Line2D([0], [0], marker='^', color='w', markerfacecolor='red', markersize=8,
+               label=f'{prev_model_date} (decline)')
+    ]
+    ax1.legend(handles=legend_elements)
+
     ax1.set_ylabel("SWE (m)")
     ax1.set_title(f"{os.path.basename(raster)[:-4]} Pillow Difference | {prev_model_date} to {rundate}")
-    ax1.legend()
 
     # --- Bottom plot: single SWE column (current rundate) ---
     ax2.scatter(x, df[swe_col], color="green", marker="o", label=f"{rundate} {swe_col}")
@@ -110,8 +124,8 @@ def pillow_date_comparison(rundate, prev_model_date, raster, point_dataset, prev
 #def
 # open raster
 def raster_box_whisker_plot(raster, prev_raster, domain, output_png):
-    arr1 = read_raster_values(raster)
-    arr2 = read_raster_values(prev_raster)
+    arr1 = read_raster_values(prev_raster)
+    arr2 = read_raster_values(raster)
 
     # optional: limit y-axis based on 99th percentile across both rasters
     upper = max(np.percentile(arr1, 99), np.percentile(arr2, 99))
@@ -119,7 +133,7 @@ def raster_box_whisker_plot(raster, prev_raster, domain, output_png):
     # plot side-by-side
     plt.figure(figsize=(8, 6))
     plt.boxplot([arr1, arr2],
-                labels=[os.path.basename(raster), os.path.basename(prev_raster)],
+                labels=[os.path.basename(prev_raster), os.path.basename(raster)],
                 patch_artist=True,
                 showfliers=True)
     plt.ylabel("SWE (m)")
@@ -287,7 +301,7 @@ for domain in domains:
     raster_box_whisker_plot(raster=raster, prev_raster=prev_raster,
                             domain=domain, output_png=vetting_WS + f"{domain}_{rundate}_box_whisker.png")
 
-    print('Creating elevation dtep plot...')
+    print('Creating elevation step plot...')
     swe_elevation_step_plot(raster=raster, prev_raster=prev_raster,
                             output_png=vetting_WS + f"{domain}_{rundate}_elevation_step.png", elevation_tif=elevation_tif,
                             elev_bins=elev_bins)
