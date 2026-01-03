@@ -846,7 +846,7 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     snowPolyElim = outWorkspace + f"modscag_{report_date}_snowline_Sel_elim.shp"
 
     # define snow pillow gpkg
-    meanMap = meanWorkspace + f"WW_{mean_date}_fscamsk_glacMask_mean_geon83.tif"
+    meanMap = meanWorkspace + f"WW_{mean_date}_fscamsk_glacMask_mean.tif"
     meanMap_copy = outWorkspace + f"WW_{mean_date}_mean_geon83.tif"
     meanMap_proj = outWorkspace + f"WW_{mean_date}_mean_albn83.tif"
     meanMapMask = outWorkspace + f"WW_{mean_date}_mean_msk_albn83.tif"
@@ -1048,10 +1048,6 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
             rcn_mask_final = rcn_allMask
         rcn_mask_final.save(product8)
 
-    print("creating mean mask")
-    # MeanMapMsk = Raster(meanMap_proj) * Raster(watermask)
-    # MeanMapALlMsk = MeanMapMsk * Raster(glacierMask)
-    # MeanMapALlMsk.save(meanMapMask)
 
     # Create GT 0 mean blended swe and make mask
     con01 = Con(Raster(meanMapMask) > 0.00, 1, 0)
