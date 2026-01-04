@@ -415,7 +415,7 @@ def download_snow_surveys(report_date, survey_workspace, results_workspace, WW_u
     geometry = [Point(xy) for xy in zip(merged_df["Longitude"], merged_df["Latitude"])]
     gdf_stateSurvey = gpd.GeoDataFrame(merged_df, geometry=geometry, crs="EPSG:4326")
 
-    results_dir = os.path.join(results_workspace, f"{report_date}_results")
+    results_dir = os.path.join(results_workspace, f"{report_date}_results_ET")
     os.makedirs(results_dir, exist_ok=True)
 
     gdf_stateSurvey.to_file(os.path.join(results_dir, f"{report_date}_surveys.shp"), driver="ESRI Shapefile")
@@ -450,7 +450,7 @@ def download_cdec_snow_surveys(report_date, survey_workspace, SNM_results_worksp
     clean_csv = os.path.join(survey_workspace, f"{report_date}_SnowCourseMeasurements.csv")
     shapefile_out = os.path.join(snow_course_workspace, f"{report_date}_surveys_cdec.shp")
     merged_csv = os.path.join(survey_workspace, report_date, f"{report_date}_surveys_cdec.csv")
-    final_shapefile = os.path.join(SNM_results_workspace, f"{report_date}_results", f"{report_date}_surveys.shp")
+    final_shapefile = os.path.join(SNM_results_workspace, f"{report_date}_results_ET", f"{report_date}_surveys.shp")
 
     # Download HTML table from CDEC
     print(f"Downloading survey from: {cdec_url}")
