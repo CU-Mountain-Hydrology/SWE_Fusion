@@ -33,16 +33,18 @@ ChosenModelRun = "RT_CanAdj_rcn_wCCR_nofscamskSens_testReport"
 model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens_testReport"
 model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
 modelRuns = [model_woCCR, model_wCCR]
+model_labels = ["model_woCCR", "model_wCCR"]
 SNM_mask = "M:/SWE/WestWide/data/hydro/SNM/dwr_mask_null_albn83.tif"
 current_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
 prev_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
-surveys_use = "N"
+surveys_use = "Y"
 snapRaster_geon83 = "M:/SWE/WestWide/data/boundaries/SnapRaster_geon83.tif"
 snapRaster_albn83 = "M:/SWE/WestWide/data/boundaries/SnapRaster_albn83.tif"
 SNM_snapRaster_albn83 = "M:/SWE/WestWide/data/boundaries/SNM_SnapRaster_albn83.tif"
 projGEO = arcpy.SpatialReference(4269)
 projALB = arcpy.SpatialReference(102039)
 ProjOut_UTM = arcpy.SpatialReference(26911)
+snowTrax_csv = r"C:\Users\etyrr\OneDrive\Documents\CU_Grad\wsfr_snow.csv"
 meanWorkspace = fr"M:/SWE/WestWide/Spatial_SWE/WW_regression/mean_2000_2025_WY26_glacMask/"
 HUC6_zones = "M:/SWE/WestWide/data/hydro/WW_HUC6_albn83_ras_msked.tif"
 region_zones = "M:/SWE/WestWide/data/hydro/WW_Regions_albn83_v2.tif"
@@ -329,6 +331,10 @@ if difference == "Y":
             prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg.tif"
             point_dataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{rundate}_results_ET\SNM_{rundate}_sensors_albn83.shp"
             prev_pointDataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{prev_rundate}_results_ET\SNM_{prev_rundate}_sensors_albn83.shp"
+
+            snowtrax_comparision(rundate=rundate, snowTrax_csv=snowTrax_csv, results_WS=SNM_results_workspace,
+                                 output_csv=vetting_WS + f"{rundate}_snowtrax_comparison.csv", model_list=modelRuns, model_labels="", reference_col="SNOW17_SWE_AF",
+                                 output_png = vetting_WS + f"{rundate}_snowtrax_comparison.png")
 
         else:
             print(f"analyzing {domain}")

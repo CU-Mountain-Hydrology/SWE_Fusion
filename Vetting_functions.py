@@ -547,3 +547,234 @@ def swe_elevation_step_plot(rundate, prev_model_date, domain, raster, prev_raste
             plt.tight_layout()
             plt.savefig(output_png, dpi=300)
             plt.show()
+
+
+def filter_data_by_date(df, target_date, max_days_back=2):
+    """
+    Filter data for a specific date, using fallback dates if needed.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame with DATE column already parsed
+    target_date : str
+        Target date in format 'YYYYMMDD'
+    max_days_back : int
+        Maximum number of days to look back (default: 2)
+
+    Returns:
+    --------
+    pd.DataFrame
+        Filtered dataframe with one row per station/basin
+    """
+
+    # Convert target_date to datetime
+    target_dt = pd.to_datetime(target_date, format='%Y%m%d')
+
+    print(f"\n{'=' * 70}")
+    print(f"TARGET DATE: {target_dt.strftime('%Y-%m-%d')} ({target_date})")
+    print(f"LOOKBACK WINDOW: {max_days_back} days")
+    print(f"{'=' * 70}\n")
+
+    # Get unique stations/basins
+    stations = df['STATION_NAME'].unique()
+    print(f"Processing {len(stations)} stations/basins\n")
+
+    # List of model columns
+    model_cols = ['ASO_SWE_AF', 'ISNOBAL_DWR_SWE_AF', 'ISNOBAL_M3WORKS_SWE_AF',
+                  'SNODAS_SWE_AF', 'SNOW17_SWE_AF', 'SWANN_UA_SWE_AF']
+
+    result_rows = []
+
+    # For each station, find the best matching date
+    for station in stations:
+        station_df = df[df['STATION_NAME'] == station].copy()
+
+        # Try exact date match first
+        exact_match = station_df[station_df['DATE'] == target_dt]
+
+        if len(exact_match) > 0:
+            result_rows.append(exact_match.iloc[0])
+            print(f"✓ {station:40} Exact date ({target_dt.strftime('%Y-%m-%d')})")
+        else:
+            # Look for fallback within window
+            date_range_start = target_dt - timedelta(days=max_days_back)
+
+            fallback_matches = station_df[
+                (station_df['DATE'] >= date_range_start) &
+                (station_df['DATE'] <= target_dt)
+                ].sort_values('DATE', ascending=False)
+
+            if len(fallback_matches) > 0:
+                best_match = fallback_matches.iloc[0]
+                result_rows.append(best_match)
+                days_diff = (target_dt - best_match['DATE']).days
+                print(f"{station:40} Fallback ({best_match['DATE'].strftime('%Y-%m-%d')}, -{days_diff}d)")
+            else:
+                print(f"{station:40} EXCLUDED (no data within {max_days_back} days)")
+
+    # Create result dataframe
+    if result_rows:
+        result_df = pd.DataFrame(result_rows)
+
+        print(f"\n{'=' * 70}")
+        print(f"SUMMARY:")
+        print(f"  Total stations processed: {len(stations)}")
+        print(f"  Stations included:        {len(result_df)}")
+        print(f"  Stations excluded:        {len(stations) - len(result_df)}")
+        print(f"{'=' * 70}\n")
+
+        return result_df
+    else:
+        print("\nNo stations found with data in the specified window")
+        return pd.DataFrame()
+
+
+def snowtrax_comparision(rundate, snowTrax_csv, results_WS, output_csv, model_list, model_labels, reference_col,
+                         output_png):
+    # load csv and prepare
+    df = pd.read_csv(snowTrax_csv)
+    df = df[['DATE', 'STATION_NAME', 'ASO_SWE_AF', 'ISNOBAL_DWR_SWE_AF', 'ISNOBAL_M3WORKS_SWE_AF',
+             'SNODAS_SWE_AF', 'SNOW17_SWE_AF', 'SWANN_UA_SWE_AF']]
+    df['DATE'] = pd.to_datetime(df['DATE'], format='%m/%d/%Y %H:%M')
+    df['DATE_formatted'] = df['DATE'].dt.strftime('%Y%m%d')
+    print(df.head(5))
+    print(df.columns)
+
+    basin_dictionary = {"American River Basin": "07American", "Cosumnes River Basin": "08Cosumnes",
+                        "East Carson River River Basin":
+                            "21E Carson", "East Walker River Basin": "23E Walker", "Feather River Basin": "05Feather",
+                        "KingsRiver  Basin River Basin": "14Kings", "Kern River Basin": "17Kern", "Kaweah River Basin":
+                            '15Kaweah', "Mokelumne River Basin": "09Mokelumne", "Merced River Basin": "12Merced",
+                        "McCloud River Basin": "02McCloud", "Pit at Shasta Lake River Basin": "03Pit",
+                        "Sacramento at Bend Bridge River Basin": "04Sacramento at Bend Bridge",
+                        "San Joaquin River Basin":
+                            "13San Joaquin", "Tule River Basin": "16Tule",
+                        "Sacramento at Delta River Basin": "01Upper Sacramento",
+                        "Stanislaus River Basin": "10Stanislaus", "Lake Tahoe Rise": "19Tahoe",
+                        "Tuolumne River Basin": "11Tuolomne",
+                        "Trinity River Basin": "00Trinity", "Truckee River Basin": "18Truckee",
+                        "West Carson River Basin": "20W Carson",
+                        "West Walker River Basin": "22W Walker", "Yuba River Basin": "06Yuba"}
+
+    # filter data for the rundate
+    filtered_df = filter_data_by_date(df, rundate, max_days_back=2)
+
+    if not filtered_df.empty:
+        print("\nFiltered Data Sample:")
+        print(filtered_df[['DATE', 'STATION_NAME', 'SNODAS_SWE_AF', 'DATE_formatted']].head())
+
+        # save filtered data
+        filtered_df.to_csv(output_csv, index=False)
+        print(f"\nSaved filtered data to: {output_csv}")
+
+        # check which models have data
+        model_cols = ['ASO_SWE_AF', 'ISNOBAL_DWR_SWE_AF', 'ISNOBAL_M3WORKS_SWE_AF',
+                      'SNODAS_SWE_AF', 'SNOW17_SWE_AF', 'SWANN_UA_SWE_AF']
+
+        print(f"\nModel Data Availability:")
+        for col in model_cols:
+            non_null = filtered_df[col].notna().sum()
+            print(f"  {col:30} {non_null}/{len(filtered_df)} stations")
+
+    filtered_df['BASIN_CODE'] = filtered_df['STATION_NAME'].map(basin_dictionary)
+    print(filtered_df[['STATION_NAME', 'BASIN_CODE']].head())
+
+    # merge with model runs
+    for model, label in zip(model_list, model_labels):
+        watershed_csv = results_WS + f"/{rundate}_results_ET/{model}/{rundate}Wtshd_table.csv"
+
+        # merge
+        df_model = pd.read_csv(watershed_csv)
+        df_model_filter = df_model[['SrtName', 'VOL_AF']]
+        df_model_filter = df_model_filter.rename(columns={'VOL_AF': f'{label}_VOL_AF'})
+        filtered_df = filtered_df.merge(df_model_filter, left_on='BASIN_CODE', right_on='SrtName', how='inner')
+        filtered_df = filtered_df.drop('SrtName', axis=1)
+        print(filtered_df.head(5))
+
+        filtered_df.to_csv(f"{output_csv[:-4]}_edit.csv", index=False)
+        print(f"\nSaved filtered data to: {output_csv}")
+
+    # calculate % error
+    # Calculate percent error: ((model - reference) / reference) × 100
+    filtered_df['woCCR_pct_error'] = ((filtered_df['woCCR_VOL_AF'] - filtered_df[reference_col]) /
+                                      filtered_df[reference_col]) * 100
+
+    filtered_df['wCCR_pct_error'] = ((filtered_df['wCCR_VOL_AF'] - filtered_df[reference_col]) /
+                                     filtered_df[reference_col]) * 100
+
+    # Calculate mean absolute percent error for each model
+    woCCR_mean_error = filtered_df['woCCR_pct_error'].abs().mean()
+    wCCR_mean_error = filtered_df['wCCR_pct_error'].abs().mean()
+
+    print(f"\nMean Absolute Percent Error vs {reference_col.replace('_SWE_AF', '')}:")
+    print(f"  woCCR: {woCCR_mean_error:6.2f}%")
+    print(f"  wCCR:  {wCCR_mean_error:6.2f}%")
+
+    # make bar graph
+    # Method 2: Grouped bar chart for multiple models
+    models = ['ASO_SWE_AF', 'ISNOBAL_DWR_SWE_AF', 'ISNOBAL_M3WORKS_SWE_AF',
+              'SNODAS_SWE_AF', 'SNOW17_SWE_AF', 'SWANN_UA_SWE_AF', f'woCCR_VOL_AF', f'wCCR_VOL_AF']
+
+    # Filter to only models with data
+    filtered_df = filtered_df.sort_values('BASIN_CODE', ascending=True)
+    models_with_data = [col for col in models if filtered_df[col].notna().any()]
+
+    # Create figure with 2 subplots (stacked vertically)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 12),
+                                   gridspec_kw={'height_ratios': [2, 1]})
+
+    # ============================================================================
+    # TOP SUBPLOT: SWE Comparison Bar Chart
+    # ============================================================================
+
+    x = range(len(filtered_df))
+    width = 0.15
+    positions = [i - (len(models_with_data) - 1) * width / 2 for i in x]
+
+    # Plot bars for each model
+    for i, model in enumerate(models_with_data):
+        offset = [p + i * width for p in positions]
+        label = model.replace('_SWE_AF', '').replace('_VOL_AF', '')
+        ax1.bar(offset, filtered_df[model], width, label=label)
+
+    ax1.set_xlabel('Basin', fontsize=12, fontweight='bold')
+    ax1.set_ylabel('SWE (Acre-Feet)', fontsize=12, fontweight='bold')
+    ax1.set_title(f'SWE Comparison by Basin and Model - {rundate[:4]}-{rundate[4:6]}-{rundate[6:]}',
+                  fontsize=14, fontweight='bold')
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(filtered_df['BASIN_CODE'], rotation=90, fontsize=10)
+    ax1.legend(loc='upper left', fontsize=9)
+    ax1.grid(axis='y', alpha=0.3)
+
+    # ============================================================================
+    # BOTTOM SUBPLOT: Percent Error Bar Chart
+    # ============================================================================
+
+    width_error = 0.35
+    x_error = np.arange(len(filtered_df))
+
+    # Plot percent error bars
+    bars1 = ax2.bar(x_error - width_error / 2, filtered_df['woCCR_pct_error'],
+                    width_error, label='woCCR', color='steelblue', alpha=0.8)
+    bars2 = ax2.bar(x_error + width_error / 2, filtered_df['wCCR_pct_error'],
+                    width_error, label='wCCR', color='coral', alpha=0.8)
+
+    # Add zero reference line
+    ax2.axhline(y=0, color='black', linestyle='-', linewidth=1.5, alpha=0.7)
+
+    # Add ±10% reference lines
+    ax2.axhline(y=10, color='gray', linestyle='--', linewidth=1, alpha=0.5)
+    ax2.axhline(y=-10, color='gray', linestyle='--', linewidth=1, alpha=0.5)
+
+    ax2.set_xlabel('Basin', fontsize=12, fontweight='bold')
+    ax2.set_ylabel('Percent Error (%)', fontsize=12, fontweight='bold')
+    ax2.set_title('Percent Error vs ISNOBAL_M3WORKS', fontsize=12, fontweight='bold')
+    ax2.set_xticks(x_error)
+    ax2.set_xticklabels(filtered_df['BASIN_CODE'], rotation=90, fontsize=10)
+    ax2.legend(loc='upper left', fontsize=10)
+    ax2.grid(axis='y', alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(output_png, dpi=300, bbox_inches='tight')
+    plt.show()

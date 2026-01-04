@@ -1345,7 +1345,7 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
                           case_field_wtrshd, case_field_band, watermask, glacier_mask, domain_mask, run_type, snap_raster, WW_results_workspace,
                           Difference, bias_model_run=None, prev_report_date=None, previous_model_run=None):
     # create directory
-    prevRepWorkspace = SNM_results_workspace + f"{prev_report_date}_results/{previous_model_run}/"
+    prevRepWorkspace = SNM_results_workspace + f"{prev_report_date}_results_ET/{previous_model_run}/"
     where_clause = """"POLY_AREA" > 100"""
     part_area = "100 SquareKilometers"
     ProjOut_UTM = arcpy.SpatialReference(26911)
@@ -2058,7 +2058,7 @@ import warnings
 import gc
 
 def merge_sort_sensors_surveys(report_date, results_workspace, surveys, difference, watershed_shapefile, case_field_wtrshd,
-                               band_shapefile, case_field_band, merge, projOut, projIn=None, domainList=None, domain_shapefile=None,
+                               band_shapefile, case_field_band, merge, projOut, projIn=None, domainList=None, domain= None, domain_shapefile=None,
                                prev_report_date=None, prev_results_workspace=None):
 
     # Set up snow pillow and snow survey shapefiles
@@ -2191,8 +2191,16 @@ def merge_sort_sensors_surveys(report_date, results_workspace, surveys, differen
 
     # creating a data frame of just the last SWE inches
     if difference == "Y":
-        lastPillowView = prev_results_workspace + f"{prev_report_date}_sensors_view.dbf"
-        lastPillow = prev_results_workspace + f"{prev_report_date}_sensors_albn83.shp"
+
+        if domain == "SNM":
+
+            lastPillowView = prev_results_workspace + f"SNM_{prev_report_date}_sensors_view.dbf"
+            lastPillow = prev_results_workspace + f"SNM_{prev_report_date}_sensors_albn83.shp"
+
+        else:
+            lastPillowView = prev_results_workspace + f"{prev_report_date}_sensors_view.dbf"
+            lastPillow = prev_results_workspace + f"{prev_report_date}_sensors_albn83.shp"
+
         arcpy.MakeTableView_management(lastPillow, lastPillowView)
         arcpy.TableToTable_conversion(lastPillowView, results_workspace, f"{report_date}_temp.csv")
         temp_df = pd.read_csv(results_workspace + f"{report_date}_temp.csv")
