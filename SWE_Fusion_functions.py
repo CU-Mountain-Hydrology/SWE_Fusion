@@ -367,11 +367,11 @@ def download_snow_surveys(report_date, survey_workspace, results_workspace, WW_u
     for url, text, edit, state in zip(state_url_list, state_text_list, state_edit_list, WW_state_list):
         # Download text data
         state_data = requests.get(url)
-        with open(text, 'w') as out_f:
+        with open(text, 'w', encoding='utf-8') as out_f:
             out_f.write(state_data.text)
 
         # Remove headers and blank lines
-        with open(text, "r") as file:
+        with open(text, "r", encoding='utf-8') as file:
             content = file.readlines()
 
         marker = [i for i, line in enumerate(content) if line.startswith("#") or line == "\n"]
@@ -380,6 +380,13 @@ def download_snow_surveys(report_date, survey_workspace, results_workspace, WW_u
             for i, line in enumerate(content):
                 if i not in marker:
                     file.write(line)
+
+        with open(edit, "r", encoding='utf-8') as file:
+            cleaned_content = file.read().strip()
+
+        if not cleaned_content:
+            print(f"Warning: No data found for {state} after cleaning. Skipping...")
+            continue
 
         # Convert cleaned text to CSV
         df = pd.read_csv(edit, sep=",")
@@ -822,8 +829,9 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     prevRepWorkspace = workspaceBase + f"RT_report_data/{prev_report_date}_results/{prev_model_run}/"
 
     meanMask = outWorkspace + f"{mean_date}_mean_msk.tif"
-    MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.1.0_ops/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
+    # MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.1.0_ops/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
     MODSCAG_tif_plus_proj = outWorkspace + f"fSCA_{report_date}_albn83.tif"
+    MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.0d/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
 
     ## project and clip SNODAS
     SNODASWorkspace = resultsWorkspace + "SNODAS/"
@@ -982,6 +990,7 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     arcpy.env.snapRaster = snapRaster_albn83
     arcpy.env.cellSize = snapRaster_albn83
     arcpy.env.extent = snapRaster_albn83
+    # arcpy.DefineProjection_management(meanMap, projGEO)
     arcpy.ProjectRaster_management(meanMap, meanMapMask, projALB,
                                    "NEAREST", "500 500",
                                    "", "", projGEO)

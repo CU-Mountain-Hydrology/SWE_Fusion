@@ -24,7 +24,7 @@ domains = ['SNM', 'SOCN']
 basinList = ["SouthPlatte", "Uinta", "Kings"]
 output_csv = "Y"
 csv_outFile = r"W:/Spatial_SWE/ASO/2025/data_testing/FracError_data_test.csv"
-asoCatalog = r"W:/Spatial_SWE/ASO/2025/data_testing/ASO_SNOTEL_DifferenceStats.csv"
+# asoCatalog = r"W:/Spatial_SWE/ASO/2025/data_testing/ASO_SNOTEL_DifferenceStats.csv"
 basin_List = r"W:/Spatial_SWE/ASO/ASO_Metadata/ASO_in_Basin.txt"
 fracErrorWorkspace = "W:/Spatial_SWE/ASO/2025/data_testing/"
 domainList = r"M:\SWE\WestWide\Spatial_SWE\ASO\ASO_Metadata\State_Basin.txt"
@@ -33,8 +33,8 @@ results_workspace = f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{
 ## function for fix
 ## function for validation
 
-def bias_correction_selection(rundate, basin_List, domainList, method_list, fracErrorWorkspace,
-                              output_csv, csv_outFile=None, currentYear=None, grade_amount=None,
+def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, method_list, fracErrorWorkspace,
+                              output_csv, csv_outFile=None, currentYear=None, year=None, grade_amount=None,
                               sensorTrend=None, SNOTEL=None, grade=None, grade_range=None):
 
     """
@@ -54,7 +54,7 @@ def bias_correction_selection(rundate, basin_List, domainList, method_list, frac
     :return: 
     """
         
-    current_year = datetime.now().year
+    # current_year = datetime.now().year
         
     mapping = {}
     with open(basin_List) as f:
@@ -96,10 +96,12 @@ def bias_correction_selection(rundate, basin_List, domainList, method_list, frac
                 domain = "WW"
 
             # read through CSV
-            aso_df = pd.read_csv(asoCatalog)
+            aso_df = pd.read_csv(aso_snotel_data)
+
             if item in aso_df['Basin'].values:
+
                 if currentYear is True:
-                    aso_df = aso_df[aso_df["Year"] == current_year]
+                    aso_df = aso_df[aso_df["Year"] == year]
                 else:
                     print("Using all years of ASO data")
 
@@ -153,13 +155,27 @@ def bias_correction_selection(rundate, basin_List, domainList, method_list, frac
                                         f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                                     basin_row['GRADE'] = fraErrorPath
 
+                            # if method == "GRADES_SPECF":
+                            #     print(f"\nMETHOD: {method}")
+                            #     closest_row = aso_df_grade.loc[(aso_df_grade["GradeDifference"] - grade_amount).abs().idxmin()]
+                            #     fraErrorPath = (
+                            #         f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison_testing/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                            #         f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
+                            #     basin_row['GRADES_SPECF'] = fraErrorPath
                             if method == "GRADES_SPECF":
                                 print(f"\nMETHOD: {method}")
-                                closest_row = aso_df_grade.loc[(aso_df_grade["GradeDifference"] - grade_amount).abs().idxmin()]
-                                fraErrorPath = (
-                                    f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison_testing/{closest_row['RunDate']}_{closest_row['modelRun']}/"
-                                    f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
-                                basin_row['GRADES_SPECF'] = fraErrorPath
+
+                                # Check if aso_df_grade has any rows before attempting to find closest match
+                                if not aso_df_grade.empty:
+                                    closest_row = aso_df_grade.loc[
+                                        (aso_df_grade["GradeDifference"] - grade_amount).abs().idxmin()]
+                                    fraErrorPath = (
+                                        f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison_testing/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                                        f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
+                                    basin_row['GRADES_SPECF'] = fraErrorPath
+                                else:
+                                    print(f"No data found for grade direction '{grade}' in basin {item}")
+                                    basin_row['GRADES_SPECF'] = None
 
                     if method == "SENSOR_PATTERN":
                         print(f"\nMETHOD: {method}")
@@ -251,11 +267,27 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
         for idx, row in df_group.iterrows():
             sub_basin = row["Basin"]
             fraErr = row[method]
-            if fraErr is None or (isinstance(fraErr, float) and math.isnan(fraErr)):
-                print(f"Skipping sub-basin {row['Basin']} because {method} value is empty")
+            if (fraErr is None or
+                    (isinstance(fraErr, float) and math.isnan(fraErr)) or
+                    fraErr == "NA" or
+                    fraErr == "" or
+                    str(fraErr).lower() == "none"):
+                print(f"✗ Skipping sub-basin {sub_basin}: {method} has no data (value: '{fraErr}')")
                 continue
 
-            fraErr_dir = os.path.dirname(str(fraErr))
+                # Convert to string and validate it's a real path
+            fraErr = str(fraErr).strip()
+            if len(fraErr) < 20:  # Valid paths should be longer than 20 characters
+                print(f"✗ Skipping sub-basin {sub_basin}: {method} path too short: '{fraErr}'")
+                continue
+
+            # Check if directory exists before trying to search it
+            fraErr_dir = os.path.dirname(fraErr)
+            if not fraErr_dir or not os.path.exists(fraErr_dir):
+                print(f"✗ Skipping sub-basin {sub_basin}: directory doesn't exist: '{fraErr_dir}'")
+                continue
+
+            # fraErr_dir = os.path.dirname(str(fraErr))
             fraErr_basename = os.path.basename(str(fraErr))
 
             # Pattern: starts with basename, ends with swe_50m_fraErr.tif
@@ -264,7 +296,10 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
 
             print(f"Basin: {basin} | Sub-Basin: {sub_basin} | Search pattern: {search_pattern}")
 
-            basinSHP = f"{shapefile_workspace}ASO_{sub_basin}_albn83.shp"
+            if domain == "SNM":
+                basinSHP = f"{shapefile_workspace}/{sub_basin}_albn83.shp"
+            if domain == "WW":
+                basinSHP = f"{shapefile_workspace}ASO_{sub_basin}_albn83.shp"
 
             matching_files = glob.glob(search_pattern)
 
