@@ -392,7 +392,7 @@ if biasCorrection == "Y":
         methods = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
         for method in methods:
             print(f"\nprocessing method:", method)
-            bias_correct(results_workspace, domain="WW", ModelRun=ChosenModelRun, method=method, rundate=rundate, results_df=results_df, shapefile_workspace=WW_shapefile_workspace)
+            bias_correct(WW_results_workspace + f"{rundate}_results_ET/", domain="WW", ModelRun=ChosenModelRun, method=method, rundate=rundate, results_df=results_df, shapefile_workspace=WW_shapefile_workspace)
 
         # got through methods to find the best version for vetting
         # folder = r"W:\Spatial_SWE\WW_regression\RT_report_data\20250503_results_ET\ASO_BiasCorrect_fSCA_RT_CanAdj_rcn_noSW_woCCR/"
@@ -422,7 +422,7 @@ if biasCorrection == "Y":
         methods = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
         for method in methods:
             print(f"\nMethod: {method}"'')
-            BC_path = rf"W:\Spatial_SWE\{region}_regression\RT_report_data\{rundate}_results_ET\ASO_BiasCorrect_{ChosenModelRun}/{method}/"
+            BC_path = rf"W:\Spatial_SWE\WW_regression\RT_report_data\{rundate}_results_ET\ASO_BiasCorrect_{ChosenModelRun}/{method}/"
             for name in unique_names:
                 print(f"Name: {name}")
                 raster = BC_path + f"{name}_{method}_BC_fix_albn83.tif"
@@ -437,7 +437,7 @@ if biasCorrection == "Y":
             methods = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
             for method in methods:
                 print(f"\nprocessing method:", method)
-                bias_correct(results_workspace, domain="SNM", ModelRun=ChosenModelRun, method=method, rundate=rundate, results_df=results_df, shapefile_workspace=SNM_shapefile_workspace)
+                bias_correct(results_workspace=SNM_results_workspace + f"{rundate}_results_ET/", domain="SNM", ModelRun=ChosenModelRun, method=method, rundate=rundate, results_df=results_df, shapefile_workspace=SNM_shapefile_workspace)
 
             # got through methods to find the best version for vetting
             folder = rf"J:/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/"
