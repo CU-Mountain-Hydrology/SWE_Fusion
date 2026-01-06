@@ -298,7 +298,7 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
 
             if domain == "SNM":
                 basinSHP = f"{shapefile_workspace}/{sub_basin}_albn83.shp"
-            if domain == "WW":
+            elif domain == "WW":
                 basinSHP = f"{shapefile_workspace}ASO_{sub_basin}_albn83.shp"
 
             matching_files = glob.glob(search_pattern)

@@ -769,7 +769,7 @@ def snowtrax_comparision(rundate, snowTrax_csv, results_WS, output_csv, model_li
 
     ax2.set_xlabel('Basin', fontsize=12, fontweight='bold')
     ax2.set_ylabel('Percent Error (%)', fontsize=12, fontweight='bold')
-    ax2.set_title('Percent Error vs ISNOBAL_M3WORKS', fontsize=12, fontweight='bold')
+    ax2.set_title(f'Percent Error vs {reference_col}', fontsize=12, fontweight='bold')
     ax2.set_xticks(x_error)
     ax2.set_xticklabels(filtered_df['BASIN_CODE'], rotation=90, fontsize=10)
     ax2.legend(loc='upper left', fontsize=10)
