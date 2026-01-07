@@ -778,3 +778,217 @@ def snowtrax_comparision(rundate, snowTrax_csv, results_WS, output_csv, model_li
     plt.tight_layout()
     plt.savefig(output_png, dpi=300, bbox_inches='tight')
     plt.show()
+
+import numpy as np
+import matplotlib.pyplot as plt
+import rasterio
+import matplotlib.colors as mcolors
+
+
+def create_aspect_comparison(aspect_path, raster, prev_raster,
+                                 label_1, label_2,
+                                 output_path=None, num_bins=16):
+    """
+    Create three-panel compass rose comparison of SWE by aspect.
+    Order: Previous date | Current date | Difference
+
+    Parameters:
+    -----------
+    aspect_path : str
+        Path to aspect raster (0-360°, larger extent is OK)
+    raster : str
+        Path to CURRENT SWE raster
+    prev_raster : str
+        Path to PREVIOUS SWE raster
+    label_1 : str
+        Label for CURRENT date (displayed in middle)
+    label_2 : str
+        Label for PREVIOUS date (displayed on left)
+    output_path : str, optional
+        Path to save figure (e.g., 'comparison.png')
+    num_bins : int
+        Number of aspect bins (8=45° per bin, 16=22.5° per bin)
+    """
+
+
+    # =========================================================================
+    # INNER FUNCTION: Calculate SWE by aspect
+    # =========================================================================
+    def calc_swe_by_aspect(aspect_path, swe_path):
+        """Calculate mean SWE for each aspect bin."""
+
+        # Read aspect
+        with rasterio.open(aspect_path) as src:
+            aspect = src.read(1).astype(float)
+            aspect_nodata = src.nodata
+            aspect_transform = src.transform
+            aspect_bounds = src.bounds
+
+            if aspect_nodata is not None:
+                aspect[aspect == aspect_nodata] = np.nan
+            aspect[aspect < 0] = np.nan  # Handle flat areas
+
+        # Read SWE (in METERS)
+        with rasterio.open(swe_path) as src:
+            swe = src.read(1).astype(float)
+            swe_nodata = src.nodata
+            swe_bounds = src.bounds
+
+            if swe_nodata is not None:
+                swe[swe == swe_nodata] = np.nan
+
+        # Handle extent mismatch
+        if aspect.shape != swe.shape:
+            col_off = int((swe_bounds.left - aspect_bounds.left) / aspect_transform.a)
+            row_off = int((aspect_bounds.top - swe_bounds.top) / abs(aspect_transform.e))
+            aspect = aspect[row_off:row_off + swe.shape[0], col_off:col_off + swe.shape[1]]
+
+        # Define aspect bins
+        bin_edges = np.linspace(0, 360, num_bins + 1)
+        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+
+        # Calculate mean SWE per bin
+        aspect_means = np.zeros(num_bins)
+        pixel_counts = np.zeros(num_bins, dtype=int)
+
+        for i in range(num_bins):
+            if i == num_bins - 1:
+                mask = (((aspect >= bin_edges[i]) | (aspect < bin_edges[0])) &
+                        ~np.isnan(aspect) & ~np.isnan(swe))
+            else:
+                mask = ((aspect >= bin_edges[i]) & (aspect < bin_edges[i + 1]) &
+                        ~np.isnan(aspect) & ~np.isnan(swe))
+
+            pixel_counts[i] = mask.sum()
+            aspect_means[i] = np.nanmean(swe[mask]) if pixel_counts[i] > 0 else np.nan
+
+        valid_pixels = (~np.isnan(swe) & ~np.isnan(aspect)).sum()
+        swe_range = (np.nanmin(swe), np.nanmax(swe))
+        mean_swe = np.nanmean(swe[~np.isnan(aspect)])
+
+        return aspect_means, bin_centers, pixel_counts, valid_pixels, swe_range, mean_swe
+
+    # =========================================================================
+    # CALCULATE DISTRIBUTIONS (Note: order matters for labels)
+    # =========================================================================
+    values_prev, bin_centers, counts_prev, valid_prev, range_prev, mean_prev = calc_swe_by_aspect(aspect_path,
+                                                                                                  prev_raster)
+
+    values_curr, _, counts_curr, valid_curr, range_curr, mean_curr = calc_swe_by_aspect(aspect_path, raster)
+
+    # =========================================================================
+    # CREATE FIGURE
+    # =========================================================================
+    fig = plt.figure(figsize=(18, 6))
+
+    # Common scale for first two plots
+    vmin_common = np.nanmin([values_prev, values_curr])
+    vmax_common = np.nanmax([values_prev, values_curr])
+
+    # Convert to radians
+    theta = np.deg2rad(bin_centers)
+    width = 2 * np.pi / len(values_prev)
+
+    # Create BLUE colormap for SWE (white -> light blue -> dark blue)
+    colors_blue = ['white', 'lightblue', 'deepskyblue', 'dodgerblue', 'blue', 'darkblue']
+    cmap_blue = mcolors.LinearSegmentedColormap.from_list('white_blue', colors_blue, N=256)
+
+    # -------------------------------------------------------------------------
+    # SUBPLOT 1: PREVIOUS Date (LEFT)
+    # -------------------------------------------------------------------------
+    ax1 = fig.add_subplot(131, projection='polar')
+
+    norm1 = mcolors.Normalize(vmin=vmin_common, vmax=vmax_common)
+
+    bars1 = ax1.bar(theta, values_prev, width=width, bottom=0,
+                    edgecolor='black', linewidth=0.5)
+
+    for bar, val in zip(bars1, values_prev):
+        if not np.isnan(val):
+            bar.set_facecolor(cmap_blue(norm1(val)))
+            bar.set_alpha(0.8)
+
+    ax1.set_theta_zero_location('N')
+    ax1.set_theta_direction(-1)
+    ax1.set_xticks(np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]))
+    ax1.set_xticklabels(['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'],
+                        fontsize=11, fontweight='bold')
+    ax1.set_ylim(0, vmax_common * 1.1)
+    ax1.set_title(f'{label_2}\nMean SWE by Aspect', fontsize=13, fontweight='bold', pad=20)
+
+    sm1 = plt.cm.ScalarMappable(cmap=cmap_blue, norm=norm1)
+    sm1.set_array([])
+    cbar1 = plt.colorbar(sm1, ax=ax1, pad=0.1, shrink=0.8)
+    cbar1.set_label('Mean SWE (m)', fontsize=11, fontweight='bold')
+
+    # -------------------------------------------------------------------------
+    # SUBPLOT 2: CURRENT Date (MIDDLE)
+    # -------------------------------------------------------------------------
+    ax2 = fig.add_subplot(132, projection='polar')
+
+    bars2 = ax2.bar(theta, values_curr, width=width, bottom=0,
+                    edgecolor='black', linewidth=0.5)
+
+    for bar, val in zip(bars2, values_curr):
+        if not np.isnan(val):
+            bar.set_facecolor(cmap_blue(norm1(val)))
+            bar.set_alpha(0.8)
+
+    ax2.set_theta_zero_location('N')
+    ax2.set_theta_direction(-1)
+    ax2.set_xticks(np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]))
+    ax2.set_xticklabels(['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'],
+                        fontsize=11, fontweight='bold')
+    ax2.set_ylim(0, vmax_common * 1.1)
+    ax2.set_title(f'{label_1}\nMean SWE by Aspect', fontsize=13, fontweight='bold', pad=20)
+
+    cbar2 = plt.colorbar(sm1, ax=ax2, pad=0.1, shrink=0.8)
+    cbar2.set_label('Mean SWE (m)', fontsize=11, fontweight='bold')
+
+    # -------------------------------------------------------------------------
+    # SUBPLOT 3: Difference (Current - Previous) (RIGHT)
+    # -------------------------------------------------------------------------
+    ax3 = fig.add_subplot(133, projection='polar')
+
+    diff = values_curr - values_prev  # Current - Previous
+    vmax_diff = np.nanmax(np.abs(diff))
+
+    # Create colormap: Red (decrease) -> White (no change) -> Blue (increase)
+    norm3 = mcolors.TwoSlopeNorm(vmin=-vmax_diff, vcenter=0, vmax=vmax_diff)
+    cmap3 = mcolors.LinearSegmentedColormap.from_list(
+        'red_white_blue',
+        ['darkred', 'red', 'lightcoral', 'white', 'lightblue', 'blue', 'darkblue'],
+        N=256
+    )
+
+    bars3 = ax3.bar(theta, np.abs(diff), width=width, bottom=0,
+                    edgecolor='black', linewidth=0.5)
+
+    for bar, d in zip(bars3, diff):
+        if not np.isnan(d):
+            bar.set_facecolor(cmap3(norm3(d)))
+            bar.set_alpha(0.8)
+
+    ax3.set_theta_zero_location('N')
+    ax3.set_theta_direction(-1)
+    ax3.set_xticks(np.deg2rad([0, 45, 90, 135, 180, 225, 270, 315]))
+    ax3.set_xticklabels(['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'],
+                        fontsize=11, fontweight='bold')
+    ax3.set_ylim(0, vmax_diff * 1.1)
+    ax3.set_title(f'Difference ({label_1} - {label_2})\nBlue=Increase  Red=Decrease',
+                  fontsize=13, fontweight='bold', pad=20)
+
+    sm3 = plt.cm.ScalarMappable(cmap=cmap3, norm=norm3)
+    sm3.set_array([])
+    cbar3 = plt.colorbar(sm3, ax=ax3, pad=0.1, shrink=0.8)
+    cbar3.set_label('Difference (m)', fontsize=11, fontweight='bold')
+
+    plt.suptitle('SWE Distribution by Aspect', fontsize=16, fontweight='bold', y=1.02)
+    plt.tight_layout()
+
+    # Save
+    if output_path:
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        print(f"Saved: {output_path}")
+
+    plt.show()
