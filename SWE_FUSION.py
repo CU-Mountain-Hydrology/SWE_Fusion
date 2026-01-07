@@ -402,32 +402,34 @@ if difference == "Y":
 
         print('Creating box and whiskers plot...')
         raster_box_whisker_plot(rundate=rundate, prev_model_date=prev_rundate, raster=raster, prev_raster=prev_raster,
-                                domain=domain, output_png=vetting_WS + f"{domain}_{rundate}_box_whisker.png")
+                                domain=domain, variable="SWE", unit="m", output_png=vetting_WS + f"{domain}_{rundate}_box_whisker.png")
 
         print('Creating elevation step plot...')
         swe_elevation_step_plot(rundate=rundate, prev_model_date=prev_rundate, domain=domain, raster=raster, prev_raster=prev_raster,
                                 output_png=vetting_WS + f"{domain}_{rundate}_elevation_step.png",
                                 elevation_tif=elevation_tif,
-                                elev_bins=elev_bins)
+                                elev_bins=elev_bins, variable="SWE", unit="m")
 
         print('Creating aspect compass...')
         create_aspect_comparison(aspect_path=aspect_path, raster=raster, prev_raster=prev_raster, label_1=rundate,
-                                 label_2=prev_rundate, output_path=vetting_WS + f"{rundate}_{domain}_aspect_comparison.png", num_bins=16)
+                                 label_2=prev_rundate, title="Difference of SWE", variable='SWE', unit="m",
+                                 output_path=vetting_WS + f"{rundate}_{domain}_aspect_comparison.png", num_bins=16)
 
 
         print('Creating box and whiskers plot...')
         raster_box_whisker_plot(rundate=rundate, prev_model_date=prev_rundate, raster=fSCA_raster, prev_raster=prev_fSCA_raster,
-                                domain=domain, output_png=vetting_WS + f"{domain}_{rundate}_fSCA_box_whisker.png")
+                                domain=domain, variable="fSCA", unit="%", output_png=vetting_WS + f"{domain}_{rundate}_fSCA_box_whisker.png")
 
         print('Creating elevation step plot...')
         swe_elevation_step_plot(rundate=rundate, prev_model_date=prev_rundate, domain=domain, raster=fSCA_raster, prev_raster=prev_fSCA_raster,
                                 output_png=vetting_WS + f"{domain}_{rundate}_fSCA_elevation_step.png",
                                 elevation_tif=elevation_tif,
-                                elev_bins=elev_bins)
+                                elev_bins=elev_bins, variable="fSCA", unit="%")
 
         print('Creating aspect compass...')
         create_aspect_comparison(aspect_path=aspect_path, raster=fSCA_raster, prev_raster=prev_fSCA_raster, label_1=rundate,
-                             label_2=prev_rundate, output_path=vetting_WS + f"{rundate}_{domain}_fSCA_aspect_comparison.png", num_bins=16)
+                             label_2=prev_rundate, title="Difference of fSCA", variable='fSCA', unit="%",
+                                 output_path=vetting_WS + f"{rundate}_{domain}_fSCA_aspect_comparison.png", num_bins=16)
 
 
 ## ERIC: prompt for best model run with sensor counts and % error

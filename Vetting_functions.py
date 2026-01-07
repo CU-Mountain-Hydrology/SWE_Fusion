@@ -411,24 +411,140 @@ def pillow_date_comparison(rundate, prev_model_date, raster, point_dataset, prev
 #def
 # open raster
 
-def raster_box_whisker_plot(rundate, prev_model_date, raster, prev_raster, domain, output_png):
+# def raster_box_whisker_plot(rundate, prev_model_date, raster, prev_raster, domain, variable, unit, output_png):
+#     arr1 = read_raster_values(prev_raster)
+#     arr2 = read_raster_values(raster)
+#
+#     # optional: limit y-axis based on 99th percentile across both rasters
+#     upper = max(np.percentile(arr1, 99), np.percentile(arr2, 99))
+#
+#     # plot side-by-side
+#     plt.figure(figsize=(8, 6))
+#     plt.boxplot([arr1, arr2],
+#                 labels=[os.path.basename(prev_raster), os.path.basename(raster)],
+#                 patch_artist=True,
+#                 showfliers=True)
+#     plt.ylabel(f"{variable} ({unit})")
+#     plt.title(f"Comparison of {variable} Distributions {domain} | {prev_model_date} to {rundate}")
+#     plt.ylim(0, upper)
+#     plt.savefig(output_png)
+#     plt.show()
+
+
+def raster_box_whisker_plot(rundate, prev_model_date, raster, prev_raster, domain, variable, unit, output_png):
+    """
+    Create box plot with statistical annotations.
+    Handles extreme outliers to prevent image size errors.
+    """
+
     arr1 = read_raster_values(prev_raster)
     arr2 = read_raster_values(raster)
 
-    # optional: limit y-axis based on 99th percentile across both rasters
-    upper = max(np.percentile(arr1, 99), np.percentile(arr2, 99))
+    # Remove extreme outliers and invalid values
+    def clean_array(arr):
+        """Remove NaN, inf, and extreme outliers"""
+        arr_clean = arr[~np.isnan(arr) & ~np.isinf(arr)]
+        arr_clean = arr_clean[arr_clean >= 0]  # Remove negative values
 
-    # plot side-by-side
-    plt.figure(figsize=(8, 6))
-    plt.boxplot([arr1, arr2],
-                labels=[os.path.basename(prev_raster), os.path.basename(raster)],
-                patch_artist=True,
-                showfliers=True)
-    plt.ylabel("SWE (m)")
-    plt.title(f"Comparison of SWE Distributions {domain} | {prev_model_date} to {rundate}")
-    plt.ylim(0, upper)
-    plt.savefig(output_png)
+        # Remove values beyond 99.9th percentile (extreme outliers)
+        p999 = np.percentile(arr_clean, 99.9)
+        arr_clean = arr_clean[arr_clean <= p999]
+
+        return arr_clean
+
+    arr1_clean = clean_array(arr1)
+    arr2_clean = clean_array(arr2)
+
+    print(f"\nData cleaning summary:")
+    print(
+        f"  {prev_model_date}: {len(arr1)} → {len(arr1_clean)} values (removed {len(arr1) - len(arr1_clean)} outliers)")
+    print(f"  {rundate}: {len(arr2)} → {len(arr2_clean)} values (removed {len(arr2) - len(arr2_clean)} outliers)")
+
+    # Calculate statistics
+    stats1 = {
+        'min': np.min(arr1_clean),
+        'q25': np.percentile(arr1_clean, 25),
+        'median': np.median(arr1_clean),
+        'q75': np.percentile(arr1_clean, 75),
+        'max': np.max(arr1_clean),
+        'mean': np.mean(arr1_clean)
+    }
+
+    stats2 = {
+        'min': np.min(arr2_clean),
+        'q25': np.percentile(arr2_clean, 25),
+        'median': np.median(arr2_clean),
+        'q75': np.percentile(arr2_clean, 75),
+        'max': np.max(arr2_clean),
+        'mean': np.mean(arr2_clean)
+    }
+
+    # Set reasonable y-axis limit (99th percentile)
+    upper = max(np.percentile(arr1_clean, 99), np.percentile(arr2_clean, 99))
+
+    # Safety check: ensure upper limit is reasonable
+    if upper > 100:  # Adjust this threshold based on your expected SWE range
+        print(f"  ⚠ Warning: Upper limit ({upper:.2f}) seems high. Data may have outliers.")
+
+    # Limit figure height to prevent memory errors
+    fig_height = min(7, max(5, upper / 100))  # Dynamically adjust but cap at 7
+
+    # Create plot
+    fig, ax = plt.subplots(figsize=(10, fig_height))
+
+    # Create box plot (hide fliers to avoid extreme outliers)
+    bp = ax.boxplot([arr1_clean, arr2_clean],
+                    labels=[prev_model_date, rundate],
+                    patch_artist=True,
+                    showfliers=False,  # HIDE OUTLIERS to prevent huge plots
+                    widths=0.6,
+                    showmeans=True,
+                    meanprops=dict(marker='D', markerfacecolor='green',
+                                   markeredgecolor='black', markersize=8))
+
+    # Color boxes
+    colors = ['steelblue', 'coral']
+    for patch, color in zip(bp['boxes'], colors):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.6)
+
+    # Add median and mean values
+    for i, (stat, x_pos) in enumerate(zip([stats1, stats2], [1, 2])):
+        # Median (on box)
+        ax.text(x_pos, stat['median'], f"{stat['median']:.2f}",
+                ha='center', va='bottom', fontsize=11, fontweight='bold',
+                bbox=dict(boxstyle='round,pad=0.4', facecolor='white',
+                          edgecolor='black', linewidth=1.5))
+
+        # Mean (to the side)
+        ax.text(x_pos - 0.45, stat['mean'], f"μ={stat['mean']:.2f}",
+                ha='center', va='center', fontsize=9,
+                bbox=dict(boxstyle='round,pad=0.3', facecolor='lightgreen', alpha=0.8))
+
+    # Labels and formatting
+    ax.set_ylabel(f"{variable} ({unit})", fontsize=12, fontweight='bold')
+    ax.set_title(f"{variable} Distribution: {domain}\n{prev_model_date} → {rundate}",
+                 fontsize=13, fontweight='bold')
+    ax.set_ylim(0, upper * 1.05)  # 5% padding above 99th percentile
+    ax.grid(axis='y', alpha=0.3, linestyle='--')
+
+    # Remove the problematic tight_layout line or wrap it in try/except
+    try:
+        plt.tight_layout()
+    except:
+        pass  # Skip if layout can't be adjusted
+
+    # Save with error handling
+    try:
+        plt.savefig(output_png, dpi=300, bbox_inches='tight')
+        print(f"✓ Saved: {output_png}")
+    except Exception as e:
+        print(f"⚠ Warning: Could not save with tight bbox. Trying standard save...")
+        plt.savefig(output_png, dpi=300)
+        print(f"✓ Saved: {output_png}")
+
     plt.show()
+    plt.close()
 
 from rasterio.warp import reproject, Resampling
 def swe_vs_elevation(swe_raster, elev_raster, elev_bins):
@@ -477,7 +593,8 @@ def swe_vs_elevation(swe_raster, elev_raster, elev_bins):
 
     return bin_centers, mean_swe
 
-def swe_elevation_step_plot(rundate, prev_model_date, domain, raster, prev_raster, elevation_tif, elev_bins, output_png):
+def swe_elevation_step_plot(rundate, prev_model_date, domain, raster, prev_raster,
+                            variable, unit, elevation_tif, elev_bins, output_png):
     # After collecting your data, create the elevation plot
     file_list = [prev_raster, raster]
     file_labels = [prev_model_date, rundate]
@@ -493,8 +610,8 @@ def swe_elevation_step_plot(rundate, prev_model_date, domain, raster, prev_raste
                      label=label, color=colors[i], linewidth=2)
 
     plt.xlabel("Elevation (m)")
-    plt.ylabel("Mean SWE (m)")
-    plt.title(f"SWE vs Elevation for {domain} — {prev_model_date} to {rundate}")
+    plt.ylabel(f"Mean {variable} ({unit})")
+    plt.title(f"{variable} vs Elevation for {domain} — {prev_model_date} to {rundate}")
     plt.legend()
     plt.grid(alpha=0.3)
     plt.tight_layout()
@@ -540,8 +657,8 @@ def swe_elevation_step_plot(rundate, prev_model_date, domain, raster, prev_raste
             plt.axhline(y=0, color='black', linestyle='--', linewidth=1, alpha=0.5)
 
             plt.xlabel("Elevation (m)")
-            plt.ylabel("SWE Difference (m)")
-            plt.title(f"SWE Difference vs Elevation for {domain} — {prev_model_date} to {rundate}")
+            plt.ylabel(f"{variable} Difference ({unit})")
+            plt.title(f"{variable} Difference vs Elevation for {domain} — {prev_model_date} to {rundate}")
             plt.legend()
             plt.grid(alpha=0.3)
             plt.tight_layout()
@@ -786,7 +903,7 @@ import matplotlib.colors as mcolors
 
 
 def create_aspect_comparison(aspect_path, raster, prev_raster,
-                                 label_1, label_2,
+                                 label_1, label_2, title, variable, unit,
                                  output_path=None, num_bins=16):
     """
     Create three-panel compass rose comparison of SWE by aspect.
@@ -914,12 +1031,12 @@ def create_aspect_comparison(aspect_path, raster, prev_raster,
     ax1.set_xticklabels(['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'],
                         fontsize=11, fontweight='bold')
     ax1.set_ylim(0, vmax_common * 1.1)
-    ax1.set_title(f'{label_2}\nMean SWE by Aspect', fontsize=13, fontweight='bold', pad=20)
+    ax1.set_title(f'{label_2}\nMean {variable} by Aspect', fontsize=13, fontweight='bold', pad=20)
 
     sm1 = plt.cm.ScalarMappable(cmap=cmap_blue, norm=norm1)
     sm1.set_array([])
     cbar1 = plt.colorbar(sm1, ax=ax1, pad=0.1, shrink=0.8)
-    cbar1.set_label('Mean SWE (m)', fontsize=11, fontweight='bold')
+    cbar1.set_label(f'Mean {variable} ({unit})', fontsize=11, fontweight='bold')
 
     # -------------------------------------------------------------------------
     # SUBPLOT 2: CURRENT Date (MIDDLE)
@@ -940,10 +1057,10 @@ def create_aspect_comparison(aspect_path, raster, prev_raster,
     ax2.set_xticklabels(['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'],
                         fontsize=11, fontweight='bold')
     ax2.set_ylim(0, vmax_common * 1.1)
-    ax2.set_title(f'{label_1}\nMean SWE by Aspect', fontsize=13, fontweight='bold', pad=20)
+    ax2.set_title(f'{label_1}\nMean {variable} by Aspect', fontsize=13, fontweight='bold', pad=20)
 
     cbar2 = plt.colorbar(sm1, ax=ax2, pad=0.1, shrink=0.8)
-    cbar2.set_label('Mean SWE (m)', fontsize=11, fontweight='bold')
+    cbar2.set_label(f'Mean {variable} ({unit})', fontsize=11, fontweight='bold')
 
     # -------------------------------------------------------------------------
     # SUBPLOT 3: Difference (Current - Previous) (RIGHT)
@@ -981,9 +1098,9 @@ def create_aspect_comparison(aspect_path, raster, prev_raster,
     sm3 = plt.cm.ScalarMappable(cmap=cmap3, norm=norm3)
     sm3.set_array([])
     cbar3 = plt.colorbar(sm3, ax=ax3, pad=0.1, shrink=0.8)
-    cbar3.set_label('Difference (m)', fontsize=11, fontweight='bold')
+    cbar3.set_label(f'Difference {variable}', fontsize=11, fontweight='bold')
 
-    plt.suptitle('SWE Distribution by Aspect', fontsize=16, fontweight='bold', y=1.02)
+    plt.suptitle(f'{title}', fontsize=16, fontweight='bold', y=1.02)
     plt.tight_layout()
 
     # Save
