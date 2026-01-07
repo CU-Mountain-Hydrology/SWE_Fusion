@@ -330,8 +330,11 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                 arcpy.env.mask = mask_path
                 arcpy.env.cellSize = p8_forBC
                 arcpy.env.snapRaster = p8_forBC
-                basinBound = ExtractByMask(mask_path, basinSHP)
-                basinBound.save(f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_msk.tif")
+                if os.path.exists(f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_msk.tif"):
+                    print('basin mask already exists')
+                else:
+                    basinBound = ExtractByMask(mask_path, basinSHP)
+                    basinBound.save(f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_msk.tif")
 
                 # Change all -1 to -0.999
                 newFracError = Con(Raster(fraErr_path) == -1, -0.999, Raster(fraErr_path))

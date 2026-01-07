@@ -545,7 +545,7 @@ def swe_elevation_step_plot(rundate, prev_model_date, domain, raster, prev_raste
             plt.legend()
             plt.grid(alpha=0.3)
             plt.tight_layout()
-            plt.savefig(output_png, dpi=300)
+            plt.savefig(f"{output_png[:-4]}_diff.png", dpi=300)
             plt.show()
 
 
@@ -636,7 +636,7 @@ def snowtrax_comparision(rundate, snowTrax_csv, results_WS, output_csv, model_li
     df = pd.read_csv(snowTrax_csv)
     df = df[['DATE', 'STATION_NAME', 'ASO_SWE_AF', 'ISNOBAL_DWR_SWE_AF', 'ISNOBAL_M3WORKS_SWE_AF',
              'SNODAS_SWE_AF', 'SNOW17_SWE_AF', 'SWANN_UA_SWE_AF']]
-    df['DATE'] = pd.to_datetime(df['DATE'], format='%m/%d/%Y %H:%M')
+    df['DATE'] = df['DATE'] = pd.to_datetime(df['DATE'], errors='coerce')
     df['DATE_formatted'] = df['DATE'].dt.strftime('%Y%m%d')
     print(df.head(5))
     print(df.columns)
