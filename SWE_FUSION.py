@@ -25,25 +25,25 @@ print(f"\n START TIME: {start}")
 ######################################
 ## date info
 user = "Olaf"
-year = "2026"
-rundate = "20260105"
-pillow_date = "05Jan2026"
-mean_date = "0105"
+year = "2025"
+rundate = "20250315"
+pillow_date = "15Mar2025"
+mean_date = "0315"
 prev_rundate = "20260101"
 
 # flags
-difference = "Y"
+difference = "N"
 biasCorrection = "N"
 surveys_use = "N"
 
 # model run information
 domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"]
-ChosenModelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport" ## TEMP
-model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens_testReport"
-model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
+ChosenModelRun = "RT_CanAdj_rcn_noSW_wCCR" ## TEMP
+model_wCCR = "RT_CanAdj_rcn_noSW_wCCR"
+model_woCCR = "fSCA_RT_CanAdj_rcn_noSW_woCCR"
 modelRuns = [model_woCCR, model_wCCR]
 model_labels = ["woCCR", "wCCR"]
-current_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
+current_model_run = "RT_CanAdj_rcn_noSW_wCCR"
 prev_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
 
 ######################################
@@ -166,9 +166,9 @@ Cellsize = "500"
 # os.makedirs(SNM_results_workspace + f"/{rundate}_results_ET", exist_ok=True)
 # print("\nResults directories made")
 #
-# os.makedirs(WW_reports_workspace + f"/{rundate}_RT_report_ET", exist_ok=True)
-# os.makedirs(SNM_reports_workspace + f"/{rundate}_RT_report_ET", exist_ok=True)
-# print("\nReports directories made")
+os.makedirs(WW_reports_workspace + f"/{rundate}_RT_report_ET", exist_ok=True)
+os.makedirs(SNM_reports_workspace + f"/{rundate}_RT_report_ET", exist_ok=True)
+print("\nReports directories made")
 #
 # print("\nRunning Vetting Codes")
 # # download surveys if requested
@@ -370,6 +370,7 @@ if difference == "Y":
             print('analyzing Sierras')
             prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/2026_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
             vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/2026_RT_Reports/{rundate}_RT_report_ET/{current_model_run}/vetting_domains/"
+            fSCA_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/2026_RT_Reports/{rundate}_RT_report_ET/"
             raster = vetting_WS + f"p8_{rundate}_noneg.tif"
             fSCA_raster = vetting_WS + f"SNM_fSCA_{rundate}_albn83.tif"
             prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg.tif"
@@ -385,6 +386,7 @@ if difference == "Y":
             print(f"analyzing {domain}")
             prev_vetting_WS = f"W:/documents/2026_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
             vetting_WS = f"W:/documents/2026_RT_Reports/{rundate}_RT_report_ET/{current_model_run}/vetting_domains/"
+            fSCA_vetting_WS = f"W:/documents/2026_RT_Reports/{rundate}_RT_report_ET/"
             raster = vetting_WS + f"p8_{rundate}_noneg_{domain}_clp.tif"
             fSCA_raster = f"{WW_results_workspace}/{rundate}_results_ET/{model_woCCR}/fSCA_{rundate}_albn83.tif"
             prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg_{domain}_clp.tif"
@@ -418,18 +420,18 @@ if difference == "Y":
 
         print('Creating box and whiskers plot...')
         raster_box_whisker_plot(rundate=rundate, prev_model_date=prev_rundate, raster=fSCA_raster, prev_raster=prev_fSCA_raster,
-                                domain=domain, variable="fSCA", unit="%", output_png=vetting_WS + f"{domain}_{rundate}_fSCA_box_whisker.png")
+                                domain=domain, variable="fSCA", unit="%", output_png=fSCA_vetting_WS + f"{domain}_{rundate}_fSCA_box_whisker.png")
 
         print('Creating elevation step plot...')
         swe_elevation_step_plot(rundate=rundate, prev_model_date=prev_rundate, domain=domain, raster=fSCA_raster, prev_raster=prev_fSCA_raster,
-                                output_png=vetting_WS + f"{domain}_{rundate}_fSCA_elevation_step.png",
+                                output_png=fSCA_vetting_WS + f"{domain}_{rundate}_fSCA_elevation_step.png",
                                 elevation_tif=elevation_tif,
                                 elev_bins=elev_bins, variable="fSCA", unit="%")
 
         print('Creating aspect compass...')
         create_aspect_comparison(aspect_path=aspect_path, raster=fSCA_raster, prev_raster=prev_fSCA_raster, label_1=rundate,
                              label_2=prev_rundate, title="Difference of fSCA", variable='fSCA', unit="%",
-                                 output_path=vetting_WS + f"{rundate}_{domain}_fSCA_aspect_comparison.png", num_bins=16)
+                                 output_path=fSCA_vetting_WS + f"{rundate}_{domain}_fSCA_aspect_comparison.png", num_bins=16)
 
 
 ## ERIC: prompt for best model run with sensor counts and % error

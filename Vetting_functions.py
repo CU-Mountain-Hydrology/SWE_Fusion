@@ -366,7 +366,13 @@ def pillow_date_comparison(rundate, prev_model_date, raster, point_dataset, prev
 
     # --- Top plot: paired SWE with color-coded markers ---
     for _, row in df.iterrows():
-        point_color = "blue" if row[swe_col] > row[f"prev_{swe_col}"] else "red"
+        # Determine color based on change
+        if row[swe_col] > row[f"prev_{swe_col}"]:
+            point_color = "blue"  # increase
+        elif row[swe_col] < row[f"prev_{swe_col}"]:
+            point_color = "red"   # decline
+        else:
+            point_color = "black" # no change
 
         # Plot both markers with the same color
         ax1.scatter(row[elev_col], row[swe_col], marker="s", color=point_color)
@@ -388,7 +394,10 @@ def pillow_date_comparison(rundate, prev_model_date, raster, point_dataset, prev
                label=f'{prev_model_date} (increase)'),
         Line2D([0], [0], marker='s', color='w', markerfacecolor='red', markersize=8, label=f'{rundate} (decline)'),
         Line2D([0], [0], marker='^', color='w', markerfacecolor='red', markersize=8,
-               label=f'{prev_model_date} (decline)')
+               label=f'{prev_model_date} (decline)'),
+        Line2D([0], [0], marker='s', color='w', markerfacecolor='black', markersize=8, label=f'{rundate} (no change)'),
+        Line2D([0], [0], marker='^', color='w', markerfacecolor='black', markersize=8,
+               label=f'{prev_model_date} (no change)')
     ]
     ax1.legend(handles=legend_elements)
 
@@ -407,30 +416,6 @@ def pillow_date_comparison(rundate, prev_model_date, raster, point_dataset, prev
     plt.show()
 
 ## create box and whiskers plots of the rasters before and after
-##############3
-#def
-# open raster
-
-# def raster_box_whisker_plot(rundate, prev_model_date, raster, prev_raster, domain, variable, unit, output_png):
-#     arr1 = read_raster_values(prev_raster)
-#     arr2 = read_raster_values(raster)
-#
-#     # optional: limit y-axis based on 99th percentile across both rasters
-#     upper = max(np.percentile(arr1, 99), np.percentile(arr2, 99))
-#
-#     # plot side-by-side
-#     plt.figure(figsize=(8, 6))
-#     plt.boxplot([arr1, arr2],
-#                 labels=[os.path.basename(prev_raster), os.path.basename(raster)],
-#                 patch_artist=True,
-#                 showfliers=True)
-#     plt.ylabel(f"{variable} ({unit})")
-#     plt.title(f"Comparison of {variable} Distributions {domain} | {prev_model_date} to {rundate}")
-#     plt.ylim(0, upper)
-#     plt.savefig(output_png)
-#     plt.show()
-
-
 def raster_box_whisker_plot(rundate, prev_model_date, raster, prev_raster, domain, variable, unit, output_png):
     """
     Create box plot with statistical annotations.
@@ -484,7 +469,7 @@ def raster_box_whisker_plot(rundate, prev_model_date, raster, prev_raster, domai
 
     # Safety check: ensure upper limit is reasonable
     if upper > 100:  # Adjust this threshold based on your expected SWE range
-        print(f"  ⚠ Warning: Upper limit ({upper:.2f}) seems high. Data may have outliers.")
+        print(f"Warning: Upper limit ({upper:.2f}) seems high. Data may have outliers.")
 
     # Limit figure height to prevent memory errors
     fig_height = min(7, max(5, upper / 100))  # Dynamically adjust but cap at 7
@@ -537,11 +522,11 @@ def raster_box_whisker_plot(rundate, prev_model_date, raster, prev_raster, domai
     # Save with error handling
     try:
         plt.savefig(output_png, dpi=300, bbox_inches='tight')
-        print(f"✓ Saved: {output_png}")
+        print(f"Saved: {output_png}")
     except Exception as e:
-        print(f"⚠ Warning: Could not save with tight bbox. Trying standard save...")
+        print(f"Warning: Could not save with tight bbox. Trying standard save...")
         plt.savefig(output_png, dpi=300)
-        print(f"✓ Saved: {output_png}")
+        print(f"Saved: {output_png}")
 
     plt.show()
     plt.close()
@@ -849,6 +834,11 @@ def snowtrax_comparision(rundate, snowTrax_csv, results_WS, output_csv, model_li
     width = 0.15
     positions = [i - (len(models_with_data) - 1) * width / 2 for i in x]
 
+    # Add alternating gray background shading for each basin
+    for i in range(len(filtered_df)):
+        if i % 2 == 0:  # Even indices get gray shading
+            ax1.axvspan(i - 0.5, i + 0.5, facecolor='lightgray', alpha=0.3, zorder=0)
+
     # Plot bars for each model
     for i, model in enumerate(models_with_data):
         offset = [p + i * width for p in positions]
@@ -870,6 +860,11 @@ def snowtrax_comparision(rundate, snowTrax_csv, results_WS, output_csv, model_li
 
     width_error = 0.35
     x_error = np.arange(len(filtered_df))
+
+    # Add alternating gray background shading for each basin
+    for i in range(len(filtered_df)):
+        if i % 2 == 0:  # Even indices get gray shading
+            ax2.axvspan(i - 0.5, i + 0.5, facecolor='lightgray', alpha=0.3, zorder=0)
 
     # Plot percent error bars
     bars1 = ax2.bar(x_error - width_error / 2, filtered_df['woCCR_pct_error'],
