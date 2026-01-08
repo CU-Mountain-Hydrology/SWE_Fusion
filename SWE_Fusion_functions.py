@@ -947,9 +947,9 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     prevRepWorkspace = workspaceBase + f"RT_report_data/{prev_report_date}_results/{prev_model_run}/"
 
     meanMask = outWorkspace + f"{mean_date}_mean_msk.tif"
-    MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.1.0_ops/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
+    # MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.1.0_ops/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
     MODSCAG_tif_plus_proj = outWorkspace + f"fSCA_{report_date}_albn83.tif"
-    # MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.0d/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
+    MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.0d/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
 
     ## project and clip SNODAS
     SNODASWorkspace = resultsWorkspace + "SNODAS/"
