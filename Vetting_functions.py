@@ -594,7 +594,7 @@ def swe_elevation_step_plot(rundate, prev_model_date, domain, raster, prev_raste
             plt.step(elev_centers, mean_swe, where='mid',
                      label=label, color=colors[i], linewidth=2)
 
-    plt.xlabel("Elevation (m)")
+    plt.xlabel("Elevation (ft)")
     plt.ylabel(f"Mean {variable} ({unit})")
     plt.title(f"{variable} vs Elevation for {domain} — {prev_model_date} to {rundate}")
     plt.legend()
@@ -641,7 +641,7 @@ def swe_elevation_step_plot(rundate, prev_model_date, domain, raster, prev_raste
             # Add a horizontal line at zero for reference
             plt.axhline(y=0, color='black', linestyle='--', linewidth=1, alpha=0.5)
 
-            plt.xlabel("Elevation (m)")
+            plt.xlabel("Elevation (ft)")
             plt.ylabel(f"{variable} Difference ({unit})")
             plt.title(f"{variable} Difference vs Elevation for {domain} — {prev_model_date} to {rundate}")
             plt.legend()
@@ -651,7 +651,7 @@ def swe_elevation_step_plot(rundate, prev_model_date, domain, raster, prev_raste
             plt.show()
 
 
-def filter_data_by_date(df, target_date, max_days_back=2):
+def filter_data_by_date(df, target_date, max_days_back=3):
     """
     Filter data for a specific date, using fallback dates if needed.
 

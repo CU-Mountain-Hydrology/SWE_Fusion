@@ -12,6 +12,7 @@ import time
 import rasterio
 from rasterio.merge import merge
 from datetime import datetime, timedelta
+import shutil
 
 def fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaWS, proj_in, snap_raster, extent, proj_out):
     """
@@ -59,7 +60,7 @@ def fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaW
 
         # NetCDF and output paths
         netCDF_list = [os.path.join(netCDF_WS, tile, str(current_year),
-                        f"SPIRES_NRT_{tile}_MOD09GA061_{yyyymmddd_str}_V1.0.nc")
+                        f"SPIRES_NRT_{tile}_MOD09GA061_{yyyymmddd_str}_V2.0.nc")
                        for tile in tile_list]
 
         outTIF_list = [os.path.join(out_intermediary, f"{tile}_Terra_{yyyymmddd_str}.v2024.0d.tif")
@@ -122,6 +123,12 @@ def fsca_processing_tif(start_date, end_date, netCDF_WS, tile_list, output_fscaW
 
         # Move to next day
         start_date += timedelta(days=1)
+
+        # # delete intermediary directories
+        # shutil.rmtree(out_intermediary)
+        # shutil.rmtree(out_files_mos)
+        # shutil.rmtree(out_projected)
+
 
 
 import arcpy
@@ -947,9 +954,9 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     prevRepWorkspace = workspaceBase + f"RT_report_data/{prev_report_date}_results/{prev_model_run}/"
 
     meanMask = outWorkspace + f"{mean_date}_mean_msk.tif"
-    # MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.1.0_ops/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
+    MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2025.0.1_ops/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
     MODSCAG_tif_plus_proj = outWorkspace + f"fSCA_{report_date}_albn83.tif"
-    MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.0d/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
+    # MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.0d/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
 
     ## project and clip SNODAS
     SNODASWorkspace = resultsWorkspace + "SNODAS/"
@@ -1504,7 +1511,7 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
     SWE_both = outWorkspace + f"SWE_{rundate}_both.tif"
 
     meanMask = outWorkspace + f"{mean_date}_mean_msk.tif"
-    MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.0d/NRT_FSCA_WW_N83/{year}/{rundate}.tif"
+    MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2025.0.1_ops/NRT_FSCA_WW_N83/{year}/{rundate}.tif"
     MODSCAG_tif_plus_proj_WW = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"fSCA_{rundate}_albn83.tif"
     MODSCAG_tif_plus_proj = outWorkspace + f"SNM_fSCA_{rundate}_albn83.tif"
 

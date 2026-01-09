@@ -25,26 +25,26 @@ print(f"\n START TIME: {start}")
 ######################################
 ## date info
 user = "Olaf"
-year = "2025"
-rundate = "20250402"
-pillow_date = "02Apr2025"
-mean_date = "0402"
-prev_rundate = "20250315"
+year = 2026
+rundate = "20260107"
+pillow_date = "07Jan2026"
+mean_date = "0107"
+prev_rundate = "20260101"
 
 # flags
 difference = "Y"
-biasCorrection = "Y"
+biasCorrection = "N"
 surveys_use = "N"
 
 # model run information
 domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"]
-ChosenModelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport" ## TEMP
-model_wCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
-model_woCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens_testReport"
+ChosenModelRun = "RT_CanAdj_rcn_wCCR_nofscamskSens" ## TEMP
+model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
+model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens"
 modelRuns = [model_woCCR, model_wCCR]
 model_labels = ["woCCR", "wCCR"]
-current_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
-prev_model_run = "RT_CanAdj_rcn_noSW_wCCR"
+current_model_run = "RT_CanAdj_rcn_wCCR_nofscamskSens"
+prev_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens"
 
 ######################################
 # VETTING VARIABLES
@@ -53,7 +53,7 @@ prev_model_run = "RT_CanAdj_rcn_noSW_wCCR"
 aso_snotel_data = r"W:/Spatial_SWE/ASO/2025/data_testing/ASO_SNOTEL_DifferenceStats.csv"
 currentYear = True
 # current_year = datetime.now().year
-year = 2025
+# year = 2026
 methods = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
 grade = "positive"
 grade_range = False
@@ -61,10 +61,10 @@ grade_amount = -10
 sensorTrend = "Mixed"
 SNOTEL = "Decreasing"
 output_csv = "Y"
-csv_outFile = r"W:/Spatial_SWE/ASO/2025/data_testing/FracError_data_test.csv"
-asoCatalog = r"W:/Spatial_SWE/ASO/2025/data_testing/ASO_SNOTEL_DifferenceStats.csv"
+csv_outFile = fr"W:/Spatial_SWE/ASO/{year}/data_testing/FracError_data_test.csv"
+asoCatalog = fr"W:/Spatial_SWE/ASO/{year}/data_testing/ASO_SNOTEL_DifferenceStats.csv"
 basin_List = r"W:/Spatial_SWE/ASO/ASO_Metadata/ASO_in_Basin.txt"
-fracErrorWorkspace = "W:/Spatial_SWE/ASO/2025/data_testing/"
+fracErrorWorkspace = f"W:/Spatial_SWE/ASO/{year}/data_testing/"
 domain_textFile = r"M:\SWE\WestWide\Spatial_SWE\ASO\ASO_Metadata\State_Basin.txt"
 SNM_shapefile_workspace = "M:/SWE/WestWide/data/hydro/SNM/Basin_Shapefiles/"
 WW_shapefile_workspace = "M:/SWE/WestWide/data/hydro/WW/ASO_Basin_Shapefiles/"
@@ -294,8 +294,8 @@ for modelRun in modelRuns:
 
             # fsca variables
             fSCA_raster = f"{SNM_results_workspace}/{rundate}_results_ET/{model_woCCR}/SNM_fSCA_{rundate}_albn83.tif"
-            prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/2026_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
-            vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/2025_RT_Reports/{rundate}_RT_report_ET/{current_model_run}/vetting_domains/"
+            prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
+            vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/{current_model_run}/vetting_domains/"
             prev_raster = prev_vetting_WS + f"SNM_fSCA_{prev_rundate}_albn83.tif"
 
             # move p8 to vetting space
@@ -368,9 +368,9 @@ if difference == "Y":
 
         if domain == "SNM":
             print('analyzing Sierras')
-            prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/2026_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
-            vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/2025_RT_Reports/{rundate}_RT_report_ET/{current_model_run}/vetting_domains/"
-            fSCA_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/2025_RT_Reports/{rundate}_RT_report_ET/"
+            prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
+            vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/{current_model_run}/vetting_domains/"
+            fSCA_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/"
             raster = vetting_WS + f"p8_{rundate}_noneg.tif"
             fSCA_raster = vetting_WS + f"SNM_fSCA_{rundate}_albn83.tif"
             prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg.tif"
@@ -384,9 +384,9 @@ if difference == "Y":
 
         else:
             print(f"analyzing {domain}")
-            prev_vetting_WS = f"W:/documents/2026_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
-            vetting_WS = f"W:/documents/2025_RT_Reports/{rundate}_RT_report_ET/{current_model_run}/vetting_domains/"
-            fSCA_vetting_WS = f"W:/documents/2025_RT_Reports/{rundate}_RT_report_ET/"
+            prev_vetting_WS = f"W:/documents/{year}_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
+            vetting_WS = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report_ET/{current_model_run}/vetting_domains/"
+            fSCA_vetting_WS = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report_ET/"
             raster = vetting_WS + f"p8_{rundate}_noneg_{domain}_clp.tif"
             fSCA_raster = f"{WW_results_workspace}/{rundate}_results_ET/{model_woCCR}/fSCA_{rundate}_albn83.tif"
             prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg_{domain}_clp.tif"
@@ -440,8 +440,8 @@ if difference == "Y":
 
 # ASO Bias correction
 
-regions = ["SNM", "WW"]
-regions_full = ["Sierras", "WestWide"]
+# regions = ["SNM", "WW"]
+# regions_full = ["Sierras", "WestWide"]
 if biasCorrection == "Y":
 
     out_csv = rf"W:/Spatial_SWE/ASO/ASO_Metadata/{rundate}_ASO_biasCorrection_stats.csv"
@@ -460,7 +460,6 @@ if biasCorrection == "Y":
         bias_correct(WW_results_workspace + f"{rundate}_results_ET/", domain="WW", ModelRun=ChosenModelRun, method=method, rundate=rundate, results_df=results_df, shapefile_workspace=WW_shapefile_workspace)
 
     # got through methods to find the best version for vetting
-    # folder = r"W:\Spatial_SWE\WW_regression\RT_report_data\20250503_results_ET\ASO_BiasCorrect_fSCA_RT_CanAdj_rcn_noSW_woCCR/"
     prefix = rundate
     unique_names = set()  # use a set to keep unique values
     file_mapping = {}
@@ -485,9 +484,9 @@ if biasCorrection == "Y":
             print(f"  {f}")
 
     control_raster_WW = rf"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/{ChosenModelRun}/p8_{rundate}_noneg.tif"
-    os.makedirs(f"J:/paperwork/0_UCSB_DWR_Project/2025_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/",
+    os.makedirs(f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/",
         exist_ok=True)
-    WW_out_csv_vetting = f"J:/paperwork/0_UCSB_DWR_Project/2025_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_ASO_error_stats.csv"
+    WW_out_csv_vetting = f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_ASO_error_stats.csv"
     for method in methods:
         print(f"\nMethod: {method}"'')
         BC_path = rf"W:\Spatial_SWE\WW_regression\RT_report_data\{rundate}_results_ET\ASO_BiasCorrect_{ChosenModelRun}/{method}/"
@@ -533,8 +532,8 @@ if biasCorrection == "Y":
 
     methods = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
     control_raster_SNM = rf"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/{ChosenModelRun}/p8_{rundate}_noneg.tif"
-    os.makedirs(f"J:/paperwork/0_UCSB_DWR_Project/2025_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/", exist_ok=True)
-    SNM_out_csv_vetting = f"J:/paperwork/0_UCSB_DWR_Project/2025_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_ASO_error_stats.csv"
+    os.makedirs(f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/", exist_ok=True)
+    SNM_out_csv_vetting = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_ASO_error_stats.csv"
     for method in methods:
         print(f"\nMethod: {method}"'')
         BC_path = folder + f"/{method}/"
