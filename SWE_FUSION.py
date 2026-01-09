@@ -26,13 +26,13 @@ print(f"\n START TIME: {start}")
 ## date info
 user = "Olaf"
 year = 2026
-rundate = "20260107"
-pillow_date = "07Jan2026"
-mean_date = "0107"
+rundate = "20260108"
+pillow_date = "08Jan2026"
+mean_date = "0108"
 prev_rundate = "20260101"
 
 # flags
-difference = "Y"
+difference = "Y" # should be Y if you want to compare against a previous model run
 biasCorrection = "N"
 surveys_use = "N"
 
@@ -279,7 +279,7 @@ tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_
 # clear memory
 clear_arcpy_locks()
 sleep(30)
-
+################ START VETTING ######################
 # loop through domains
 for modelRun in modelRuns:
     for domain in domainList:
@@ -361,6 +361,9 @@ for modelRun in modelRuns:
             model_domain_vetting(raster=raster, point=sensors_WW, swe_col=swe_col_sens, id_col=id_col_sens, rundate=rundate, domain=domain,
                                  modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_sensors_error.csv")
 
+#####
+ # PROMPT TO PICK THE BEST ERROR FROM THE CSV
+
 if difference == "Y":
     print("Running Plots...")
 
@@ -378,9 +381,9 @@ if difference == "Y":
             point_dataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{rundate}_results_ET\SNM_{rundate}_sensors_albn83.shp"
             prev_pointDataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{prev_rundate}_results_ET\SNM_{prev_rundate}_sensors_albn83.shp"
 
-            snowtrax_comparision(rundate=rundate, snowTrax_csv=snowTrax_csv, results_WS=SNM_results_workspace,
-                                 output_csv=vetting_WS + f"{rundate}_snowtrax_comparison.csv", model_list=modelRuns, model_labels=model_labels, reference_col="SNOW17_SWE_AF",
-                                 output_png = vetting_WS + f"{rundate}_snowtrax_comparison.png")
+            # snowtrax_comparision(rundate=rundate, snowTrax_csv=snowTrax_csv, results_WS=SNM_results_workspace,
+            #                      output_csv=vetting_WS + f"{rundate}_snowtrax_comparison.csv", model_list=modelRuns, model_labels=model_labels, reference_col="SNOW17_SWE_AF",
+            #                      output_png = vetting_WS + f"{rundate}_snowtrax_comparison.png")
 
         else:
             print(f"analyzing {domain}")
