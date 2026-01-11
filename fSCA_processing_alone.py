@@ -4,8 +4,10 @@ import datetime as dt
 import shutil
 from SWE_Fusion_functions import *
 
-start_date = datetime(2026, 1, 6)
-end_date = datetime(2026, 1, 7)
+start_date = datetime(2026, 1, 8)
+end_date = datetime(2026, 1, 8)
+dateList = ["0108"]
+##############
 netCDF_WS = "H:/WestUS_Data/Rittger_data/fsca_v2025.0.1_ops/NRT_NetCDFs/netcdf/"
 tile_list = ['h08v04', 'h08v05', 'h09v04', 'h09v05', 'h10v04']
 output_fscaWS = "H:/WestUS_Data/Rittger_data/fsca_v2025.0.1_ops/NRT_FSCA_WW_N83/"
@@ -16,7 +18,6 @@ extent = rf"M:/SWE/WestWide/data/boundaries/Margulis_domain_geon83.shp"
 proj_out = arcpy.SpatialReference(4269)
 start_year = 2000
 end_year =  2025
-dateList = ["0107"]
 input_workspace = f"H:/WestUS_Data/Regress_SWE/HistoricalDaily_mask/"
 output_folder = "W:/Spatial_SWE/WW_regression/mean_2000_2025_WY26_glacMask/"
 
