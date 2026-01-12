@@ -25,15 +25,15 @@ print(f"\n START TIME: {start}")
 ######################################
 ## date info
 user = "Olaf"
-year = 2026
-rundate = "20260108"
-pillow_date = "08Jan2026"
-mean_date = "0108"
+year = 2025
+rundate = "20250402"
+pillow_date = "02Apr2025"
+mean_date = "0402"
 prev_rundate = "20260101"
 
 # flags
-difference = "Y" # should be Y if you want to compare against a previous model run
-biasCorrection = "N"
+difference = "N" # should be Y if you want to compare against a previous model run
+biasCorrection = "Y"
 surveys_use = "N"
 
 # model run information
