@@ -1225,3 +1225,79 @@ def plot_rasters_side_by_side(
     plt.close()
 
     print(f"Saved raster visualization: {output_png}")
+
+
+def aso_choice_and_mosaic(rundate, aso_error_csv, error_metric, aso_region, bias_correction_workspace, snapRaster,
+                          control_raster):
+    # make mosaic workspace
+    arcpy.env.snapRaster = snapRaster
+    arcpy.env.extent = snapRaster
+    arcpy.env.cellSize = snapRaster
+
+    # get csv
+
+    aso_df = pd.read_csv(aso_error_csv)
+
+    # make directory
+    os.makedirs(bias_correction_workspace + "final_mosaic", exist_ok=True)
+    mosaics_WS = bias_correction_workspace + "final_mosaic/"
+
+    # isolate based on domain (SNM or WW)
+    aso_df = aso_df[aso_df["Domain"] == aso_region]
+
+    # get unique values for the domains
+    basins = aso_df["Basin"].unique()
+
+    # figure out which method has the lowest
+    idx = aso_df.groupby("Basin")[error_metric].idxmin()
+    best_df = aso_df.loc[idx]
+
+    # output csv
+    chosen_methods_csv = os.path.join(bias_correction_workspace, f"{aso_region}_best_methods_{rundate}.csv")
+    best_df_to_save = best_df[['Basin', 'Method', error_metric]].copy()
+    best_df_to_save = best_df_to_save.rename(columns={'Method': 'Chosen_Method'})
+    best_df_to_save.to_csv(chosen_methods_csv, index=False)
+    print(f"Saved chosen methods per basin to: {chosen_methods_csv}")
+
+    basin_metric_to_method = {
+        (row["Basin"], error_metric): row["Method"]
+        for _, row in best_df.iterrows()
+    }
+
+    print(basin_metric_to_method)
+    for (basin, metric), method in basin_metric_to_method.items():
+        print(f"Basin: {basin}")
+        print(f"Best Method: {method}")
+
+        if not method == "CONTROL":
+            # search for folder
+
+            method_files = os.listdir(bias_correction_workspace + f"{method}/")
+            for file in method_files:
+                if file.startswith(f"{rundate}_{basin}") and file.endswith("BC_fix_albn83.tif"):
+                    print(f"Moving {file} to {mosaics_WS}")
+                    arcpy.CopyRaster_management(bias_correction_workspace + f"{method}/" + file, mosaics_WS + file)
+
+    # mosaic all files in folder
+    rasters = []
+    for raster in os.listdir(mosaics_WS):
+        if raster.endswith(".tif"):
+            rasters.append(mosaics_WS + raster)
+
+    arcpy.env.snapRaster = snapRaster
+    arcpy.env.extent = snapRaster
+    arcpy.env.cellSize = snapRaster
+    arcpy.management.MosaicToNewRaster(
+        input_rasters=rasters,
+        output_location=mosaics_WS,
+        raster_dataset_name_with_extension="SNM_final_ASO_bias_correction.tif",
+        pixel_type="32_BIT_FLOAT",
+        number_of_bands=1,
+        mosaic_method="LAST",
+        mosaic_colormap_mode="FIRST"
+    )
+
+    # do a Con Is Null
+    final_mos = Con(IsNull(Raster(mosaics_WS + "SNM_final_ASO_bias_correction.tif")), Raster(control_raster),
+                    Raster(mosaics_WS + "SNM_final_ASO_bias_correction.tif"))
+    final_mos.save(mosaics_WS + f"p8_{rundate}_noneg.tif")

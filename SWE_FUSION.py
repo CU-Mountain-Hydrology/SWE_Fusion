@@ -450,14 +450,14 @@ if biasCorrection == "Y":
     # BIAS CORRECTION CODE FOR WW
     #################################
     for method in methods:
-        print(f"\nprocessing method:", method)
+        print(f"\nProcessing method:", method)
         bias_correct(WW_results_workspace + f"{rundate}_results_ET/", domain="WW", ModelRun=ChosenModelRun, method=method, rundate=rundate, results_df=results_df, shapefile_workspace=WW_shapefile_workspace)
 
     # got through methods to find the best version for vetting
     prefix = rundate
     unique_names = set()  # use a set to keep unique values
     file_mapping = {}
-    for root, dirs, files in os.walk(rf"W:\Spatial_SWE\WW_regression\RT_report_data\{rundate}_results_ET\ASO_BiasCorrect_{ChosenModelRun}/"):
+    for root, dirs, files in os.walk(rf"W:/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/"):
         for file in files:
             if file.startswith(prefix):
 
@@ -478,12 +478,13 @@ if biasCorrection == "Y":
             print(f"  {f}")
 
     control_raster_WW = rf"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/{ChosenModelRun}/p8_{rundate}_noneg.tif"
-    os.makedirs(f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/",
+    os.makedirs(f"W:/documents/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/",
         exist_ok=True)
-    WW_out_csv_vetting = f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_ASO_error_stats.csv"
+
+    WW_out_csv_vetting = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_ASO_error_stats.csv"
     for method in methods:
         print(f"\nMethod: {method}"'')
-        BC_path = rf"W:\Spatial_SWE\WW_regression\RT_report_data\{rundate}_results_ET\ASO_BiasCorrect_{ChosenModelRun}/{method}/"
+        BC_path = rf"W:/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/{method}/"
         for name in unique_names:
             print(f"Name: {name}")
             raster = BC_path + f"{name}_{method}_BC_fix_albn83.tif"
@@ -494,12 +495,13 @@ if biasCorrection == "Y":
 
     # figures and vetting
     df = pd.read_csv(WW_out_csv_vetting)
-    aso_df = df[df["Domain"] == "SNM"]
+    aso_df = df[df["Domain"] == "WW"]
 
     # get a list of unique values
     basins_bc = aso_df["Basin"].unique()
 
     for basin in basins_bc:
+        print(basin)
         file_paths = []
         labels = []
 
@@ -546,7 +548,7 @@ if biasCorrection == "Y":
             titles=labels,
             variable="SWE",
             unit="mm",
-            output_png=f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_{basin}_SWE_maps.png"
+            output_png=f"W:/documents/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_{basin}_SWE_maps.png"
         )
 
     #################################
@@ -656,6 +658,16 @@ if biasCorrection == "Y":
         )
 
     ## pick the best file
+    print("\n Choosing and mosaic for WW...")
+    aso_choice_and_mosaic(rundate=rundate, aso_error_csv=WW_out_csv_vetting, error_metric="MAE", aso_region="WW",
+                          bias_correction_workspace=f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/",
+                          snapRaster=snapRaster_albn83, control_raster=f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/p8_{rundate}_noneg.tif")
+
+    print("\n Choosing and mosaic for SNM...")
+    aso_choice_and_mosaic(rundate=rundate, aso_error_csv=SNM_out_csv_vetting, error_metric="MAE", aso_region="SNM",
+                          bias_correction_workspace=f"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/",
+                          snapRaster=snapRaster_albn83,
+                          control_raster=f"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/p8_{rundate}_noneg.tif")
 
 
 # Run vetting code
