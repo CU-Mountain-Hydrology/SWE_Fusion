@@ -653,86 +653,32 @@ def swe_elevation_step_plot(rundate, prev_model_date, domain, raster, prev_raste
             plt.show()
 
 
-def filter_data_by_date(df, target_date, max_days_back=3):
+def filter_data_by_date(df, rundate, max_days_back=2):
     """
-    Filter data for a specific date, using fallback dates if needed.
-
-    Parameters:
-    -----------
-    df : pd.DataFrame
-        DataFrame with DATE column already parsed
-    target_date : str
-        Target date in format 'YYYYMMDD'
-    max_days_back : int
-        Maximum number of days to look back (default: 2)
-
-    Returns:
-    --------
-    pd.DataFrame
-        Filtered dataframe with one row per station/basin
+    For each station, select the most recent available data
+    on or before rundate, up to max_days_back.
     """
 
-    # Convert target_date to datetime
-    target_dt = pd.to_datetime(target_date, format='%Y%m%d')
+    rundate = pd.to_datetime(rundate)
+    df = df.copy()
 
-    print(f"\n{'=' * 70}")
-    print(f"TARGET DATE: {target_dt.strftime('%Y-%m-%d')} ({target_date})")
-    print(f"LOOKBACK WINDOW: {max_days_back} days")
-    print(f"{'=' * 70}\n")
+    # Only keep dates within allowed window
+    df = df[
+        (df["DATE"] <= rundate) &
+        (df["DATE"] >= rundate - pd.Timedelta(days=max_days_back))
+    ]
 
-    # Get unique stations/basins
-    stations = df['STATION_NAME'].unique()
-    print(f"Processing {len(stations)} stations/basins\n")
+    if df.empty:
+        return df
 
-    # List of model columns
-    model_cols = ['ASO_SWE_AF', 'ISNOBAL_DWR_SWE_AF', 'ISNOBAL_M3WORKS_SWE_AF',
-                  'SNODAS_SWE_AF', 'SNOW17_SWE_AF', 'SWANN_UA_SWE_AF']
+    # Sort so newest date is first
+    df = df.sort_values(["STATION_NAME", "DATE"], ascending=[True, False])
 
-    result_rows = []
+    # Keep the most recent row per station
+    df_latest = df.groupby("STATION_NAME", as_index=False).first()
+    df_latest["DAYS_BACK"] = (rundate - df_latest["DATE"]).dt.days
 
-    # For each station, find the best matching date
-    for station in stations:
-        station_df = df[df['STATION_NAME'] == station].copy()
-
-        # Try exact date match first
-        exact_match = station_df[station_df['DATE'] == target_dt]
-
-        if len(exact_match) > 0:
-            result_rows.append(exact_match.iloc[0])
-            print(f"✓ {station:40} Exact date ({target_dt.strftime('%Y-%m-%d')})")
-        else:
-            # Look for fallback within window
-            date_range_start = target_dt - timedelta(days=max_days_back)
-
-            fallback_matches = station_df[
-                (station_df['DATE'] >= date_range_start) &
-                (station_df['DATE'] <= target_dt)
-                ].sort_values('DATE', ascending=False)
-
-            if len(fallback_matches) > 0:
-                best_match = fallback_matches.iloc[0]
-                result_rows.append(best_match)
-                days_diff = (target_dt - best_match['DATE']).days
-                print(f"{station:40} Fallback ({best_match['DATE'].strftime('%Y-%m-%d')}, -{days_diff}d)")
-            else:
-                print(f"{station:40} EXCLUDED (no data within {max_days_back} days)")
-
-    # Create result dataframe
-    if result_rows:
-        result_df = pd.DataFrame(result_rows)
-
-        print(f"\n{'=' * 70}")
-        print(f"SUMMARY:")
-        print(f"  Total stations processed: {len(stations)}")
-        print(f"  Stations included:        {len(result_df)}")
-        print(f"  Stations excluded:        {len(stations) - len(result_df)}")
-        print(f"{'=' * 70}\n")
-
-        return result_df
-    else:
-        print("\nNo stations found with data in the specified window")
-        return pd.DataFrame()
-
+    return df_latest
 
 def snowtrax_comparision(rundate, snowTrax_csv, results_WS, output_csv, model_list, model_labels, reference_col,
                          output_png):

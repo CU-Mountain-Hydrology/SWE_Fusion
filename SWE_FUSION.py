@@ -38,13 +38,13 @@ surveys_use = "N"
 
 # model run information
 domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"]
-ChosenModelRun = "RT_CanAdj_rcn_wCCR_nofscamskSens" ## TEMP
-model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
-model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens"
+ChosenModelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport" ## TEMP
+model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens_testReport"
+model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
 modelRuns = [model_woCCR, model_wCCR]
 model_labels = ["woCCR", "wCCR"]
-current_model_run = "RT_CanAdj_rcn_wCCR_nofscamskSens"
-prev_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens"
+current_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
+prev_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
 
 ######################################
 # VETTING VARIABLES
@@ -434,8 +434,8 @@ if difference == "Y":
 
 
 ## ERIC: prompt for best model run with sensor counts and % error
-
-
+sensors_SNM = SNM_results_workspace + f"{rundate}_results_ET/SNM_{rundate}_sensors_albn83.shp"
+sensors_WW = WW_results_workspace + f"{rundate}_results_ET/{rundate}_sensors_albn83.shp"
 if biasCorrection == "Y":
 
     out_csv = rf"W:/Spatial_SWE/ASO/ASO_Metadata/{rundate}_ASO_biasCorrection_stats.csv"
@@ -504,17 +504,17 @@ if biasCorrection == "Y":
         labels = []
 
         # get control file
-        control_list = os.listdir(f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/")
+        control_list = os.listdir(f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/")
         for file in control_list:
             if file.startswith(f"{rundate}_{basin}") and file.endswith("Control_clp.tif"):
-                file_paths.append(f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/" + file)
+                file_paths.append(f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/" + file)
                 labels.append("Control")
 
         # get bias corrected
         for method in methods:
-            for bc_file in os.listdir(f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/" + f"{method}/"):
+            for bc_file in os.listdir(f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/" + f"{method}/"):
                 if bc_file.startswith(f"{rundate}_{basin}") and bc_file.endswith(f"{method}_BC_fix_albn83.tif"):
-                    file_paths.append(f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/" + f"{method}/{bc_file}")
+                    file_paths.append(f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/" + f"{method}/{bc_file}")
                     labels.append(method)
 
         # get metadata
@@ -525,7 +525,7 @@ if biasCorrection == "Y":
             print("Skipping — not enough rasters")
             continue
 
-        output_png = f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_{basin}_SWE_boxplot.png"
+        output_png = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_{basin}_SWE_boxplot.png"
 
         raster_box_whisker_plot_multi(
             rundate=rundate,
@@ -546,7 +546,7 @@ if biasCorrection == "Y":
             titles=labels,
             variable="SWE",
             unit="mm",
-            output_png=f"{f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/"}/{rundate}_{basin}_SWE_maps.png"
+            output_png=f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_{basin}_SWE_maps.png"
         )
 
     #################################
@@ -610,17 +610,17 @@ if biasCorrection == "Y":
         labels = []
 
         # get control file
-        control_list = os.listdir(f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/")
+        control_list = os.listdir(f"J:/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/")
         for file in control_list:
             if file.startswith(f"{rundate}_{basin}") and file.endswith("Control_clp.tif"):
-                file_paths.append(f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/" + file)
+                file_paths.append(f"J:/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/" + file)
                 labels.append("Control")
 
         # get bias corrected
         for method in methods:
-            for bc_file in os.listdir(f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/" + f"{method}/"):
+            for bc_file in os.listdir(f"J:/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/{method}"):
                 if bc_file.startswith(f"{rundate}_{basin}") and bc_file.endswith(f"{method}_BC_fix_albn83.tif"):
-                    file_paths.append(f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/" + f"{method}/{bc_file}")
+                    file_paths.append(f"J:/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/" + f"{method}/{bc_file}")
                     labels.append(method)
 
         # get metadata
@@ -652,8 +652,10 @@ if biasCorrection == "Y":
             titles=labels,
             variable="SWE",
             unit="mm",
-            output_png=f"{f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/"}/{rundate}_{basin}_SWE_maps.png"
+            output_png=f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_{basin}_SWE_maps.png"
         )
+
+    ## pick the best file
 
 
 # Run vetting code
