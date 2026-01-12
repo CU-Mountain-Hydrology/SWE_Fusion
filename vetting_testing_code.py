@@ -36,7 +36,7 @@ import rasterio
 import arcpy
 from arcpy.sa import ExtractByMask
 
-def bias_correction_vetting(raster, point, swe_col, id_col, rundate, name, method, out_csv, folder, control_raster=None):
+def bias_correction_vetting(raster, point, domain, swe_col, id_col, rundate, name, method, out_csv, folder, control_raster=None):
     """
     Process a raster, compute SWE statistics, and optionally update CSV.
 
@@ -115,6 +115,7 @@ def bias_correction_vetting(raster, point, swe_col, id_col, rundate, name, metho
     error_frame = {
         'rundate': rundate,
         'Basin': name.split("_")[1],
+        'Domain': domain,
         'Method': method,
         'Avg.Perc.Error': avg_percent_error,
         'Avg.Abs.Perc.Error': avg_abs_percent_error,

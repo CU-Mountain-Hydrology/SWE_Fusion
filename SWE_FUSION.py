@@ -489,8 +489,65 @@ if biasCorrection == "Y":
             raster = BC_path + f"{name}_{method}_BC_fix_albn83.tif"
 
             if os.path.exists(raster):
-                bias_correction_vetting(raster=raster, point=sensors_WW, swe_col="pillowswe", id_col="Site_ID", rundate=rundate,
+                bias_correction_vetting(raster=raster, point=sensors_WW, domain="WW", swe_col="pillowswe", id_col="Site_ID", rundate=rundate,
                     name=name, method=method, out_csv=WW_out_csv_vetting, folder=BC_path, control_raster=control_raster_WW)
+
+    # figures and vetting
+    df = pd.read_csv(WW_out_csv_vetting)
+    aso_df = df[df["Domain"] == "SNM"]
+
+    # get a list of unique values
+    basins_bc = aso_df["Basin"].unique()
+
+    for basin in basins_bc:
+        file_paths = []
+        labels = []
+
+        # get control file
+        control_list = os.listdir(f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/")
+        for file in control_list:
+            if file.startswith(f"{rundate}_{basin}") and file.endswith("Control_clp.tif"):
+                file_paths.append(f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/" + file)
+                labels.append("Control")
+
+        # get bias corrected
+        for method in methods:
+            for bc_file in os.listdir(f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/" + f"{method}/"):
+                if bc_file.startswith(f"{rundate}_{basin}") and bc_file.endswith(f"{method}_BC_fix_albn83.tif"):
+                    file_paths.append(f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/" + f"{method}/{bc_file}")
+                    labels.append(method)
+
+        # get metadata
+        print(len(file_paths))
+
+        # get box and whiskers plot
+        if len(file_paths) < 2:
+            print("Skipping — not enough rasters")
+            continue
+
+        output_png = f"W:/documents/{year}_RT_Reports/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_{basin}_SWE_boxplot.png"
+
+        raster_box_whisker_plot_multi(
+            rundate=rundate,
+            raster_paths=file_paths,
+            labels=labels,
+            domain=basin,
+            variable="SWE",
+            unit="m",
+            output_png=output_png
+        )
+        # plot rasters
+        titles = ["CONTROL"] + methods[:len(file_paths) - 1]
+
+        plot_rasters_side_by_side(
+            rundate=rundate,
+            basin=basin ,
+            raster_paths=file_paths,
+            titles=labels,
+            variable="SWE",
+            unit="mm",
+            output_png=f"{f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/"}/{rundate}_{basin}_SWE_maps.png"
+        )
 
     #################################
     # BIAS CORRECTION CODE FOR SNM
@@ -536,10 +593,67 @@ if biasCorrection == "Y":
             raster = BC_path + f"{name}_{method}_BC_fix_albn83.tif"
 
             if os.path.exists(raster):
-                bias_correction_vetting(raster=raster, point=sensors_SNM, swe_col="pillowswe", id_col="Site_ID",
+                bias_correction_vetting(raster=raster, point=sensors_SNM, domain="SNM", swe_col="pillowswe", id_col="Site_ID",
                                         rundate=rundate,
                                         name=name, method=method, out_csv=SNM_out_csv_vetting, folder=rf"J:/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/",
                                         control_raster=control_raster_SNM)
+
+    # figures and vetting
+    df = pd.read_csv(SNM_out_csv_vetting)
+    aso_df = df[df["Domain"] == "SNM"]
+
+    # get a list of unique values
+    basins_bc = aso_df["Basin"].unique()
+
+    for basin in basins_bc:
+        file_paths = []
+        labels = []
+
+        # get control file
+        control_list = os.listdir(f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/")
+        for file in control_list:
+            if file.startswith(f"{rundate}_{basin}") and file.endswith("Control_clp.tif"):
+                file_paths.append(f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/" + file)
+                labels.append("Control")
+
+        # get bias corrected
+        for method in methods:
+            for bc_file in os.listdir(f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/" + f"{method}/"):
+                if bc_file.startswith(f"{rundate}_{basin}") and bc_file.endswith(f"{method}_BC_fix_albn83.tif"):
+                    file_paths.append(f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/" + f"{method}/{bc_file}")
+                    labels.append(method)
+
+        # get metadata
+        print(len(file_paths))
+
+        # get box and whiskers plot
+        if len(file_paths) < 2:
+            print("Skipping — not enough rasters")
+            continue
+
+        output_png = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/{rundate}_{basin}_SWE_boxplot.png"
+
+        raster_box_whisker_plot_multi(
+            rundate=rundate,
+            raster_paths=file_paths,
+            labels=labels,
+            domain=basin,
+            variable="SWE",
+            unit="m",
+            output_png=output_png
+        )
+        # plot rasters
+        titles = ["CONTROL"] + methods[:len(file_paths) - 1]
+
+        plot_rasters_side_by_side(
+            rundate=rundate,
+            basin=basin ,
+            raster_paths=file_paths,
+            titles=labels,
+            variable="SWE",
+            unit="mm",
+            output_png=f"{f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun}/"}/{rundate}_{basin}_SWE_maps.png"
+        )
 
 
 # Run vetting code

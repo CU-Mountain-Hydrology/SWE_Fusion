@@ -84,7 +84,7 @@ import rasterio
 import arcpy
 from arcpy.sa import ExtractByMask
 
-def bias_correction_vetting(raster, point, swe_col, id_col, rundate, name, method, out_csv, folder, control_raster=None):
+def bias_correction_vetting(raster, point, domain, swe_col, id_col, rundate, name, method, out_csv, folder, control_raster=None):
     """
     Process a raster, compute SWE statistics, and optionally update CSV.
 
@@ -163,6 +163,7 @@ def bias_correction_vetting(raster, point, swe_col, id_col, rundate, name, metho
     error_frame = {
         'rundate': rundate,
         'Basin': name.split("_")[1],
+        'Domain': domain,
         'Method': method,
         'Avg.Perc.Error': avg_percent_error,
         'Avg.Abs.Perc.Error': avg_abs_percent_error,
@@ -220,6 +221,7 @@ def bias_correction_vetting(raster, point, swe_col, id_col, rundate, name, metho
             error_frame = {
                 'rundate': rundate,
                 'Basin': name.split("_")[1],
+                'Domain': domain,
                 'Method': "CONTROL",
                 'Avg.Perc.Error': avg_percent_error,
                 'Avg.Abs.Perc.Error': avg_abs_percent_error,
@@ -1104,3 +1106,176 @@ def create_aspect_comparison(aspect_path, raster, prev_raster,
         print(f"Saved: {output_path}")
 
     plt.show()
+
+def raster_box_whisker_plot_multi(
+    rundate,
+    raster_paths,
+    labels,
+    domain,
+    variable,
+    unit,
+    output_png
+):
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    arrays_clean = []
+    stats_list = []
+
+    def clean_array(arr):
+        arr = arr[~np.isnan(arr) & ~np.isinf(arr)]
+        arr = arr[arr >= 0]
+        p999 = np.percentile(arr, 99.9)
+        return arr[arr <= p999]
+
+    # Read, clean, and compute stats
+    for r in raster_paths:
+        arr = read_raster_values(r)
+        arr = clean_array(arr)
+
+        arrays_clean.append(arr)
+
+        stats_list.append({
+            "mean": np.mean(arr),
+            "q25": np.percentile(arr, 25),
+            "q75": np.percentile(arr, 75)
+        })
+
+    upper = max(np.percentile(a, 99) for a in arrays_clean)
+
+    fig_height = min(7, max(5, upper / 100))
+    fig, ax = plt.subplots(figsize=(12, fig_height))
+
+    bp = ax.boxplot(
+        arrays_clean,
+        labels=labels,
+        patch_artist=True,
+        showfliers=False,
+        widths=0.6,
+        showmeans=True,
+        meanprops=dict(marker='D', markerfacecolor='green',
+                       markeredgecolor='black', markersize=7)
+    )
+
+    # Color boxes
+    colors = plt.cm.tab10.colors
+    for patch, color in zip(bp['boxes'], colors):
+        patch.set_facecolor(color)
+        patch.set_alpha(0.6)
+
+    # ---- STAT ANNOTATIONS ----
+    for i, stats in enumerate(stats_list, start=1):
+        # Mean (slightly left)
+        ax.text(
+            i - 0.25,
+            stats["mean"],
+            f"μ={stats['mean']:.1f}",
+            fontsize=9,
+            ha="right",
+            va="center",
+            bbox=dict(boxstyle="round,pad=0.25",
+                      facecolor="lightgreen",
+                      alpha=0.8)
+        )
+
+        # Q25
+        ax.text(
+            i + 0.28,
+            stats["q25"],
+            f"Q1={stats['q25']:.1f}",
+            fontsize=8,
+            ha="left",
+            va="top",
+            color="dimgray"
+        )
+
+        # Q75
+        ax.text(
+            i + 0.28,
+            stats["q75"],
+            f"Q3={stats['q75']:.1f}",
+            fontsize=8,
+            ha="left",
+            va="bottom",
+            color="dimgray"
+        )
+
+    ax.set_ylabel(f"{variable} ({unit})", fontweight="bold")
+    ax.set_title(f"{rundate} {variable} Distribution – {domain}", fontweight="bold")
+    ax.set_ylim(0, upper * 1.05)
+    ax.grid(axis="y", alpha=0.3, linestyle="--")
+
+    plt.tight_layout()
+    plt.savefig(output_png, dpi=300)
+    plt.show()
+    plt.close()
+
+    print(f"Saved: {output_png}")
+
+def plot_rasters_side_by_side(
+    rundate,
+    basin,
+    raster_paths,
+    titles,
+    variable,
+    unit,
+    output_png,
+    cmap="Blues",
+    vmin_percentile=2,
+    vmax_percentile=98
+):
+    import rasterio
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    arrays = []
+    profiles = []
+
+    # Read rasters
+    for r in raster_paths:
+        with rasterio.open(r) as src:
+            arr = src.read(1).astype(float)
+            arr[arr == src.nodata] = np.nan
+            arrays.append(arr)
+            profiles.append(src.profile)
+
+    # Shared color scale
+    stacked = np.hstack([a.flatten() for a in arrays])
+    stacked = stacked[~np.isnan(stacked)]
+
+    vmin = np.percentile(stacked, vmin_percentile)
+    vmax = np.percentile(stacked, vmax_percentile)
+
+    n = len(arrays)
+    fig, axes = plt.subplots(1, n, figsize=(4 * n, 5), constrained_layout=True)
+
+    fig.suptitle(
+        f"SWE – SNM – {basin} – {rundate}",
+        fontsize=14,
+        fontweight="bold"
+    )
+
+    fig.subplots_adjust(top=0.8)
+
+    if n == 1:
+        axes = [axes]
+
+    for ax, arr, title in zip(axes, arrays, titles):
+        im = ax.imshow(arr, cmap=cmap, vmin=vmin, vmax=vmax)
+        ax.set_title(title, fontsize=10)
+        ax.axis("off")
+
+    cbar = fig.colorbar(
+        im,
+        ax=axes,
+        orientation="vertical",
+        fraction=0.025,
+        pad=0.02
+    )
+    cbar.set_label(f"{variable} ({unit})")
+
+    plt.savefig(output_png, dpi=300)
+    plt.show()
+    plt.close()
+
+    print(f"Saved raster visualization: {output_png}")
