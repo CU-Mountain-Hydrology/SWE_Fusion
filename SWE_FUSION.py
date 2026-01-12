@@ -234,6 +234,12 @@ tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_da
                   case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83,
                   snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, bias="N")
 
+# get zero sensors for all domains
+for domain in domainList:
+    zero_CCR_sensors(rundate=rundate, results_workspace=WW_results_workspace, pillow_date=pillow_date, domain=domain,
+                     sensors=WW_results_workspace + f"{rundate}_results_ET/{rundate}_sensors_{domain}.shp", zero_sensors=True,
+                     CCR=False)
+
 # clear memory
 sleep(30)
 clear_arcpy_locks()
@@ -279,6 +285,11 @@ tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_
 # clear memory
 clear_arcpy_locks()
 sleep(30)
+
+zero_CCR_sensors(rundate=rundate, results_workspace=SNM_results_workspace, pillow_date=pillow_date, domain="SNM",
+                     sensors=WW_results_workspace + f"{rundate}_results_ET/SNM_{rundate}_sensors_albn83.shp", zero_sensors=True,
+                     CCR=True, model_workspace_domain=model_workspace + f"/SNM/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
+
 ################ START VETTING ######################
 # loop through domains
 for modelRun in modelRuns:

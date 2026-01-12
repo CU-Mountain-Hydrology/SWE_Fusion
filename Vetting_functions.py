@@ -1284,20 +1284,24 @@ def aso_choice_and_mosaic(rundate, aso_error_csv, error_metric, aso_region, bias
         if raster.endswith(".tif"):
             rasters.append(mosaics_WS + raster)
 
-    arcpy.env.snapRaster = snapRaster
-    arcpy.env.extent = snapRaster
-    arcpy.env.cellSize = snapRaster
-    arcpy.management.MosaicToNewRaster(
-        input_rasters=rasters,
-        output_location=mosaics_WS,
-        raster_dataset_name_with_extension="SNM_final_ASO_bias_correction.tif",
-        pixel_type="32_BIT_FLOAT",
-        number_of_bands=1,
-        mosaic_method="LAST",
-        mosaic_colormap_mode="FIRST"
-    )
+    if len(rasters) == 0:
+        print("No mosaics available, Control only")
 
-    # do a Con Is Null
-    final_mos = Con(IsNull(Raster(mosaics_WS + "SNM_final_ASO_bias_correction.tif")), Raster(control_raster),
-                    Raster(mosaics_WS + "SNM_final_ASO_bias_correction.tif"))
-    final_mos.save(mosaics_WS + f"p8_{rundate}_noneg.tif")
+    else:
+        arcpy.env.snapRaster = snapRaster
+        arcpy.env.extent = snapRaster
+        arcpy.env.cellSize = snapRaster
+        arcpy.management.MosaicToNewRaster(
+            input_rasters=rasters,
+            output_location=mosaics_WS,
+            raster_dataset_name_with_extension="SNM_final_ASO_bias_correction.tif",
+            pixel_type="32_BIT_FLOAT",
+            number_of_bands=1,
+            mosaic_method="LAST",
+            mosaic_colormap_mode="FIRST"
+        )
+
+        # do a Con Is Null
+        final_mos = Con(IsNull(Raster(mosaics_WS + "SNM_final_ASO_bias_correction.tif")), Raster(control_raster),
+                        Raster(mosaics_WS + "SNM_final_ASO_bias_correction.tif"))
+        final_mos.save(mosaics_WS + f"p8_{rundate}_noneg.tif")

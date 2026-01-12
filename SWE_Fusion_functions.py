@@ -2364,4 +2364,37 @@ def merge_sort_sensors_surveys(report_date, results_workspace, surveys, differen
         surveyWtshd_dbf.to_csv(SnwSurvWtshdIntStat_CSV, index=False)
 
 
+def zero_CCR_sensors(rundate, results_workspace, pillow_date, domain, sensors, zero_sensors, CCR, model_workspace_domain=None):
 
+    pillow_gpkg = model_workspace_domain + f"{domain}_pillow-{pillow_date}.gpkg"
+
+    # # Copy the .gpkg file to the new folder
+    if CCR:
+        shutil.copy2(pillow_gpkg, results_workspace)
+
+        # Path to the copied .gpkg file
+        new_gpkg_path = os.path.join(results_workspace, f"/{rundate}_results_ET/{domain}_pillow-{pillow_date}.gpkg")
+
+        # Read the .gpkg file (you can list the layers or specify the one you want)
+        gdf_CCR = gpd.read_file(new_gpkg_path)
+        gdf_CCR = gdf_CCR.rename(columns={
+            "nwbDistance": "nwbDist",
+            "regionaleastness": "regEast",
+            "regionalnorthness": "regNorth",
+            "regionalzness": "regZn",
+            "northness4km" : "north4km",
+            "eastness4km" : "east4km"
+        })
+
+        # Specify the path for the shapefile output
+        gdf_CCR["Site_ID"] = gdf_CCR["Site_ID"].astype(str)
+
+        # Filter by length > 4
+        gdf_filtered = gdf_CCR[gdf_CCR["Site_ID"].str.len() > 4]
+        gdf_filtered.to_file(results_workspace + f"/{rundate}_results_ET/{rundate}_CCR_sensors_albn83.shp")
+
+    if zero_sensors:
+        # SNM_geopackage_CCR =
+        gdf = gpd.read_file(sensors)
+        gdf_zero = gdf[gdf['pillowswe'] == 0]
+        gdf_zero.to_file(results_workspace + f"/{rundate}_results_ET/{rundate}_Zero_sensors_albn83.shp")
