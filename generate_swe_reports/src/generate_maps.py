@@ -20,8 +20,11 @@ Automatically generates report maps in ArcPy using post-processed rasters.
 #         CONFIG        #   operating system, filepaths, and preferred output location.
 #########################
 # Filepath configs
-template_aprx = "U:\EricG\MapTemplate\MapTemplate.aprx" # Project containing template for each figure
-product_source_dir = r"U:\EricG\testing_Directory"      # Parent directory of the YYYYMMDD_RT_Report folders
+ww_aprx = "U:\EricG\MapTemplate\MapTemplate.aprx"       # Project containing template for each figure
+snm_aprx = "U:\EricG\MapTemplate\SNM_Template.aprx"
+# product_source_dir = r"U:\EricG\testing_Directory"    # Parent directory of the YYYYMMDD_RT_Report folders
+product_source_dir = r"W:\documents\2026_RT_Reports"    # Parent directory of the YYYYMMDD_RT_Report folders
+# TODO: separate source & output dirs for WW and SNM
 output_parent_dir = "../output/"                        # Directory the figures will be exported to
 
 # Figure configs
@@ -35,7 +38,7 @@ ww_fig_data = {                                         # Dictionary of metadata
     "1a": {
         "maps": {
             "1a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}
+                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ]
         }
     },
@@ -64,14 +67,14 @@ ww_fig_data = {                                         # Dictionary of metadata
     "3": {
         "maps": {
             "3a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}
+                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ],
             "3b": [
                 {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
             ],
             "3c": [
                 {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
-                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]}, # TODO: NOT huc6_anom_table_save, will find both when parsing
+                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
             ],
             "3d": []
         }
@@ -79,8 +82,7 @@ ww_fig_data = {                                         # Dictionary of metadata
     "4": {
         "maps": {
             "4a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}, # TODO: In the template, this is not from UseThis or UseAvg?
-                # TODO: 3 more standalone tables in the template: zonal_stats and watersheds_elev_utm_stat
+                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"},
             ],
             "4b": [
                 {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"},
@@ -95,7 +97,7 @@ ww_fig_data = {                                         # Dictionary of metadata
     "5": {
         "maps": {
             "5a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}
+                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ],
             "5b": [
                 {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
@@ -110,7 +112,7 @@ ww_fig_data = {                                         # Dictionary of metadata
     "6": {
         "maps": {
             "6a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}
+                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ],
             "6b": [
                 {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
@@ -128,14 +130,14 @@ snm_fig_data = {
     "0": {
         "maps": {
             "regions": [
-                {"layer": "anomRegion_table", "format": "csv", "dir": "*UseAvg", "label": "Anno"}
+                {"layer": "anomRegion_table", "format": "csv", "dir": "*UseAvg", "label": ["dwr_region_labels", "Regions"]}
             ]
         }
     },
     "1": {
         "maps": {
             "real_time_swe": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}
+                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ],
             "anomaly": [
                 {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
@@ -156,7 +158,7 @@ snm_fig_data = {
     "4": {
         "maps": {
             "real_time_swe_fires": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis", "label": "None"}
+                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ]
         }
     },
@@ -164,6 +166,8 @@ snm_fig_data = {
         "maps": {
             "TC_MODIS_image": [
                 # TODO: not sure how to automate MODIS layer
+                # Maybe part of pre-processing is to append UseThis or something to the correct MODIS file
+                #{"layer": "UseThis", "format": "tif", "dir": ??? MODIS ???, "label": "None"}
             ]
         }
     },
@@ -173,7 +177,7 @@ snm_fig_data = {
                 {"layer": "Cp_m_albn83_clp", "format": "tif", "dir": "SNODAS", "label": "None"}
             ],
             "SNODAS_diff": [
-                {"layer": "SNODAS_Regress", "format": "tif", "dir": "*UseThis", "label": "None"}
+                {"layer": "SNODAS_Regress", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ],
             "SNODAS_swe_overlap": [
                 {"layer": "both", "format": "tif", "dir": "SNODAS", "label": "None"}
@@ -183,7 +187,7 @@ snm_fig_data = {
     "7": {
         "maps": {
             "mean_swe": [
-                {"layer": "mean_msk", "format": "tif", "dir": "*UseThis", "label": "None"},
+                {"layer": "mean_msk", "format": "tif", "dir": "*UseThis*", "label": "None"},
                 # TODO: add support for shp files
                 {"layer": "Zero_sensors", "format": "shp", "dir": "", "label": "None"},
                 {"layer": "sensors_SNM", "format": "shp", "dir": "", "label": "None"},
@@ -224,6 +228,8 @@ def interpret_figs(figs: str, report_type: str) -> list[str]:
     match report_type:
         case 'WW':
             all_figs = set(ww_fig_data.keys())
+        case 'SNM':
+            all_figs = set(snm_fig_data.keys())
         case _:
             raise Exception(f"Unrecognized report type: {report_type}")
 
@@ -277,9 +283,8 @@ def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True
     dir_pattern = layer_info["dir"]
 
     # Find RT_Report directory for this date
-    # TODO: may want to make this the results dir not the RT_Report dir, need to figure out what data is duplicated where
-    # TODO: ^^ good practice to copy files out of results dir to avoid corruption problems. Automate this process
-    rt_report_dir = os.path.join(product_source_dir, str(date) + "_RT_Report")
+    # TODO: copy files out of results dir to avoid corruption problems. Automate this process
+    rt_report_dir = os.path.join(product_source_dir, str(date) + "_RT_report_ET")
 
     # Find the directory containing the layer products to be used e.g. "...UseThis"
     try:
@@ -298,9 +303,12 @@ def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True
         # If one of the multiple layer files ends with "nulled", use it
         for file in layer_files:
             if file_type == "tif" and file.endswith("nulled.tif"):
-                # TODO: option to disable selecting "...nulled.tif" by default
                 layer_file = file
-                if warn: print(f"find_layer_file warning: Multiple files matching pattern '{layer_id}' found in '{layer_dir}'. Using {layer_file}")
+                if warn: print(f"find_layer_file warning: Multiple files matching pattern '{layer_id}' found! Using {layer_file}")
+                break
+            elif layer_id == "anom_table_save" and file.endswith(f"{date}anom_table_save.dbf"):
+                layer_file = file
+                if warn: print(f"find_layer_file warning: Multiple files matching pattern '{layer_id}' found! Using {layer_file}")
                 break
         else: # If none of the layer files end with "nulled"
             if prompt_user:
@@ -326,6 +334,7 @@ def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True
 
 def get_modis_date(date: int) -> int:
     # TODO: Go through all snapshot-date files in the directory and use ... most recent? idk how they are decided
+    # ^^^ MODIS files will likely be manually selected for now, and either put into a folder or labelled "UseThis"
     # Then format into YYYYMMDD
     return 20250326
 
@@ -338,13 +347,20 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
     print(f"Generating the following figures: {fig_list}")
 
     # Clone the template aprx to a temporary directory
+    if report_type == "WW":
+        template_aprx = ww_aprx
+        fig_data_dict = ww_fig_data
+    else:
+        template_aprx = snm_aprx
+        fig_data_dict = snm_fig_data
+
     temp_dir = tempfile.mkdtemp()
     working_aprx = os.path.join(temp_dir, "working_aprx.aprx")
     shutil.copyfile(template_aprx, working_aprx)
     aprx = arcpy.mp.ArcGISProject(working_aprx)  # Open the working aprx in ArcPy
     for fig_id in fig_list:
         print(f"Generating maps for fig {fig_id}...")
-        fig_data = ww_fig_data.get(fig_id)
+        fig_data = fig_data_dict.get(fig_id)
         if not fig_data:
             raise ValueError(f"No metadata found for figure '{fig_id}'")
 
@@ -390,19 +406,16 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                         layer = _map.listLayers(f"*{layer_id}*")[0]
                         layer.symbology = symbology
 
-                elif label == "Anno":
-                    # Find annotation layer in map
-                    # Maybe label:"anno_layer_pattern"
-                    # Parse imported layer in python? Can it do dbf?
-                    # Set text accordingly
-                    pass
-
-                elif isinstance(label, list): # Layer pattern
-                    label_pattern = label[0]
+                elif isinstance(label, list): # Join table to label layer
+                    label_pattern = label[0] # Name of the layer the join is being added to
                     join_field = label[1]
 
                     # Create new table view and join it to label layer
-                    _map.addTable(arcpy.management.MakeTableView(new_layer_path, f"{layer_id}")[0])
+                    table_view_name = f"{layer_id}"
+                    if arcpy.Exists(table_view_name):
+                        arcpy.management.Delete(table_view_name) # Delete existing table views of the same name
+                    _map.addTable(arcpy.management.MakeTableView(new_layer_path, table_view_name)[0])
+
                     label_layers = _map.listLayers(f"*{label_pattern}*")
                     if not label_layers:
                         raise ValueError("No layers matching pattern '*{label_pattern}*' found in '{_map.name}'")
