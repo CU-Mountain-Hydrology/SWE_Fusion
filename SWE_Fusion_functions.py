@@ -2018,7 +2018,7 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
             NoData.save(OutSNODASplus)
 
         arcpy.env.workspace = None
-
+    clear_arcpy_locks()
     arcpy.env.workspace = None
     arcpy.ClearEnvironment("workspace")
     arcpy.ClearEnvironment("extent")
@@ -2027,7 +2027,7 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
     gc.collect()
     import time
     time.sleep(2)
-
+    clear_arcpy_locks()
     # Verify source file exists
     print(f"Checking source file: {OutSNODASplus}")
     if not arcpy.Exists(OutSNODASplus):
@@ -2042,14 +2042,13 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
         print(f"Copying to: {FloatSNODAS}")
         arcpy.CopyRaster_management(OutSNODASplus, FloatSNODAS)
     # arcpy.CopyRaster_management(OutSNODASplus, FloatSNODAS)
-
+    clear_arcpy_locks()
     # Verify source file exists
     print(f"Checking source file: {OutSNODASplus}")
     if not arcpy.Exists(OutSNODASplus):
         raise FileNotFoundError(f"ERROR: Source SNODAS file not found: {OutSNODASplus}")
 
-
-
+    clear_arcpy_locks()
     ## Copy to floating point raster
     # print(FloatSNODAS)
     # # arcpy.CopyRaster_management(OutSNODASplus, FloatSNODAS, "", "", "-2147483648", "NONE", "NONE", "32_BIT_FLOAT",
@@ -2057,7 +2056,7 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
     # arcpy.CopyRaster_management(OutSNODASplus, FloatSNODAS)
 
     print("Creating SWE in meters ...")
-
+    clear_arcpy_locks()
     ## Divide by 1000 to get value in meters not mm
     SWEm = Raster(FloatSNODAS) / 1000
     SWEm.save(MeterSNODAS)
@@ -2082,7 +2081,7 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
 
     SNODASmsk = ExtractByMask(ProjSNODAS, snapRaster, "INSIDE")
     SNODASmsk.save(ClipSNODAS)
-
+    clear_arcpy_locks()
     ## If test run previously then SCA_SNODAS will exist, delete and then create
     if arcpy.Exists(SCA_SNODAS):
         arcpy.Delete_management(SCA_SNODAS, "#")
@@ -2093,14 +2092,14 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
         SNODASfSCA = Con(SNODASallMsk > .001, 100, 0)
         SNODASfSCA.save(SCA_SNODAS)
 
-
+    clear_arcpy_locks()
     # Do zonal stats for real time swe layer table
     print("creating zonal stats for SNODAS swe = " + SWEtable)
     ZonalStatisticsAsTable(band_zones, "SrtNmeBand", ClipSNODAS, SWEbandtable, "DATA", "MEAN")
     ZonalStatisticsAsTable(watershed_zones, "SrtName", ClipSNODAS, SWEtable, "DATA", "MEAN")
     arcpy.Delete_management("in-memory")
     gc.collect()
-
+    clear_arcpy_locks()
     # Add SWE in inches fields to 2 tables above
     arcpy.AddField_management(SWEbandtable, "SWE_IN", "FLOAT", "#", "#", "#",
                               "#", "NULLABLE", "NON_REQUIRED", "#")
