@@ -954,9 +954,9 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     prevRepWorkspace = workspaceBase + f"RT_report_data/{prev_report_date}_results/{prev_model_run}/"
 
     meanMask = outWorkspace + f"{mean_date}_mean_msk.tif"
-    # MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2025.0.1_ops/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
+    MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2025.0.1_ops/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
     MODSCAG_tif_plus_proj = outWorkspace + f"fSCA_{report_date}_albn83.tif"
-    MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.0d/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
+    # MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.0d/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
 
     ## project and clip SNODAS
     SNODASWorkspace = resultsWorkspace + "SNODAS/"
@@ -2373,7 +2373,7 @@ def zero_CCR_sensors(rundate, results_workspace, pillow_date, domain, sensors, z
         shutil.copy2(pillow_gpkg, results_workspace)
 
         # Path to the copied .gpkg file
-        new_gpkg_path = os.path.join(results_workspace, f"/{rundate}_results_ET/{domain}_pillow-{pillow_date}.gpkg")
+        new_gpkg_path = results_workspace + f"/{rundate}_results_ET/{domain}_pillow-{pillow_date}.gpkg"
 
         # Read the .gpkg file (you can list the layers or specify the one you want)
         gdf_CCR = gpd.read_file(new_gpkg_path)

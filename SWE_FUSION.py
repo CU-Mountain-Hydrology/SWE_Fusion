@@ -25,26 +25,26 @@ print(f"\n START TIME: {start}")
 ######################################
 ## date info
 user = "Olaf"
-year = 2025
-rundate = "20250402"
-pillow_date = "02Apr2025"
-mean_date = "0402"
-prev_rundate = "20260101"
+year = 2026
+rundate = "20260114"
+pillow_date = "14Jan2026"
+mean_date = "0114"
+prev_rundate = "20260108"
 
 # flags
-difference = "N" # should be Y if you want to compare against a previous model run
-biasCorrection = "Y"
+difference = "Y" # should be Y if you want to compare against a previous model run
+biasCorrection = "N"
 surveys_use = "N"
 
 # model run information
 domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"]
-ChosenModelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport" ## TEMP
-model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens_testReport"
-model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
+ChosenModelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens" ## TEMP
+model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
+model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens"
 modelRuns = [model_woCCR, model_wCCR]
 model_labels = ["woCCR", "wCCR"]
-current_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
-prev_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
+current_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens"
+prev_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis_UseAvg"
 
 ######################################
 # VETTING VARIABLES
@@ -79,6 +79,7 @@ swe_col_surv = 'SWE_m'
 id_col_surv = 'Station_Id'
 swe_col_surv = 'SWE_m'
 id_col_surv = 'Station_Id'
+# error_statistic = ""
 
 ######################################
 # WORKSPACES
@@ -234,11 +235,11 @@ tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_da
                   case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83,
                   snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, bias="N")
 
-# get zero sensors for all domains
-for domain in domainList:
-    zero_CCR_sensors(rundate=rundate, results_workspace=WW_results_workspace, pillow_date=pillow_date, domain=domain,
-                     sensors=WW_results_workspace + f"{rundate}_results_ET/{rundate}_sensors_{domain}.shp", zero_sensors=True,
-                     CCR=False)
+# # get zero sensors for all domains
+# for domain in domainList:
+#     zero_CCR_sensors(rundate=rundate, results_workspace=WW_results_workspace, pillow_date=pillow_date, domain=domain,
+#                      sensors=WW_results_workspace + f"{rundate}_results_ET/{rundate}_sensors_{domain}.shp", zero_sensors=True,
+#                      CCR=False, model_workspace_domain=None)
 
 # clear memory
 sleep(30)
@@ -287,8 +288,8 @@ clear_arcpy_locks()
 sleep(30)
 
 zero_CCR_sensors(rundate=rundate, results_workspace=SNM_results_workspace, pillow_date=pillow_date, domain="SNM",
-                     sensors=WW_results_workspace + f"{rundate}_results_ET/SNM_{rundate}_sensors_albn83.shp", zero_sensors=True,
-                     CCR=True, model_workspace_domain=model_workspace + f"/SNM/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
+                     sensors=SNM_results_workspace + f"{rundate}_results_ET/SNM_{rundate}_sensors_albn83.shp", zero_sensors=True,
+                     CCR=True, model_workspace_domain=model_workspace + f"SNM/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
 
 ################ START VETTING ######################
 # loop through domains
