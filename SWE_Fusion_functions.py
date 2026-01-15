@@ -2401,14 +2401,12 @@ def zero_CCR_sensors(rundate, results_workspace, pillow_date, domain, sensors, z
         gdf_zero = gdf[gdf['pillowswe'] == 0]
         gdf_zero.to_file(results_workspace + f"/{rundate}_results_ET/{rundate}_Zero_sensors_albn83.shp")
 
-# import modules
 import pandas as pd
 import os
 import shutil
 from datetime import datetime
 import warnings
 warnings.filterwarnings("ignore")
-
 
 def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspace, reports_workspace, difference,
                          prev_tables_workspace=None, survey_date=None, prev_rundate=None, surveys_use=False):
