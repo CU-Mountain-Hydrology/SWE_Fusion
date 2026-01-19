@@ -120,16 +120,12 @@ SNM_regions = "M:/SWE/WestWide/data/hydro/SNM/dwr_regions_albn83.tif"
 SNM_domain_msk = "M:/SWE/WestWide/data/hydro/SNM/dwr_mask_null_albn83.tif"
 SNM_clipbox = "M:/SWE/WestWide/data/boundaries/Domains/DomainShapefiles/WW_SNM_Clipbox_albn83.shp"
 ## west wide
-# WW_band_zones = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
-# WW_watershed_zones = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
-# WW_watershed_shapefile = "M:/SWE/WestWide/data/hydro/WW_Basins_noSNM_notahoe_albn83_sel_new.shp"
-# WW_band_shapefile = "M:/SWE/WestWide/data/hydro/WW_BasinsBanded_noSNM_notahoe_albn83_sel_new.shp"
 HUC6_zones = "M:/SWE/WestWide/data/hydro/WW_HUC6_albn83_ras_msked.tif"
 region_zones = "M:/SWE/WestWide/data/hydro/WW_Regions_albn83_v2.tif"
-WW_band_zones = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
-WW_watershed_zones = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
-WW_watershed_shapefile = "M:/SWE/WestWide/data/hydro/WW_Basins_noSNM_notahoe_albn83_sel_new.shp"
-WW_band_shapefile = "M:/SWE/WestWide/data/hydro/WW_BasinsBanded_noSNM_notahoe_albn83_sel_new.shp"
+WW_band_zones = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinBanded_noSNM_notahoe_albn83_sel_v2.tif"
+WW_watershed_zones = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinBanded_noSNM_notahoe_albn83_sel_v2.tif"
+WW_watershed_shapefile = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_Basins_noSNM_notahoe_albn83_sel_v2.shp"
+WW_band_shapefile = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinsBanded_noSNM_notahoe_albn83_sel_v2.shp"
 
 
 # masks
