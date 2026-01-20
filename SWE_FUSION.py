@@ -239,7 +239,7 @@ tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_da
 for domain in domainList:
     zero_CCR_sensors(rundate=rundate, results_workspace=WW_results_workspace, pillow_date=pillow_date, domain=domain,
                      sensors=WW_results_workspace + f"{rundate}_results_ET/{rundate}_sensors_{domain}.shp", zero_sensors=True,
-                     CCR=False, model_workspace_domain=None)
+                     CCR=False, model_workspace_domain=model_workspace + f"{domain}/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
 
 # clear memory
 sleep(30)
