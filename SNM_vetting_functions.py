@@ -23,7 +23,7 @@ print('modules imported')
 # WW_modelRun = "RT_CanAdj_rcn_noSW_woCCR_nofscamsk"
 # modelRun = "ASO_FixLayers_RT_CanAdj_rcn_noSW_woCCR_nofscamsk"
 # bias_model_run =
-previous_model_run = "ASO_FixLayers_RT_CanAdj_rcn_noSW_woCCR_UseThis"
+# previous_model_run = "ASO_FixLayers_RT_CanAdj_rcn_noSW_woCCR_UseThis"
 
 # set code parameters
 # SNODAS = "N"
@@ -62,7 +62,7 @@ import pandas as pd
 import geopandas as gpd
 
 def tables_and_layers_SNM(year, rundate, mean_date, prev_report_date, SNM_results_workspace, WW_model_run, run_type, snap_raster,
-                          WW_results_workspace, watermask, glacier_mask, domain_mask, Difference, bias_model_run=None):
+                          WW_results_workspace, watermask, glacier_mask, domain_mask, Difference, previous_model_run, bias_model_run=None):
         # create directory
         prevRepWorkspace = SNM_results_workspace + f"{prev_report_date}_results/{previous_model_run}/"
         where_clause = """"POLY_AREA" > 100"""

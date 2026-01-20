@@ -1196,7 +1196,7 @@ def plot_rasters_side_by_side(
     fig, axes = plt.subplots(1, n, figsize=(4 * n, 5), constrained_layout=True)
 
     fig.suptitle(
-        f"SWE – SNM – {basin} – {rundate}",
+        f"SWE – {basin} – {rundate}",
         fontsize=14,
         fontweight="bold"
     )
