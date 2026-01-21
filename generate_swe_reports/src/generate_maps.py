@@ -25,6 +25,8 @@ snm_aprx = "U:\EricG\MapTemplate\SNM_Template.aprx"
 # product_source_dir = r"U:\EricG\testing_Directory"    # Parent directory of the YYYYMMDD_RT_Report folders
 product_source_dir = r"W:\documents\2026_RT_Reports"    # Parent directory of the YYYYMMDD_RT_Report folders
 # TODO: separate source & output dirs for WW and SNM
+# snm_source_dir = r"U:\EricG\testing_Directory\SNM"
+snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports"
 output_parent_dir = "../output/"                        # Directory the figures will be exported to
 
 # Figure configs
@@ -130,20 +132,21 @@ snm_fig_data = {
     "0": {
         "maps": {
             "regions": [
-                {"layer": "anomRegion_table", "format": "csv", "dir": "*UseAvg", "label": ["dwr_region_labels", "Regions"]}
+                {"layer": "anomRegion_table", "format": "dbf", "dir": "*UseAvg", "label": ["dwr_region_labels", "Regions"]}
             ]
         }
     },
     "1": {
         "maps": {
             "real_time_swe": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"}
+                {"layer": "p8*msk", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ],
             "anomaly": [
                 {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
             ],
             "watershed_map": [
-                {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"}
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
+                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["dwr_basins_geon83", "SrtName"]},
             ]
         }
     },
@@ -158,7 +161,7 @@ snm_fig_data = {
     "4": {
         "maps": {
             "real_time_swe_fires": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"}
+                {"layer": "p8*msk", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ]
         }
     },
@@ -284,7 +287,9 @@ def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True
 
     # Find RT_Report directory for this date
     # TODO: copy files out of results dir to avoid corruption problems. Automate this process
-    rt_report_dir = os.path.join(product_source_dir, str(date) + "_RT_report_ET")
+    # rt_report_dir = os.path.join(product_source_dir, str(date) + "_RT_report_ET")
+    rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_report_ET")
+    # rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_Report")
 
     # Find the directory containing the layer products to be used e.g. "...UseThis"
     try:
@@ -336,7 +341,7 @@ def get_modis_date(date: int) -> int:
     # TODO: Go through all snapshot-date files in the directory and use ... most recent? idk how they are decided
     # ^^^ MODIS files will likely be manually selected for now, and either put into a folder or labelled "UseThis"
     # Then format into YYYYMMDD
-    return 20250326
+    return 20250329
 
 
 def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose: bool, prompt_user: bool):
@@ -405,55 +410,130 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                     if file_type in layer_formats:
                         layer = _map.listLayers(f"*{layer_id}*")[0]
                         layer.symbology = symbology
+                elif isinstance(label, list):  # Join table to label layer
+                    label_pattern = label[0] # Pattern of the shp layer with labels enabled
+                    join_field = label[1] # Field in both the label layer and the join table
 
-                elif isinstance(label, list): # Join table to label layer
-                    label_pattern = label[0] # Name of the layer the join is being added to
-                    join_field = label[1]
-
-                    # Create new table view and join it to label layer
-                    table_view_name = f"{layer_id}"
-                    if arcpy.Exists(table_view_name):
-                        arcpy.management.Delete(table_view_name) # Delete existing table views of the same name
-                    _map.addTable(arcpy.management.MakeTableView(new_layer_path, table_view_name)[0])
-
+                    # Find label layer first
                     label_layers = _map.listLayers(f"*{label_pattern}*")
                     if not label_layers:
-                        raise ValueError("No layers matching pattern '*{label_pattern}*' found in '{_map.name}'")
+                        raise ValueError(f"No layers matching pattern '*{label_pattern}*' found in '{_map.name}'")
+
                     if len(label_layers) > 1:
                         if prompt_user:
-                            # Ask the user to select which file to use
                             print(f"Multiple layers matching pattern '*{label_pattern}*' found in '{_map.name}'.")
-                            for i, file in enumerate(label_layers):
-                                print(f"\t{i + 1}. {file}")
+                            for i, lyr in enumerate(label_layers):
+                                print(f"\t{i + 1}. {lyr.name}")
                             while True:
                                 print(f"Enter a number from 1 to {len(label_layers)}:", end=" ")
                                 result = input()
                                 try:
                                     result = int(result)
-                                    if result in range(1, len(label_layers) + 1): break
+                                    if result in range(1, len(label_layers) + 1):
+                                        break
                                 except ValueError:
                                     pass
                             label_layer = label_layers[int(result) - 1]
-                            print(f"Using {label_layer}")
+                            print(f"Using {label_layer.name}")
                         else:
-                            print(f"Warning: Multiple layers matching pattern '*{label_pattern}*' found in "
-                                  f"'{_map.name}'. Using {label_layers[0]}.")
+                            print(f"Warning: Multiple layers matching pattern '*{label_pattern}*' found. "
+                                  f"Using {label_layers[0].name}.")
                             label_layer = label_layers[0]
                     else:
                         label_layer = label_layers[0]
 
-                    # Remove existing joins with the label layer
+                    # Remove existing joins from the original layer
                     try:
                         arcpy.management.RemoveJoin(label_layer)
                     except:
                         pass
 
-                    # Create new join between label_layer and source table
-                    arcpy.management.AddJoin(label_layer, join_field, layer_id, join_field)
-                    label_layer.showLabels = True
-                else:
-                    raise Exception(f"Invalid label type '{label}' for layer '{layer_id}' in map '{_map.name}'!")
+                    # Save label expression for later
+                    original_label_expression = label_layer.listLabelClasses()[0].expression
 
+                    # Get the data source and create a feature layer from it
+                    label_data_source = label_layer.dataSource
+                    if not label_data_source.endswith('.shp') and not os.path.exists(label_data_source):
+                        label_data_source = label_data_source + '.shp'
+
+                    feature_layer_name = label_layer.name
+                    if arcpy.Exists(feature_layer_name):
+                        arcpy.management.Delete(feature_layer_name)
+
+                    arcpy.management.MakeFeatureLayer(label_data_source, feature_layer_name)
+
+                    # Create a table view
+                    table_view_name = f"{layer_id}"
+                    if arcpy.Exists(table_view_name):
+                        arcpy.management.Delete(table_view_name)
+
+                    arcpy.management.MakeTableView(new_layer_path, table_view_name)
+
+                    # Verify join field exists in both
+                    if verbose:
+                        label_fields = [f.name for f in arcpy.ListFields(feature_layer_name)]
+                        table_fields = [f.name for f in arcpy.ListFields(table_view_name)]
+                        # print(f"Feature layer fields: {label_fields}")
+                        # print(f"Table fields: {table_fields}")
+                        # print(f"Join field: {join_field}")
+
+                        if join_field not in label_fields:
+                            raise ValueError(f"Join field '{join_field}' not found in feature layer")
+                        if join_field not in table_fields:
+                            raise ValueError(f"Join field '{join_field}' not found in table")
+
+                    # Perform the join
+                    if verbose: print(f"Attempting join: layer={feature_layer_name}, field={join_field}, table={table_view_name}")
+                    arcpy.management.AddJoin(
+                        in_layer_or_view=feature_layer_name,
+                        in_field=join_field,
+                        join_table=table_view_name,
+                        join_field=join_field,
+                        join_type="KEEP_ALL"
+                    )
+
+                    # joined_fields = [f.name for f in arcpy.ListFields(label_layer)]
+                    # print(f"Fields after join: {joined_fields}")
+
+                    # Find the actual table prefix used in the join (extract from filename)
+                    table_filename = os.path.splitext(os.path.basename(new_layer_path))[0]
+                    # print(f"Table filename (used as prefix): {table_filename}")
+
+                    # Save the joined layer to a temporary layer file
+                    temp_lyrx = os.path.join(temp_dir, f"{feature_layer_name}_joined.lyrx")
+                    arcpy.management.SaveToLayerFile(feature_layer_name, temp_lyrx)
+
+                    # Remove the old layer from the map
+                    old_symbology = label_layer.symbology
+                    _map.removeLayer(label_layer)
+
+                    # Add the joined layer file back to the map
+                    lyrx_file = arcpy.mp.LayerFile(temp_lyrx)
+                    added_layers = _map.addLayer(lyrx_file, "TOP")
+
+                    # Get the newly added layer
+                    if isinstance(added_layers, list):
+                        new_layer = added_layers[0]
+                    else:
+                        new_layer = added_layers
+
+                    # Apply original symbology and update label expressions
+                    new_layer.symbology = old_symbology
+
+                    # Set the label expression to use the joined field
+                    for lbl_class in new_layer.listLabelClasses():
+                        new_expression = original_label_expression.replace(
+                            f"'{layer_id}.",
+                            f"'{table_filename}."
+                        )
+                        lbl_class.expression = new_expression
+                        # print(f"Updated label expression: {new_expression}")
+
+                    new_layer.visible = True
+                    new_layer.showLabels = True
+
+                    # Save the project
+                    aprx.save()
 
         # Export the layout to JPEG
         layout = aprx.listLayouts(f"*{fig_id}*")[0]
@@ -473,8 +553,12 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                     formatted_date = datetime.strptime(str(date), "%Y%m%d").strftime("%B %d")
                 else: # January 01, 2000
                     formatted_date = datetime.strptime(str(date), "%Y%m%d").strftime("%B %d, %Y")
-
                 element.text = f"{formatted_date}"
+
+            elif "pctavg" in element.name.lower():
+                date_str = str(date)
+                formatted_date = f"{int(date_str[4:6])}/{int(date_str[6:8])}" # 20250331 => 3/31
+                element.text = element.text.replace("3/31", formatted_date)
 
         output_dir = os.path.join(output_parent_dir, f"{date}_{report_type}_JPEGmaps")
         os.makedirs(output_dir, exist_ok=True)
