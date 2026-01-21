@@ -669,7 +669,7 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
 
         # If not all basins are valid, skip this entire main group for this method
         if not all_basins_valid:
-            print(f"\n⚠️  SKIPPING entire main group '{basin}' for method '{method}'")
+            print(f"\n  SKIPPING entire main group '{basin}' for method '{method}'")
             print(f"    Reason: Not all basins have valid fractional error files")
             print(f"    {sum(1 for r in validation_results if '✓' in r)}/{len(validation_results)} basins valid")
             continue
@@ -763,6 +763,28 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                 print("Fix completed")
             else:
                 print("File NOT found.")
+
+    # Mosaic all files in the same main group
+    for basin in mainBasins:
+        basinFix = []
+        fixFiles = os.listdir(f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/Fix_Files/")
+        for file in fixFiles:
+            if file.endswith(".tif") and file.startswith(f"{rundate}_{basin}_"):
+                basinFix.append(f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/Fix_Files/{file}")
+            elif not file.endswith(".tif"):
+                arcpy.Delete_management(file)
+                print(f"Deleted non-TIF file: {file}")
+
+        if basinFix:
+            arcpy.env.snapRaster = p8_forBC
+            arcpy.env.cellSize = p8_forBC
+            out_raster = f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/{rundate}_{basin}_{method}_BC_fix_albn83.tif"
+            arcpy.MosaicToNewRaster_management(basinFix,
+                                               os.path.dirname(out_raster),
+                                               os.path.basename(out_raster),
+                                               "",
+                                               "32_BIT_FLOAT", "", 1, "LAST", "FIRST")
+            print(f"Mosaicked raster saved: {out_raster}")
 
 
 

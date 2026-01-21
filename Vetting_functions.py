@@ -84,7 +84,7 @@ import rasterio
 import arcpy
 from arcpy.sa import ExtractByMask
 
-def bias_correction_vetting(raster, point, domain, swe_col, id_col, rundate, name, method, out_csv, folder, control_raster=None):
+def bias_correction_vetting(raster, point, domain, swe_col, id_col, rundate, name, method, out_csv, folder, control_out_folder, control_raster=None):
     """
     Process a raster, compute SWE statistics, and optionally update CSV.
 
@@ -184,10 +184,11 @@ def bias_correction_vetting(raster, point, domain, swe_col, id_col, rundate, nam
 
     # Process control raster if provided
     if control_raster:
-        control_raster_clp = os.path.join(folder, f"{name}_p8_Control_clp.tif")
+        control_raster_clp = os.path.join(control_out_folder, f"{name}_p8_Control_clp.tif")
         if not os.path.exists(control_raster_clp):
             outControlClip = ExtractByMask(control_raster, raster, 'INSIDE')
             outControlClip.save(control_raster_clp)
+            print('control_raster savedddddd!!!!!!!!!!')
 
             raster_vals = []
             with rasterio.open(control_raster_clp) as src:
@@ -1305,3 +1306,78 @@ def aso_choice_and_mosaic(rundate, aso_error_csv, error_metric, aso_region, bias
         final_mos = Con(IsNull(Raster(mosaics_WS + "SNM_final_ASO_bias_correction.tif")), Raster(control_raster),
                         Raster(mosaics_WS + "SNM_final_ASO_bias_correction.tif"))
         final_mos.save(mosaics_WS + f"p8_{rundate}_noneg.tif")
+
+from matplotlib.colors import TwoSlopeNorm
+def sensor_difference_map(rundate, prev_rundate, sensors, prev_sensors, domain, point_value, outfile,
+                          basemap_file_1=None, basemap_name_1=None, basemap_file_2=None, basemap_name_2=None):
+    # Load your point shapefiles
+    points_prev = gpd.read_file(sensors)
+    points_curr = gpd.read_file(prev_sensors)
+
+    # Load reference polygon shapefiles
+    statelines = gpd.read_file(basemap_file_1)
+    watersheds = gpd.read_file(basemap_file_2)
+
+    # Ensure all layers are in the same CRS
+    if points_curr.crs != statelines.crs:
+        statelines = statelines.to_crs(points_curr.crs)
+    if points_curr.crs != watersheds.crs:
+        watersheds = watersheds.to_crs(points_curr.crs)
+
+    # Calculate the difference (week2 - week1)
+    points_curr['difference'] = points_curr[point_value] - points_prev[point_value]
+
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(12, 10))
+
+    # Plot polygon reference layers first (background)
+    statelines.plot(ax=ax, facecolor='none', edgecolor='black', linewidth=1.5, alpha=0.7, label=f'{basemap_name_1}')
+    watersheds.plot(ax=ax, facecolor='none', edgecolor='gray', linewidth=1, linestyle='--', alpha=0.5,
+                    label=f'{basemap_name_2}')
+
+    # Create a diverging colormap centered at 0
+    # Blue for positive, red for negative
+    vmin = points_curr['difference'].min()
+    vmax = points_curr['difference'].max()
+    norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+
+    # Plot the difference points
+    points_curr.plot(ax=ax,
+                     column='difference',
+                     cmap='RdBu',  # Red-Blue reversed (blue=positive, red=negative)
+                     norm=norm,
+                     markersize=50,
+                     legend=True,
+                     legend_kwds={'label': f'{prev_rundate} - {rundate} Difference',
+                                  'orientation': 'horizontal',
+                                  'shrink': 0.8,
+                                  'pad': 0.05})
+
+    # Set the extent to the points with a small buffer
+    bounds = points_curr.total_bounds  # returns [minx, miny, maxx, maxy]
+    buffer = 0.1  # 10% buffer around the points
+    x_range = bounds[2] - bounds[0]
+    y_range = bounds[3] - bounds[1]
+
+    ax.set_xlim(bounds[0] - buffer * x_range, bounds[2] + buffer * x_range)
+    ax.set_ylim(bounds[1] - buffer * y_range, bounds[3] + buffer * y_range)
+
+    # Customize the plot
+    ax.set_title(f'Change in Values for {domain}: {rundate} - {prev_rundate}\n(Blue = Increase, Red = Decrease)',
+                 fontsize=14, fontweight='bold')
+    ax.set_xlabel('Longitude')
+    ax.set_ylabel('Latitude')
+
+    # Create custom legend to avoid warning
+    from matplotlib.lines import Line2D
+
+    legend_elements = [Line2D([0], [0], color='black', linewidth=1.5, label=f'{basemap_name_1}'),
+                       Line2D([0], [0], color='gray', linewidth=1, linestyle='--', label=f'{basemap_name_2}')]
+    ax.legend(handles=legend_elements, loc='upper right')
+
+    # Add a grid for reference
+    ax.grid(True, alpha=0.3, linestyle=':', linewidth=0.5)
+
+    plt.tight_layout()
+    plt.savefig(outfile, dpi=300, bbox_inches='tight')
+    plt.show()
