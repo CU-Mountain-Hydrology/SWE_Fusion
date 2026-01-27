@@ -25,8 +25,8 @@ snm_aprx = "U:\EricG\MapTemplate\SNM_Template.aprx"
 # product_source_dir = r"U:\EricG\testing_Directory"    # Parent directory of the YYYYMMDD_RT_Report folders
 product_source_dir = r"W:\documents\2026_RT_Reports"    # Parent directory of the YYYYMMDD_RT_Report folders
 # TODO: separate source & output dirs for WW and SNM
-# snm_source_dir = r"U:\EricG\testing_Directory\SNM"
-snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports"
+snm_source_dir = r"U:\EricG\testing_Directory\SNM"
+# snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports"
 output_parent_dir = "../output/"                        # Directory the figures will be exported to
 
 # Figure configs
@@ -168,9 +168,7 @@ snm_fig_data = {
     "5": {
         "maps": {
             "TC_MODIS_image": [
-                # TODO: not sure how to automate MODIS layer
-                # Maybe part of pre-processing is to append UseThis or something to the correct MODIS file
-                #{"layer": "UseThis", "format": "tif", "dir": ??? MODIS ???, "label": "None"}
+                {"layer": "snapshot*UseThis", "format": "tif", "dir": "MODIS", "label": "None"}
             ]
         }
     },
@@ -337,11 +335,14 @@ def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True
 
     return layer_file
 
-def get_modis_date(date: int) -> int:
-    # TODO: Go through all snapshot-date files in the directory and use ... most recent? idk how they are decided
-    # ^^^ MODIS files will likely be manually selected for now, and either put into a folder or labelled "UseThis"
-    # Then format into YYYYMMDD
-    return 20250329
+def get_modis_date(layer_file) -> int:
+    # TODO: docs
+    match = re.search(r"snapshot-(\d{4})-(\d{2})-(\d{2})", layer_file)
+    if not match:
+        raise ValueError("No valid MODIS snapshot date found in path: ", layer_file)
+
+    year, month, day = match.groups()
+    return int(f"{year}{month}{day}")
 
 
 def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose: bool, prompt_user: bool):
@@ -394,9 +395,13 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                 # Find the new layer source
                 new_layer_path = find_layer_file(date, layer_info, prompt_user=prompt_user)
 
-                # Special handling for rasters with zero-valued cells
+                # Handle MODIS date
+                if "snapshot" in new_layer_path:
+                    modis_date = get_modis_date(new_layer_path)
+
+                # Special handling for non-MODIS rasters with zero-valued cells
                 if new_layer_path.endswith(".tif") and not new_layer_path.endswith(
-                        "_nulled.tif") and contains_zero_value_cells(new_layer_path):
+                        "_nulled.tif") and not "snapshot" in new_layer_path and contains_zero_value_cells(new_layer_path):
                     nulled_path = new_layer_path.replace(".tif", "_nulled.tif")
                     zero_to_no_data(new_layer_path, nulled_path, prompt_user=prompt_user, verbose=verbose)
                     new_layer_path = nulled_path
@@ -409,7 +414,8 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                     # Update layer symbology
                     if file_type in layer_formats:
                         layer = _map.listLayers(f"*{layer_id}*")[0]
-                        layer.symbology = symbology
+                        if "snapshot" not in new_layer_path:
+                            layer.symbology = symbology
                 elif isinstance(label, list):  # Join table to label layer
                     label_pattern = label[0] # Pattern of the shp layer with labels enabled
                     join_field = label[1] # Field in both the label layer and the join table
@@ -545,10 +551,8 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
         text_elements = layout.listElements("TEXT_ELEMENT")
         for element in text_elements:
             if "date" in element.name.lower():
-                if "date_modis" in element.name.lower():
-                    modis_date = get_modis_date(date)
+                if "date_modis" in element.name.lower() and modis_date:
                     formatted_date = datetime.strptime(str(modis_date), "%Y%m%d").strftime("%B %d, %Y")
-                    pass
                 elif "date_noyear" in element.name.lower(): # January 01
                     formatted_date = datetime.strptime(str(date), "%Y%m%d").strftime("%B %d")
                 else: # January 01, 2000
