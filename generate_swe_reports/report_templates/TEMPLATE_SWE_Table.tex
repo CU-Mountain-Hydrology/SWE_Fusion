@@ -9,10 +9,17 @@
     {% for group, subcols in headers.items() %}
         & \multicolumn{ {{ subcols|length }} }{c}{ {{ group | replace('%', '\\%') }} }
     {% endfor %} \\
-    \cmidrule(lr){2-3} % % of Average
-    \cmidrule(lr){4-5} % SWE (in)
-    \cmidrule(lr){9-10} % Pillows
-    \cmidrule(lr){11-11} % Surveys
+    {% if headers["% of Average"]|length == 2 %}
+        \cmidrule(lr){2-3} % % of Average
+        \cmidrule(lr){4-5} % SWE (in)
+        \cmidrule(lr){9-10} % Pillows
+        \cmidrule(lr){11-11} %
+    {% else %}
+        \cmidrule(lr){2-2} % % of Average
+        \cmidrule(lr){3-3} % SWE (in)
+        \cmidrule(lr){7-7} % Pillows
+        \cmidrule(lr){8-8} %
+    {% endif %}
     \makecell[l]{Basin}
     {% for i, group in headers.items() %}
         {% for sub in group %}
@@ -28,10 +35,17 @@
     {% for group, subcols in headers.items() %}
         & \multicolumn{ {{ subcols|length }} }{c}{ {{ group | replace('%', '\\%') }} }
     {% endfor %} \\
-    \cmidrule(lr){2-3}
-    \cmidrule(lr){4-5}
-    \cmidrule(lr){9-10}
-    \cmidrule(lr){11-11}
+    {% if headers["% of Average"]|length == 2 %}
+        \cmidrule(lr){2-3} % % of Average
+        \cmidrule(lr){4-5} % SWE (in)
+        \cmidrule(lr){9-10} % Pillows
+        \cmidrule(lr){11-11} %
+    {% else %}
+        \cmidrule(lr){2-2} % % of Average
+        \cmidrule(lr){3-3} % SWE (in)
+        \cmidrule(lr){7-7} % Pillows
+        \cmidrule(lr){8-8} %
+    {% endif %}
     \makecell[l]{Basin}
     {% for i, group in headers.items() %}
         {% for sub in group %}

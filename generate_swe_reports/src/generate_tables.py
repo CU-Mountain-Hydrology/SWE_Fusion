@@ -105,20 +105,47 @@ def generate_ww_tables(date: int, ids: str, verbose: bool) -> None:
             print(f"No table {table_id} found!")
         table = matches[0]
 
-        # Get header data
+        # Read in the csv
         df = pd.read_csv(table)
         df = df.iloc[:, 1:] # Drop the first column containing indices
-        previous_date = df.iloc[0, 1].strip("%").replace(" Avg.", "")
-        current_date = df.iloc[0, 2].strip("%").replace(" Avg.", "")
-        headers = { # TODO: this should be automatic parsing
-            "% of Average": [previous_date, current_date],
-            "SWE (in)": [previous_date, current_date],
-            "": ["SCA"],
-            " ": ["Vol. (AF)"],
-            "   ": ["Area (mi$^2$)"],
-            "Pillows": [previous_date, current_date],
-            "SNODAS*": [current_date],
-        }
+
+        # Format SNODAS dates to 3 decimal places
+        last_col = df.columns[-1]
+        df.loc[1:, last_col] = (
+            pd.to_numeric(df.loc[1:, last_col], errors="coerce")
+            .round(3) # TODO: magic number
+        )
+
+        # Check how many dates have data (first report does not have a previous date)
+        row0 = df.iloc[0].astype(str)
+        date_count = row0.str.contains("Avg").sum()
+        if date_count == 0:
+            # TODO: error handling
+            pass
+
+
+        # Get current date and previous date if it exists
+        if date_count > 1:
+            previous_date = df.iloc[0, 1].strip("%").replace(" Avg.", "")
+            current_date = df.iloc[0, 2].strip("%").replace(" Avg.", "")
+        else:
+            current_date = df.iloc[0, 1].strip("%").replace(" Avg.", "")
+
+        # Get header data
+        headers = {}
+        headers["% of Average"] = (
+            [previous_date, current_date] if date_count > 1 else [current_date]
+        )
+        headers["SWE (in)"] = (
+            [previous_date, current_date] if date_count > 1 else [current_date]
+        )
+        headers[""] = ["SCA"]
+        headers[" "] = ["Vol. (AF)"]
+        headers["   "] = ["Area (mi$^2$)"]
+        headers["Pillows"] = (
+            [previous_date, current_date] if date_count > 1 else [current_date]
+        )
+        headers["SNODAS*"] = [current_date]
 
         # Check for ASO 
         aso_corrected = df.iloc[:, 0].astype(str).str.contains("§").any()
