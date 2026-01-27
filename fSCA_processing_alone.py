@@ -5,9 +5,9 @@ import shutil
 import time
 from SWE_Fusion_functions import *
 
-start_date = datetime(2026, 1, 15)
-end_date = datetime(2026, 1, 18)
-dateList = ["0115", "0116", "0117", "0118"]
+start_date = datetime(2026, 1, 19)
+end_date = datetime(2026, 1, 25)
+dateList = ["0119", "0120", "0121", "0122", "0123", "0124", "0125"]
 ##############
 netCDF_WS = "H:/WestUS_Data/Rittger_data/fsca_v2025.0.1_ops/NRT_NetCDFs/netcdf/"
 tile_list = ['h08v04', 'h08v05', 'h09v04', 'h09v05', 'h10v04']
