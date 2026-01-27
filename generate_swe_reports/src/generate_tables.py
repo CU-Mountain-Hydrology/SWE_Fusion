@@ -76,9 +76,11 @@ def generate_ww_tables(date: int, ids: str, verbose: bool) -> None:
     """
     # Define output directory
     date_str = str(date)
-    report_dir = fr"W:\documents\{date_str[:4]}_RT_Reports\{date_str}_RT_Report"
-    use_this_dir = glob.glob(os.path.join(report_dir, "*UseThis"))[0]
-    table_dir = os.path.join(use_this_dir, "Tables", "forUpload")
+    report_dir = fr"W:\documents\{date_str[:4]}_RT_Reports\{date_str}_RT_report_ET"
+    # report_dir = fr"W:\documents\{date_str[:4]}_RT_Reports\{date_str}_RT_Report"
+    use_this_dir = glob.glob(os.path.join(report_dir, "*UseThis*"))[0]
+    # table_dir = os.path.join(use_this_dir, "Tables", "forUpload")
+    table_dir = os.path.join(use_this_dir, "Tables")
     output_tables_dir = Path(__file__).parent.parent / "output" / f"{date}_WW_TEXtables" # TODO: move up to config
     output_tables_dir.mkdir(parents=True, exist_ok=True)
 
@@ -87,9 +89,9 @@ def generate_ww_tables(date: int, ids: str, verbose: bool) -> None:
 
     # Merge tables 04a and 04b into a single table
     if "04" in id_list:
-        table04a = os.path.join(table_dir, f"INMT_{date}_Table04a.csv")
-        table04b = os.path.join(table_dir, f"INMT_{date}_Table04b.csv")
-        table04_output = os.path.join(table_dir, f"INMT_{date}_Table04.csv")
+        table04a = os.path.join(table_dir, f"INMT1_{date}_Table04a_final.csv")
+        table04b = os.path.join(table_dir, f"INMT2_{date}_Table04b_final.csv")
+        table04_output = os.path.join(table_dir, f"INMT0_{date}_Table04_final.csv")
         if not os.path.exists(table04_output):
             merge_swe_csv(table04a, table04b, table04_output)
 
@@ -97,30 +99,40 @@ def generate_ww_tables(date: int, ids: str, verbose: bool) -> None:
     for table_id in id_list:
         print(f"Generating table {table_id}...")
 
-        matches = glob.glob(os.path.join(table_dir, f"*{table_id}.csv"))
+        matches = glob.glob(os.path.join(table_dir, f"*{table_id}_final.csv"))
         # TODO: error handling
+        if len(matches) == 0:
+            print(f"No table {table_id} found!")
         table = matches[0]
 
         # Get header data
         df = pd.read_csv(table)
+        df = df.iloc[:, 1:] # Drop the first column containing indices
         previous_date = df.iloc[0, 1].strip("%").replace(" Avg.", "")
         current_date = df.iloc[0, 2].strip("%").replace(" Avg.", "")
-        headers = {
+        headers = { # TODO: this should be automatic parsing
             "% of Average": [previous_date, current_date],
             "SWE (in)": [previous_date, current_date],
             "": ["SCA"],
             " ": ["Vol. (AF)"],
             "   ": ["Area (mi$^2$)"],
             "Pillows": [previous_date, current_date],
-            "Surveys": [current_date],
+            "SNODAS*": [current_date],
         }
+
+        # Check for ASO 
+        aso_corrected = df.iloc[:, 0].astype(str).str.contains("§").any()
 
         # Load table template
         templates_dir = Path(__file__).parent.parent / "report_templates"
         env = Environment(loader=FileSystemLoader(str(templates_dir)))
         template = env.get_template("TEMPLATE_SWE_Table.tex")
 
-        latex_table = template.render(df=df, title=ww_table_data[table_id], headers=headers, date=date_str)
+        latex_table = template.render(df=df,
+                                      title=ww_table_data[table_id],
+                                      headers=headers,
+                                      date=date_str,
+                                      aso_corrected=aso_corrected,)
 
         # Write table to LaTeX file in the output directory
         output_table = output_tables_dir / f"{date}_WW_Table{table_id}.tex"

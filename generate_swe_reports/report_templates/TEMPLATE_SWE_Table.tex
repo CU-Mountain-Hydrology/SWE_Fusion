@@ -70,4 +70,7 @@
         \specialrule{0.1pt}{4pt}{4pt}
     {% endfor %}
     \multicolumn{ {{ 1 + df.shape[1]-1 }} }{l}{\small*Basin boundaries were derived from a combination of NRCS basins and HUC8 boundaries.} \\
+    {% if aso_corrected %}
+        \multicolumn{ {{ 1 + df.shape[1]-1 }} }{l}{\small*Basin boundaries were derived from a combination of NRCS basins and HUC8 boundaries.} \\
+    {% endif %}
 \end{longtable}

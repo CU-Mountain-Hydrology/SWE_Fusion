@@ -43,6 +43,7 @@ def generate_ww_report(date: int) -> None:
     }
 
     rendered_tex = template.render(**context)
+    # TODO: config for output location
     output_tex = PROJECT_ROOT / "output" / f"0WW_SWE_Report_{date}.tex"
     with open(output_tex, "w", encoding="utf-8") as f:
         f.write(rendered_tex)
@@ -61,10 +62,10 @@ def main():
     args = parser.parse_args()
 
     # Generate maps
-    generate_maps("WW", args.date, args.figs, False, args.verbose, args.prompt_user)
+    # generate_maps("WW", args.date, args.figs, False, args.verbose, args.prompt_user)
 
     # Generate tables
-    generate_ww_tables(args.date, args.tables, args.verbose)
+    # generate_ww_tables(args.date, args.tables, args.verbose)
 
     # Generate report
     generate_ww_report(args.date)
