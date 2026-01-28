@@ -953,9 +953,9 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     # meanWorkspace = workspaceBase + "mean_2001_2021_Nodmfsca/"
     prevRepWorkspace = workspaceBase + f"RT_report_data/{prev_report_date}_results/{prev_model_run}/"
     meanMask = outWorkspace + f"{mean_date}_mean_msk.tif"
-    # MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2025.0.1_ops/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
+    MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2025.0.1_ops/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
     MODSCAG_tif_plus_proj = outWorkspace + f"fSCA_{report_date}_albn83.tif"
-    MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.0d/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
+    # MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2024.0d/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
 
     ## project and clip SNODAS
     SNODASWorkspace = resultsWorkspace + "SNODAS/"
@@ -2907,7 +2907,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
         df_band_prev = df_band_prev.rename(
             columns={"SWE_IN": "prev_SWE_IN", "sensors": "prev_sensors", "Avg": "prev_Avg"})
         df_band_prev = df_band_prev[['Basin', 'Elevation Band', 'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
-        state_df = pd.merge(merged_df, df_band_prev, on=['Basin', 'Elevation Band'], how='inner')
+        merged_df = pd.merge(merged_df, df_band_prev, on=['Basin', 'Elevation Band'], how='inner')
 
         # edit and export
         if not surveys_use:
@@ -2977,12 +2977,12 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 tables_workspace + f"SNM_{rundate}_table10_final.csv")
 
         if surveys_use:
-            df_band_tbl = state_df[
+            df_band_tbl = merged_df[
                 ['Basin', 'Elevation Band', 'SWE_IN', "Percent", "AREA_MI2", 'VOL_AF', "sensors", "Avg", "surveys",
                  "SNODAS"]]
 
             # for export
-            df_band_export = state_df[
+            df_band_export = merged_df[
                 ["Basin", 'Elevation Band', "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "surveys",
                  "SNODAS"]]
             df_band_export = df_band_export.rename(
