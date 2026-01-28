@@ -573,14 +573,6 @@ def download_snow_surveys(report_date, survey_date, survey_workspace, results_wo
 
     print(f"Snow Courses Downloaded from {len(valid_csvs)} states")
 
-# code for downloading CDEC sensors
-import requests
-import pandas as pd
-import os
-import geopandas as gpd
-from shapely.geometry import Point
-from datetime import datetime
-
 def download_cdec_snow_surveys(report_date, survey_date, survey_workspace, SNM_results_workspace, cdec_shapefile, basin_list):
     print("Starting CDEC snow survey download...")
 
@@ -620,57 +612,41 @@ def download_cdec_snow_surveys(report_date, survey_date, survey_workspace, SNM_r
     df.to_csv(v1_csv, index=False)
 
     # Rename headers and drop bad rows
-    header_names = ["ID", "Num", "Station_Na", "Elev_Sur", "Date", "SWE_in"]
-    file = pd.read_csv(v1_csv, header=None, names=header_names)
-    file = file[~file["SWE_in"].astype(str).str.contains("Water Content", na=False)]
-    file.drop(columns=["ID", "Num"], inplace=True, errors="ignore")
+    # Read CSV WITH header
+    file = pd.read_csv(v1_csv)
+
+    print("Raw columns:", file.columns.tolist())
+
+    # Explicitly rename CDEC columns
+    file = file.rename(columns={
+        "Name": "Station_Na",
+        "Elev.": "Elev_Sur",
+        "Water Content": "SWE_in"
+    })
+
+    # Keep only expected columns
+    file = file[["Station_Na", "Elev_Sur", "Date", "SWE_in"]]
+
+    # Drop header-like / non-numeric rows
+    file["SWE_in"] = pd.to_numeric(file["SWE_in"], errors="coerce")
+    file["Elev_Sur"] = pd.to_numeric(file["Elev_Sur"], errors="coerce")
+
+    file = file.dropna(subset=["SWE_in"])
 
     # Convert SWE
     file["SWE_in"] = pd.to_numeric(file["SWE_in"], errors="coerce")
     file["SWE_m"] = file["SWE_in"] * 0.0254
     file.to_csv(clean_csv, index=False)
+    print(file.head(5))
     print(f"Cleaned CSV saved: {clean_csv}")
 
     # Read shapefile and attach survey data
-    # gdf = gpd.read_file(cdec_shapefile)
-    # gdf.to_file(shapefile_out)
-    # df = pd.read_csv(clean_csv)
-
-    # Read shapefile
     gdf = gpd.read_file(cdec_shapefile)
-
-    # --- FIX 1: enforce valid CRS ---
-    if gdf.crs is None:
-        raise ValueError("Input CDEC shapefile has no CRS")
-
-    # --- FIX 2: force POINT geometry ---
-    # Project before geometry ops
-    gdf = gdf.to_crs(epsg=3310)
-
-    # Convert any non-point geometry to point
-    gdf["geometry"] = gdf.geometry.apply(
-        lambda geom: geom if geom.geom_type == "Point" else geom.point_on_surface()
-    )
-
-    # Re-assert geometry
-    gdf = gdf.set_geometry("geometry", crs="EPSG:3310")
-
-    # Save intermediate (now guaranteed points)
     gdf.to_file(shapefile_out)
-
-    # Read cleaned survey CSV
     df = pd.read_csv(clean_csv)
 
     df_sub = df[["Station_Na", "Elev_Sur", "Date", "SWE_in", "SWE_m"]]
     merged = gdf.merge(df_sub, on="Station_Na", how="left")
-
-    # --- FIX 3: re-assert geometry after merge ---
-    merged = gpd.GeoDataFrame(
-        merged,
-        geometry="geometry",
-        crs=gdf.crs
-    )
-
     merged.to_csv(merged_csv, index=False)
 
     # Drop empty values and save final shapefile
@@ -678,6 +654,7 @@ def download_cdec_snow_surveys(report_date, survey_date, survey_workspace, SNM_r
     os.makedirs(os.path.dirname(final_shapefile), exist_ok=True)
     merged.to_file(final_shapefile)
     print(f"Final shapefile saved: {final_shapefile}")
+
 
 ## function for downloading snotel for a time series
 from rasterio.merge import merge
