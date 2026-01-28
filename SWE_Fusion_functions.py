@@ -1242,8 +1242,7 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     arcpy.Delete_management("in-memory")
     gc.collect()
 
-    ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, modscag_per, scatable, "DATA",
-                                         "ALL")
+    ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, modscag_per, scatable, "DATA",                                   "ALL")
     arcpy.Delete_management("in-memory")
     gc.collect()
 
@@ -1392,9 +1391,20 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     print("create anomaly layer table = " + anomTable)
     # NEED TO ADD IN MEAN MASK
     anomt = ZonalStatisticsAsTable(watershed_zones, case_field_wtrshd, product9, anomTable, "DATA", "MEAN")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     anombt = ZonalStatisticsAsTable(band_zones, case_field_band, product10, anombandTable, "DATA", "MEAN")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     anomh6 = ZonalStatisticsAsTable(HUC6_zones, "name", product11, anomHuc6Table, "DATA", "MEAN")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
+
     anomreg = ZonalStatisticsAsTable(region_zones, "RegionAll", product12, anomRegionTable, "DATA", "MEAN")
+    arcpy.Delete_management("in-memory")
+    gc.collect()
 
     # NEED TO ADD IN MEAN MASK
     # Sort by bandname and watershed name, 3 tables

@@ -20,6 +20,9 @@ print('modules imported')
 start = time.time()
 print(f"\n START TIME: {start}")
 
+# TURN OFF PROCESSING SO IT DOESN'T CRASH FOR NO REASON WHATSOEVER
+arcpy.env.parallelProcessingFactor = "0"
+
 ######################################
 # RUNDATE VARIABLES
 ######################################
@@ -171,7 +174,6 @@ os.makedirs(WW_reports_workspace + f"/{rundate}_RT_report_ET", exist_ok=True)
 os.makedirs(SNM_reports_workspace + f"/{rundate}_RT_report_ET", exist_ok=True)
 print("\nReports directories made")
 
-print("\nRunning Vetting Codes")
 # download surveys if requested
 if surveys_use == "Y":
     print("\nGetting SNM Surveys")
