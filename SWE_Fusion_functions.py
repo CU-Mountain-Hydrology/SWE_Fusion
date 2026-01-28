@@ -2443,12 +2443,16 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
     ## set new date structure
     date_obj = datetime.strptime(rundate, "%Y%m%d")
     formatted_date = f"{date_obj.month}/{date_obj.day}/{date_obj.year}"
-    prev_date_obj = datetime.strptime(prev_rundate, "%Y%m%d")
-    prev_formatted_date = f"{prev_date_obj.month}/{prev_date_obj.day}/{prev_date_obj.year}"
+    if difference == "Y":
+        prev_date_obj = datetime.strptime(prev_rundate, "%Y%m%d")
+        prev_formatted_date = f"{prev_date_obj.month}/{prev_date_obj.day}/{prev_date_obj.year}"
+        prev_date_abrev = f"{prev_date_obj.month}/{prev_date_obj.day}"
+
     date_abrev = f"{date_obj.month}/{date_obj.day}"
-    prev_date_abrev = f"{prev_date_obj.month}/{prev_date_obj.day}"
-    surv_date_obj = datetime.strptime(survey_date, "%Y%m%d")
-    surv_date_abrev = f"{surv_date_obj.month}/{surv_date_obj.day}"
+
+    if surveys_use:
+        surv_date_obj = datetime.strptime(survey_date, "%Y%m%d")
+        surv_date_abrev = f"{surv_date_obj.month}/{surv_date_obj.day}"
 
     # copy over files
     shutil.copy(results_workspace + f"{modelRunName}/{rundate}anomBand_table.csv",
@@ -2502,7 +2506,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
     df_band = pd.read_csv(reports_workspace + f"{modelRunName}/{rundate}band_table.csv")
     df_band['region'] = df_band["SrtNmeBand"].str[:5]
     df_band['VOL_AF'] = df_band['VOL_AF'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
-    df_band['AREA_MI2'] = df_band['AREA_MI2'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+    df_band['AREA_MI2'] = df_band['AREA_MI2'].apply(lambda x: f"{x:,.1f}" if isinstance(x, (int, float)) else x)
     df_band['SWE_IN'] = df_band['SWE_IN'].round(1)
     df_band['Percent'] = df_band['Percent'].round(1)
 
@@ -2653,7 +2657,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
     # getting watershed table
     df_wtshd = pd.read_csv(reports_workspace + f"{modelRunName}/{rundate}Wtshd_table.csv")
     df_wtshd['VOL_AF'] = df_wtshd['VOL_AF'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
-    df_wtshd['AREA_MI2'] = df_wtshd['AREA_MI2'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+    df_wtshd['AREA_MI2'] = df_wtshd['AREA_MI2'].apply(lambda x: f"{x:,.1f}" if isinstance(x, (int, float)) else x)
     df_wtshd['SWE_IN'] = df_wtshd['SWE_IN'].round(1)
     df_wtshd['Percent'] = df_wtshd['Percent'].round(1)
     df_wtshd['region'] = df_wtshd["SrtName"].str[:5]
@@ -2867,7 +2871,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
     # open band table and sort
     df_band = pd.read_csv(reports_workspace + f"{modelRunName}/{rundate}band_table.csv")
     df_band['VOL_AF'] = df_band['VOL_AF'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
-    df_band['AREA_MI2'] = df_band['AREA_MI2'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+    df_band['AREA_MI2'] = df_band['AREA_MI2'].apply(lambda x: f"{x:,.1f}" if isinstance(x, (int, float)) else x)
     df_band['SWE_IN'] = df_band['SWE_IN'].round(1)
     df_band['Percent'] = df_band['Percent'].round(1)
 
@@ -3025,7 +3029,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
     # getting watershed table
     df_wtshd = pd.read_csv(reports_workspace + f"{modelRunName}/{rundate}Wtshd_table.csv")
     df_wtshd['VOL_AF'] = df_wtshd['VOL_AF'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
-    df_wtshd['AREA_MI2'] = df_wtshd['AREA_MI2'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+    df_wtshd['AREA_MI2'] = df_wtshd['AREA_MI2'].apply(lambda x: f"{x:,.1f}" if isinstance(x, (int, float)) else x)
     df_wtshd['SWE_IN'] = df_wtshd['SWE_IN'].round(1)
     df_wtshd['Percent'] = df_wtshd['Percent'].round(1)
     df_wtshd['region'] = df_wtshd["SrtName"].str[:5]
