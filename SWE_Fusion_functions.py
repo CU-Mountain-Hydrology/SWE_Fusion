@@ -337,6 +337,7 @@ import glob
 import geopandas as gpd
 from shapely.geometry import Point
 from datetime import datetime
+from shapely.geometry import Point
 
 # def download_snow_surveys(report_date, survey_workspace, results_workspace, WW_url_file, NRCS_shp, WW_state_list):
 #     """
@@ -453,7 +454,7 @@ def download_snow_surveys(report_date, survey_date, survey_workspace, results_wo
     os.makedirs(path, exist_ok=True)
     snowCourseWorkspace = os.path.join(survey_workspace, report_date)
     date_obj = datetime.strptime(survey_date, "%Y%m%d")
-    month = date_obj.strftime("%B")
+    month = date_obj.strftime("%b")
     year = date_obj.year
 
     # ---- Read URLs from file ----
@@ -541,12 +542,29 @@ def download_snow_surveys(report_date, survey_date, survey_workspace, results_wo
     gdf = gdf[
         ["Station_Na", "Station_Id", "State_Code", "Network_Co", "Elevation", "Latitude", "Longitude", "geometry"]]
 
-    merged_df = pd.merge(df, gdf, left_on="Station Name", right_on="Station_Na", how="right")
+    merged_df = pd.merge(df, gdf, left_on="Station Name", right_on="Station_Na", how="left")
     merged_df = merged_df.dropna(subset=[month]).drop_duplicates(subset=["Station Id"])
 
+    merged_df["Longitude"] = pd.to_numeric(merged_df["Longitude"], errors="coerce")
+    merged_df["Latitude"] = pd.to_numeric(merged_df["Latitude"], errors="coerce")
+    merged_df = merged_df.dropna(subset=["Longitude", "Latitude"])
+    merged_df = merged_df[
+        merged_df["Longitude"].apply(lambda x: isinstance(x, (int, float))) &
+        merged_df["Latitude"].apply(lambda x: isinstance(x, (int, float)))
+        ]
+
     # Export as shapefile
-    geometry = [Point(xy) for xy in zip(merged_df["Longitude"], merged_df["Latitude"])]
-    gdf_stateSurvey = gpd.GeoDataFrame(merged_df, geometry=geometry, crs="EPSG:4326")
+    # geometry = [
+    #     Point(float(x), float(y))
+    #     for x, y in zip(merged_df["Longitude"], merged_df["Latitude"])
+    # ]
+    # gdf_stateSurvey = gpd.GeoDataFrame(merged_df, geometry=geometry, crs="EPSG:4326")
+
+    gdf_stateSurvey = gpd.GeoDataFrame(
+        merged_df,
+        geometry="geometry",
+        crs=gdf.crs
+    )
 
     results_dir = os.path.join(results_workspace, f"{report_date}_results_ET")
     os.makedirs(results_dir, exist_ok=True)
@@ -614,12 +632,45 @@ def download_cdec_snow_surveys(report_date, survey_date, survey_workspace, SNM_r
     print(f"Cleaned CSV saved: {clean_csv}")
 
     # Read shapefile and attach survey data
+    # gdf = gpd.read_file(cdec_shapefile)
+    # gdf.to_file(shapefile_out)
+    # df = pd.read_csv(clean_csv)
+
+    # Read shapefile
     gdf = gpd.read_file(cdec_shapefile)
+
+    # --- FIX 1: enforce valid CRS ---
+    if gdf.crs is None:
+        raise ValueError("Input CDEC shapefile has no CRS")
+
+    # --- FIX 2: force POINT geometry ---
+    # Project before geometry ops
+    gdf = gdf.to_crs(epsg=3310)
+
+    # Convert any non-point geometry to point
+    gdf["geometry"] = gdf.geometry.apply(
+        lambda geom: geom if geom.geom_type == "Point" else geom.point_on_surface()
+    )
+
+    # Re-assert geometry
+    gdf = gdf.set_geometry("geometry", crs="EPSG:3310")
+
+    # Save intermediate (now guaranteed points)
     gdf.to_file(shapefile_out)
+
+    # Read cleaned survey CSV
     df = pd.read_csv(clean_csv)
 
     df_sub = df[["Station_Na", "Elev_Sur", "Date", "SWE_in", "SWE_m"]]
     merged = gdf.merge(df_sub, on="Station_Na", how="left")
+
+    # --- FIX 3: re-assert geometry after merge ---
+    merged = gpd.GeoDataFrame(
+        merged,
+        geometry="geometry",
+        crs=gdf.crs
+    )
+
     merged.to_csv(merged_csv, index=False)
 
     # Drop empty values and save final shapefile
@@ -844,9 +895,20 @@ def extract_zip(zip_path, ext, output_folder):
 import geopandas as gpd
 import fiona
 
-def safe_read_shapefile(path):
-        with fiona.open(path, 'r') as src:
-            return gpd.GeoDataFrame.from_features(src, crs=src.crs)
+# def safe_read_shapefile(path):
+#         with fiona.open(path, 'r') as src:
+#             return gpd.GeoDataFrame.from_features(src, crs=src.crs)
+
+def safe_read_shapefile(shapefile_path):
+    gdf = gpd.read_file(shapefile_path)
+
+    # Drop rows with missing or empty geometry
+    gdf = gdf[gdf.geometry.notnull()]
+
+    if gdf.empty:
+        raise ValueError(f"No valid geometries found in {shapefile_path}")
+
+    return gdf
 
 def read_raster_values(path, remove_zeros=True):
     with rasterio.open(path) as src:
@@ -912,6 +974,8 @@ def get_points_within_raster(shapefile_path, raster_path, id_column="site_id"):
 
         # Filter to points with actual data
         gdf_final = gdf_within_extent.loc[points_with_data]
+
+    gdf_final = gdf_final[gdf_final.geometry.notnull()]
     site_id_list = gdf_final[id_column].unique().tolist()
 
     return gdf_final, site_id_list
