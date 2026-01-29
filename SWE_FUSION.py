@@ -79,7 +79,7 @@ aspect_path = r"M:\SWE\WestWide\data\topo\ww_ASPECT_albn83.tif"
 reference_col = "SNOW17_SWE_AF"
 elev_bins = np.arange(1500, 15000, 100, dtype=float)
 swe_col_surv = 'SWE_m'
-id_col_surv = 'Station_Id'
+id_col_surv = 'Station_Na'
 # error_statistic = ""
 
 ######################################
@@ -125,10 +125,14 @@ SNM_clipbox = "M:/SWE/WestWide/data/boundaries/Domains/DomainShapefiles/WW_SNM_C
 ## west wide
 HUC6_zones = "M:/SWE/WestWide/data/hydro/WW_HUC6_albn83_ras_msked.tif"
 region_zones = "M:/SWE/WestWide/data/hydro/WW_Regions_albn83_v2.tif"
-WW_band_zones = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinBanded_noSNM_notahoe_albn83_sel_v2.tif"
-WW_watershed_zones = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinBanded_noSNM_notahoe_albn83_sel_v2.tif"
-WW_watershed_shapefile = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_Basins_noSNM_notahoe_albn83_sel_v2.shp"
-WW_band_shapefile = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinsBanded_noSNM_notahoe_albn83_sel_v2.shp"
+WW_band_zones = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel_v2.tif"
+WW_watershed_zones = "M:/SWE/WestWide/data/hydro/WW_BasinBanded_noSNM_notahoe_albn83_sel_v2.tif"
+WW_watershed_shapefile = "M:/SWE/WestWide/data/hydro/WW_Basins_noSNM_notahoe_albn83_sel_v2.shp"
+WW_band_shapefile = "M:/SWE/WestWide/data/hydro/WW_BasinsBanded_noSNM_notahoe_albn83_sel_v2.shp"
+# WW_band_zones = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinBanded_noSNM_notahoe_albn83_sel_v2.tif"
+# WW_watershed_zones = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinBanded_noSNM_notahoe_albn83_sel_v2.tif"
+# WW_watershed_shapefile = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_Basins_noSNM_notahoe_albn83_sel_v2.shp"
+# WW_band_shapefile = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinsBanded_noSNM_notahoe_albn83_sel_v2.shp"
 
 
 # masks

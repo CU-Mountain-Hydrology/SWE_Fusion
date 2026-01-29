@@ -2458,6 +2458,26 @@ from datetime import datetime
 import warnings
 warnings.filterwarnings("ignore")
 
+def parse_sensors(s):
+    # Handle NA or missing values
+    if s is None or s == 'NA' or (isinstance(s, float) and np.isnan(s)):
+        return np.nan, 0  # no sensors
+    # match "4.7 ( 18 )"
+    match = re.match(r'([\d\.]+)\s*\(\s*(\d+)\s*\)', s)
+    if match:
+        return float(match.group(1)), int(match.group(2))
+    else:
+        try:
+            return float(s), 1
+        except:
+            return np.nan, 0
+
+def clean_numeric(val):
+    """Convert a value that might be a formatted string (with commas) back to float"""
+    if isinstance(val, str):
+        return float(val.replace(',', ''))
+    return float(val)
+
 def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspace, reports_workspace, difference,
                          prev_tables_workspace=None, survey_date=None, prev_rundate=None, surveys_use=False):
 
@@ -2593,6 +2613,62 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
         state_df['Elevation Band'] = state_df['SrtNmeBand'].apply(lambda x: x[-7:] if x[-2:] == "GT" else x[-5:])
         state_df['Elevation Band'] = state_df['Elevation Band'].map(elevationBands)
 
+        if abbrev == "SOCN0":
+            bands = ["7,000-8,000'","8,000-9,000'", "9,000-10,000'", "10,000-11,000'", "11,000-12,000'", "12,000-13,000'","13,000-14,000'"]
+            rows = ['33. Animas', '21. San Juan']
+
+            # loop through elevation bands
+            for band in bands:
+                subset = state_df.loc[state_df['Basin'].isin(rows) & state_df['Elevation Band'].isin([band])]
+
+                subset['VOL_AF'] = subset['VOL_AF'].apply(clean_numeric)
+                subset['AREA_MI2'] = subset['AREA_MI2'].apply(clean_numeric)
+                subset['SWE_IN'] = pd.to_numeric(subset['SWE_IN'], errors='coerce')
+                subset['Avg'] = pd.to_numeric(subset['Avg'], errors='coerce')
+                subset['Percent'] = pd.to_numeric(subset['Percent'], errors='coerce')
+                subset['SNODAS'] = pd.to_numeric(subset['SNODAS'], errors='coerce')
+
+                sum_vals = subset[['VOL_AF', 'AREA_MI2']].sum()
+
+                weights = subset['AREA_MI2']
+                swe_weighted = (subset['SWE_IN'].mul(weights).sum() / weights.sum())
+                snodas_weighted = (subset['SNODAS'].mul(weights).sum() / weights.sum())
+                pct_weighted = (subset['Avg'].mul(weights).sum() / weights.sum())
+                sca_weighted = (subset['Percent'].mul(weights).sum() / weights.sum())
+
+                subset[['SWE_from_sensors', 'Num_sensors']] = subset['sensors'].apply(
+                            lambda x: pd.Series(parse_sensors(x)))
+
+                # Weighted average SWE
+                if subset['Num_sensors'].sum() > 0:
+                    weighted_swe = (subset['SWE_from_sensors'] * subset['Num_sensors']).sum() / subset[
+                        'Num_sensors'].sum()
+                    total_sensors = subset['Num_sensors'].sum()
+                    sensors_weighted_str = f"{weighted_swe:.1f} ( {total_sensors:.0f} )"
+                else:
+                    sensors_weighted_str = "NA"
+
+                combined_row = {
+                    'Basin': 'San Juan & Animas*',
+                    'Elevation Band': band,
+                    'VOL_AF': sum_vals['VOL_AF'],  # Keep as numeric for now
+                    'AREA_MI2': sum_vals['AREA_MI2'],  # Keep as numeric for now
+                    'SWE_IN': swe_weighted,
+                    'Avg': pct_weighted,
+                    'SNODAS': snodas_weighted,
+                    'Percent': sca_weighted,
+                    'sensors': sensors_weighted_str
+                }
+
+                state_df = pd.concat(
+                    [state_df, pd.DataFrame([combined_row])],
+                    ignore_index=True
+                )
+
+                # assert combined_row['AREA_MI2'] == subset['AREA_MI2'].sum()
+        state_df['VOL_AF'] = state_df['VOL_AF'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+        state_df['AREA_MI2'] = state_df['AREA_MI2'].apply(lambda x: f"{x:,.1f}" if isinstance(x, (int, float)) else x)
+
         if difference == "Y":
             difference_cols = ['prev_SWE_IN', 'prev_sensors', 'prev_Avg']
             df_band_prev = pd.read_csv(
@@ -2697,8 +2773,6 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
     print('Moving on to watershed table')
     # getting watershed table
     df_wtshd = pd.read_csv(reports_workspace + f"{modelRunName}/{rundate}Wtshd_table.csv")
-    df_wtshd['VOL_AF'] = df_wtshd['VOL_AF'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
-    df_wtshd['AREA_MI2'] = df_wtshd['AREA_MI2'].apply(lambda x: f"{x:,.1f}" if isinstance(x, (int, float)) else x)
     df_wtshd['SWE_IN'] = df_wtshd['SWE_IN'].round(1)
     df_wtshd['Percent'] = df_wtshd['Percent'].round(1)
     df_wtshd['region'] = df_wtshd["SrtName"].str[:5]
@@ -2741,6 +2815,87 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
         state_wtshd_df['Basin_rw'] = state_wtshd_df['SrtName'].str[9:]
         state_wtshd_df['Num'] = state_wtshd_df['SrtName'].str[6:8].astype(int).astype(str) + '.'
         state_wtshd_df['Basin'] = state_wtshd_df['Num'] + " " + state_wtshd_df['Basin_rw']
+
+        if abbrev == "SOCN0":
+            num_cols = ['VOL_AF', 'AREA_MI2', 'SWE_IN', 'Sensors', 'Avg']
+
+            for c in ['VOL_AF', 'AREA_MI2']:
+                state_wtshd_df[c] = (
+                    state_wtshd_df[c]
+                    .astype(str)
+                    .str.replace(',', '', regex=False)
+                    .astype(float)
+                )
+
+            rows = ['33. Animas', '21. San Juan']
+            subset = state_wtshd_df.loc[state_wtshd_df['Basin'].isin(rows)]
+
+            sum_vals = subset[['VOL_AF', 'AREA_MI2']].sum()
+
+            weights = subset['AREA_MI2']
+
+            swe_weighted = (
+                    subset['SWE_IN']
+                    .mul(weights)
+                    .sum()
+                    / weights.sum()
+            )
+
+            snodas_weighted = (
+                    subset['SNODAS']
+                    .mul(weights)
+                    .sum()
+                    / weights.sum()
+            )
+
+            pct_weighted = (
+                    subset['Avg']
+                    .mul(weights)
+                    .sum()
+                    / weights.sum()
+            )
+
+            sca_weighted = (
+                    subset['Percent']
+                    .mul(weights)
+                    .sum()
+                    / weights.sum()
+            )
+
+            subset[['SWE_from_sensors', 'Num_sensors']] = subset['sensors'].apply(lambda x: pd.Series(parse_sensors(x)))
+
+            # Weighted average SWE
+            weighted_swe = (subset['SWE_from_sensors'] * subset['Num_sensors']).sum() / subset['Num_sensors'].sum()
+
+            # Total sensors
+            total_sensors = subset['Num_sensors'].sum()
+
+            # Format back into "X ( Y )"
+            sensors_weighted_str = f"{weighted_swe:.1f} ( {total_sensors:.0f} )"
+
+            combined_row = {
+                'Basin': 'San Juan & Animas*',
+                'VOL_AF': sum_vals['VOL_AF'],
+                'AREA_MI2': sum_vals['AREA_MI2'],
+                'SWE_IN': swe_weighted,
+                'Avg': pct_weighted,
+                'SNODAS': snodas_weighted,
+                'Percent': sca_weighted,
+                'sensors':sensors_weighted_str
+            }
+
+            state_wtshd_df = pd.concat(
+                [state_wtshd_df, pd.DataFrame([combined_row])],
+                ignore_index=True
+            )
+
+            assert combined_row['AREA_MI2'] == subset['AREA_MI2'].sum()
+        state_wtshd_df['VOL_AF'] = state_wtshd_df['VOL_AF'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
+        state_wtshd_df['AREA_MI2'] = state_wtshd_df['AREA_MI2'].apply(lambda x: f"{x:,.1f}" if isinstance(x, (int, float)) else x)
+        state_wtshd_df['SWE_IN'] = state_wtshd_df['SWE_IN'].round(1)
+        state_wtshd_df['Percent'] = state_wtshd_df['Percent'].round(1)
+        state_wtshd_df['Avg'] = state_wtshd_df['Avg'].fillna("NA")
+        state_wtshd_df['Avg'] = state_wtshd_df['Avg'].apply(lambda x: int(round(x)) if x != "NA" else x)
 
         if difference == "Y":
             difference_cols = ['prev_SWE_IN', 'prev_sensors', 'prev_Avg']
@@ -2799,6 +2954,8 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
 
         if difference == "N":
             # edit and export
+            # add animas and san juan
+
             if not surveys_use:
                 df_wtshd_tbl = state_wtshd_df[
                     ['Basin', 'SWE_IN', "Percent", "AREA_MI2", 'VOL_AF', "sensors", "Avg", "SNODAS"]]
@@ -2816,6 +2973,8 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                 )
                 df_wtshd_export.to_csv(
                     tables_workspace + f"{abbrev}_{rundate}_table{wtshTableIndex[f'{abbrev}']}_final.csv")
+
+
 
             if surveys_use:
                 df_wtshd_tbl = state_wtshd_df[
