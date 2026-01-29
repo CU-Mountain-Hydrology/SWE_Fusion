@@ -25,8 +25,8 @@ snm_aprx = "U:\EricG\MapTemplate\SNM_Template.aprx"
 # product_source_dir = r"U:\EricG\testing_Directory"    # Parent directory of the YYYYMMDD_RT_Report folders
 product_source_dir = r"W:\documents\2026_RT_Reports"    # Parent directory of the YYYYMMDD_RT_Report folders
 # TODO: separate source & output dirs for WW and SNM
-snm_source_dir = r"U:\EricG\testing_Directory\SNM"
-# snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports"
+# snm_source_dir = r"U:\EricG\testing_Directory\SNM"
+snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports"
 output_parent_dir = "../output/"                        # Directory the figures will be exported to
 
 # Figure configs
@@ -132,7 +132,7 @@ snm_fig_data = {
     "0": {
         "maps": {
             "regions": [
-                {"layer": "anomRegion_table", "format": "dbf", "dir": "*UseAvg", "label": ["dwr_region_labels", "Regions"]}
+                {"layer": "anomRegion_table", "format": "dbf", "dir": "*UseAvg", "label": ["dwr_region_poly_labels", "Regions"]}
             ]
         }
     },
@@ -189,11 +189,10 @@ snm_fig_data = {
         "maps": {
             "mean_swe": [
                 {"layer": "mean_msk", "format": "tif", "dir": "*UseThis*", "label": "None"},
-                # TODO: add support for shp files
                 {"layer": "Zero_sensors", "format": "shp", "dir": "", "label": "None"},
-                {"layer": "sensors_SNM", "format": "shp", "dir": "", "label": "None"},
-                {"layer": "Zero_CCR", "format": "shp", "dir": "", "label": "None"},
-                {"layer": "CCR", "format": "shp", "dir": "", "label": "None"},
+                # {"layer": "sensors_SNM", "format": "shp", "dir": "", "label": "None"},
+                # {"layer": "Zero_CCR", "format": "shp", "dir": "", "label": "None"},
+                # {"layer": "CCR_sensors", "format": "shp", "dir": "", "label": "None"},
             ],
             "banded_elev": []
         }
@@ -213,6 +212,7 @@ import glob # OS Pattern Searching
 import tempfile
 import shutil
 import arcpy
+import uuid
 from datetime import datetime
 
 def interpret_figs(figs: str, report_type: str) -> list[str]:
@@ -266,10 +266,11 @@ def interpret_figs(figs: str, report_type: str) -> list[str]:
     return sorted(fig_list)
 
 
-def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True) -> str:
+def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user = True, warn = True) -> str:
     """
     Finds the specific layer file to use
 
+    :param report_type: Type of report to interpret figures for. e.g., WW, SNM
     :param date: Date of report in YYYYMMDD format
     :param layer_info: Dictionary containing the layer id, format, directory, and label type
     :param prompt_user: Enable prompting the user when selecting between multiple options. Default: True
@@ -285,9 +286,11 @@ def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True
 
     # Find RT_Report directory for this date
     # TODO: copy files out of results dir to avoid corruption problems. Automate this process
-    # rt_report_dir = os.path.join(product_source_dir, str(date) + "_RT_report_ET")
-    rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_report_ET")
-    # rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_Report")
+    if report_type == "WW":
+        rt_report_dir = os.path.join(product_source_dir, str(date) + "_RT_report_ET")
+    else: # SNM
+        rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_report_ET")
+        # rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_Report")
 
     # Find the directory containing the layer products to be used e.g. "...UseThis"
     try:
@@ -334,6 +337,7 @@ def find_layer_file(date: int, layer_info: dict, prompt_user = True, warn = True
                 print(f"find_layer_file warning: Multiple files matching pattern '{layer_id}' found in '{layer_dir}'. Using {layer_files[0]}")
 
     return layer_file
+
 
 def get_modis_date(layer_file) -> int:
     # TODO: docs
@@ -393,7 +397,7 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                     _map.removeTable(undefined_table)
 
                 # Find the new layer source
-                new_layer_path = find_layer_file(date, layer_info, prompt_user=prompt_user)
+                new_layer_path = find_layer_file(report_type, date, layer_info, prompt_user=prompt_user)
 
                 # Handle MODIS date
                 if "snapshot" in new_layer_path:
@@ -417,8 +421,8 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                         if "snapshot" not in new_layer_path:
                             layer.symbology = symbology
                 elif isinstance(label, list):  # Join table to label layer
-                    label_pattern = label[0] # Pattern of the shp layer with labels enabled
-                    join_field = label[1] # Field in both the label layer and the join table
+                    label_pattern = label[0]  # Pattern of the shp layer with labels enabled
+                    join_field = label[1]  # Field in both the label layer and the join table
 
                     # Find label layer first
                     label_layers = _map.listLayers(f"*{label_pattern}*")
@@ -456,90 +460,88 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
 
                     # Save label expression for later
                     original_label_expression = label_layer.listLabelClasses()[0].expression
-
-                    # Get the data source and create a feature layer from it
-                    label_data_source = label_layer.dataSource
-                    if not label_data_source.endswith('.shp') and not os.path.exists(label_data_source):
-                        label_data_source = label_data_source + '.shp'
-
-                    feature_layer_name = label_layer.name
-                    if arcpy.Exists(feature_layer_name):
-                        arcpy.management.Delete(feature_layer_name)
-
-                    arcpy.management.MakeFeatureLayer(label_data_source, feature_layer_name)
+                    if verbose:
+                        print(f"Original label expression: {original_label_expression}")
 
                     # Create a table view
-                    table_view_name = f"{layer_id}"
-                    if arcpy.Exists(table_view_name):
-                        arcpy.management.Delete(table_view_name)
-
+                    table_view_name = f"temp_table_{uuid.uuid4().hex[:8]}"
                     arcpy.management.MakeTableView(new_layer_path, table_view_name)
 
                     # Verify join field exists in both
                     if verbose:
-                        label_fields = [f.name for f in arcpy.ListFields(feature_layer_name)]
+                        print(f"Label layer: {label_layer}")
+                        print(f"Label layer type: {type(label_layer)}")
+                        print(f"Label layer name: {label_layer.name}")
+                        print(f"Label layer dataSource: {label_layer.dataSource}")
+
+                        label_data_source = label_layer.dataSource
+                        if not os.path.exists(label_data_source):
+                            label_data_source = label_data_source + '.shp'
+                        label_fields = [f.name for f in arcpy.ListFields(label_data_source)]
                         table_fields = [f.name for f in arcpy.ListFields(table_view_name)]
-                        # print(f"Feature layer fields: {label_fields}")
-                        # print(f"Table fields: {table_fields}")
-                        # print(f"Join field: {join_field}")
+                        print(f"Feature layer fields: {label_fields}")
+                        print(f"Table fields: {table_fields}")
+                        print(f"Join field: {join_field}")
 
                         if join_field not in label_fields:
                             raise ValueError(f"Join field '{join_field}' not found in feature layer")
                         if join_field not in table_fields:
                             raise ValueError(f"Join field '{join_field}' not found in table")
 
-                    # Perform the join
-                    if verbose: print(f"Attempting join: layer={feature_layer_name}, field={join_field}, table={table_view_name}")
+                    # Perform the join directly on the map layer
+                    if verbose: print(
+                        f"Attempting join: layer={label_layer.name}, field={join_field}, table={table_view_name}")
                     arcpy.management.AddJoin(
-                        in_layer_or_view=feature_layer_name,
+                        in_layer_or_view=label_layer,
                         in_field=join_field,
                         join_table=table_view_name,
                         join_field=join_field,
                         join_type="KEEP_ALL"
                     )
 
-                    # joined_fields = [f.name for f in arcpy.ListFields(label_layer)]
-                    # print(f"Fields after join: {joined_fields}")
+                    if verbose:
+                        joined_fields = [f.name for f in arcpy.ListFields(label_layer)]
+                        print(f"Fields after join: {joined_fields}")
 
                     # Find the actual table prefix used in the join (extract from filename)
                     table_filename = os.path.splitext(os.path.basename(new_layer_path))[0]
-                    # print(f"Table filename (used as prefix): {table_filename}")
-
-                    # Save the joined layer to a temporary layer file
-                    temp_lyrx = os.path.join(temp_dir, f"{feature_layer_name}_joined.lyrx")
-                    arcpy.management.SaveToLayerFile(feature_layer_name, temp_lyrx)
-
-                    # Remove the old layer from the map
-                    old_symbology = label_layer.symbology
-                    _map.removeLayer(label_layer)
-
-                    # Add the joined layer file back to the map
-                    lyrx_file = arcpy.mp.LayerFile(temp_lyrx)
-                    added_layers = _map.addLayer(lyrx_file, "TOP")
-
-                    # Get the newly added layer
-                    if isinstance(added_layers, list):
-                        new_layer = added_layers[0]
-                    else:
-                        new_layer = added_layers
-
-                    # Apply original symbology and update label expressions
-                    new_layer.symbology = old_symbology
+                    if verbose:
+                        print(f"Table filename (used as prefix): {table_filename}")
 
                     # Set the label expression to use the joined field
-                    for lbl_class in new_layer.listLabelClasses():
-                        new_expression = original_label_expression.replace(
-                            f"'{layer_id}.",
-                            f"'{table_filename}."
-                        )
-                        lbl_class.expression = new_expression
-                        # print(f"Updated label expression: {new_expression}")
+                    for lbl_class in label_layer.listLabelClasses():
+                        # After joining, field references need to include the table prefix
+                        # Replace $feature.fieldname with $feature['tablename.fieldname']
+                        import re
 
-                    new_layer.visible = True
-                    new_layer.showLabels = True
+                        # Extract field name from the original expression (e.g., "Average" from "$feature.Average")
+                        # This regex finds patterns like $feature.fieldname
+                        def replace_field_reference(match):
+                            field_name = match.group(1)
+                            return f"$feature['{table_filename}.{field_name}']"
+
+                        new_expression = re.sub(r'\$feature\.(\w+)', replace_field_reference, original_label_expression)
+
+                        lbl_class.expression = new_expression
+                        if verbose:
+                            print(f"Updated label expression: {new_expression}")
+
+                    # Ensure layer is visible with labels
+                    label_layer.visible = True
+                    label_layer.showLabels = True
+
+                    if verbose:
+                        print(
+                            f"Layer '{label_layer.name}' visible: {label_layer.visible}, showLabels: {label_layer.showLabels}")
 
                     # Save the project
                     aprx.save()
+
+                    # Clean up (non-critical)
+                    try:
+                        arcpy.management.Delete(table_view_name)
+                    except:
+                        pass
 
         # Export the layout to JPEG
         layout = aprx.listLayouts(f"*{fig_id}*")[0]
