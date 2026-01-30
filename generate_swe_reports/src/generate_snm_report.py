@@ -3,7 +3,7 @@
 """
 
 from generate_maps import generate_maps
-from generate_tables import generate_ww_tables
+from generate_tables import generate_tables
 import argparse
 from pathlib import Path
 from jinja2 import Template
@@ -36,10 +36,8 @@ def generate_snm_report(date: int) -> Path:
         # "fig4_path": str(maps_dir / f"{date}_WW_Fig4.jpg").replace("\\", "/"),
         # "fig5_path": str(maps_dir / f"{date}_WW_Fig5.jpg").replace("\\", "/"),
         # "fig6_path": str(maps_dir / f"{date}_WW_Fig6.jpg").replace("\\", "/"),
-        # "table1_path": str(tables_dir / f"{date}_WW_Table01.tex").replace("\\", "/"),
-        # "table2_path": str(tables_dir / f"{date}_WW_Table02.tex").replace("\\", "/"),
-        # "table3_path": str(tables_dir / f"{date}_WW_Table03.tex").replace("\\", "/"),
-        # "table4_path": str(tables_dir / f"{date}_WW_Table04.tex").replace("\\", "/"),
+        "table5_path": str(tables_dir / f"{date}_SNM_Table5.tex").replace("\\", "/"),
+        # "table10_path": str(tables_dir / f"{date}_SNM_Table10.tex").replace("\\", "/"),
     }
 
     rendered_tex = template.render(**context)
@@ -66,7 +64,7 @@ def main():
     # generate_maps("WW", args.date, args.figs, False, args.verbose, args.prompt_user)
 
     # Generate tables
-    # generate_ww_tables(args.date, args.tables, args.verbose)
+    generate_tables("SNM", args.date, args.tables, args.verbose)
 
     # Generate report
     output_path = generate_snm_report(args.date)
