@@ -47,7 +47,7 @@ ww_fig_data = {                                         # Dictionary of metadata
     "1b": {
         "maps": {
             "1b": [
-                {"layer": "anomRegion_table", "format": "csv", "dir": "*UseAvg", "label": "Anno"}
+                {"layer": "anomRegion_table", "format": "csv", "dir": "*UseAvg", "label": ["WW_Regions_albn83_label","ZONE_CODE"]}
             ]
         }
     },
@@ -504,7 +504,14 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                         print(f"Fields after join: {joined_fields}")
 
                     # Find the actual table prefix used in the join (extract from filename)
-                    table_filename = os.path.splitext(os.path.basename(new_layer_path))[0]
+                    table_path = os.path.basename(new_layer_path)
+                    if table_path.lower().endswith('.csv'):
+                        # Keep the .csv extension for CSV files
+                        table_filename = table_path
+                    else:
+                        # Remove extension for other file types (like .dbf)
+                        table_filename = os.path.splitext(table_path)[0]
+
                     if verbose:
                         print(f"Table filename (used as prefix): {table_filename}")
 
