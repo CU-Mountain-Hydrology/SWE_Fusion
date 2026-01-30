@@ -3,7 +3,7 @@
 """
 
 from generate_maps import generate_maps
-from generate_tables import generate_ww_tables
+from generate_tables import generate_tables
 import argparse
 from pathlib import Path
 from jinja2 import Template
@@ -23,7 +23,7 @@ def generate_ww_report(date: int) -> None:
     tables_dir = PROJECT_ROOT / "output"  / f"{date}_WW_TEXtables"
 
     context = {
-        "instaar_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "INSTAAR_Logo.png").replace("\\", "/"),
+        "instaar_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "INSTAAR_75_Logo.png").replace("\\", "/"),
         "bureau_reclamation_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "Bureau_Reclamation_Logo.png").replace("\\", "/"),
         "cu_boulder_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "CU_Boulder_Logo.png").replace("\\", "/"),
         "date": date,
