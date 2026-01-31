@@ -3096,7 +3096,9 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
     merged_df['sensors'] = merged_df['sensors'].fillna('NA')
 
     # separate into tables for domain
-    merged_df['Basin_rw'] = merged_df['SrtNmeBand'].str[2:-5]
+    # merged_df['Basin_rw'] = merged_df['SrtNmeBand'].str[2:-5]
+    # state_df['Basin_rw'] = state_df['SrtNmeBand'].apply(lambda x: x[9:-8] if x[-2:] == "GT" else x[9:-6])
+    merged_df['Basin_rw'] = merged_df['SrtNmeBand'].apply(lambda x: x[2:-7] if x[-2:] == "GT" else x[2:-5])
     merged_df['Num'] = merged_df['SrtNmeBand'].str[:2].astype(int).astype(str) + '.'
     merged_df['Basin'] = merged_df['Num'] + " " + merged_df['Basin_rw']
     # merged_df['Elevation Band'] = merged_df['SrtNmeBand'].str[-5:]
