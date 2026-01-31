@@ -1236,7 +1236,7 @@ def aso_choice_and_mosaic(rundate, domain, aso_error_csv, error_metric, aso_regi
     arcpy.env.cellSize = snapRaster
 
     # get csv
-
+    aso_bias_corrected_basins = []
     aso_df = pd.read_csv(aso_error_csv)
 
     # make directory
@@ -1278,6 +1278,7 @@ def aso_choice_and_mosaic(rundate, domain, aso_error_csv, error_metric, aso_regi
                 if file.startswith(f"{rundate}_{basin}") and file.endswith("BC_fix_albn83.tif"):
                     print(f"Moving {file} to {mosaics_WS}")
                     arcpy.CopyRaster_management(bias_correction_workspace + f"{method}/" + file, mosaics_WS + file)
+                    aso_bias_corrected_basins.append(basin)
 
     # mosaic all files in folder
     rasters = []
@@ -1295,7 +1296,7 @@ def aso_choice_and_mosaic(rundate, domain, aso_error_csv, error_metric, aso_regi
         arcpy.management.MosaicToNewRaster(
             input_rasters=rasters,
             output_location=mosaics_WS,
-            raster_dataset_name_with_extension="SNM_final_ASO_bias_correction.tif",
+            raster_dataset_name_with_extension=f"{domain}_final_ASO_bias_correction.tif",
             pixel_type="32_BIT_FLOAT",
             number_of_bands=1,
             mosaic_method="LAST",
@@ -1306,6 +1307,8 @@ def aso_choice_and_mosaic(rundate, domain, aso_error_csv, error_metric, aso_regi
         final_mos = Con(IsNull(Raster(mosaics_WS + f"{domain}_final_ASO_bias_correction.tif")), Raster(control_raster),
                         Raster(mosaics_WS + f"{domain}_final_ASO_bias_correction.tif"))
         final_mos.save(mosaics_WS + f"p8_{rundate}_noneg.tif")
+
+    return aso_bias_corrected_basins
 
 from matplotlib.colors import TwoSlopeNorm
 def sensor_difference_map(rundate, prev_rundate, sensors, prev_sensors, domain, point_value, outfile,
@@ -1476,6 +1479,7 @@ def chosing_best_model_run(rundate, domain_list, WW_reports_workspace, SNM_repor
 
     else:
         print("Sierra (SNM) uses the most common model")
+        ChosenModelRun_SNM = most_common_value
 
     print("\nCHOSEN MODEL RUN")
     print(f"West Wide: {ChosenModelRun_WW}")

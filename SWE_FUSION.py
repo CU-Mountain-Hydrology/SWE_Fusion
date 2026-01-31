@@ -29,7 +29,7 @@ arcpy.env.parallelProcessingFactor = "0"
 ## date info
 user = "Olaf"
 year = 2026
-rundate = "20260115"
+rundate = "20260125"
 survey_date = "20260101"
 pillow_date = "25Jan2026"
 mean_date = "0125"
@@ -42,9 +42,9 @@ surveys_use = "N"
 
 # model run information
 domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"]
-ChosenModelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis_UseAvg" ## TEMP
+# ChosenModelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis_UseAvg" ## TEMP
 model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
-model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis_UseAvg"
+model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens"
 modelRuns = [model_woCCR, model_wCCR]
 model_labels = ["woCCR", "wCCR"]
 prev_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis_UseAvg"
@@ -126,14 +126,14 @@ SNM_clipbox = "M:/SWE/WestWide/data/boundaries/Domains/DomainShapefiles/WW_SNM_C
 ## west wide
 HUC6_zones = "M:/SWE/WestWide/data/hydro/WW_HUC6_albn83_ras_msked.tif"
 region_zones = "M:/SWE/WestWide/data/hydro/WW_Regions_albn83_v2.tif"
-WW_band_zones = r"M:\SWE\WestWide\data\hydro\outdated\WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
-WW_watershed_zones = r"M:\SWE\WestWide\data\hydro\outdated\WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
-WW_watershed_shapefile = r"M:\SWE\WestWide\data\hydro\outdated\WW_Basins_noSNM_notahoe_sel_albn83.shp"
-WW_band_shapefile = r"M:\SWE\WestWide\data\hydro\outdated\WW_BasinsBanded_noSNM_notahoe_sel_albn83.shp"
-# WW_band_zones = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinBanded_noSNM_notahoe_albn83_sel_v2.tif"
-# WW_watershed_zones = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinBanded_noSNM_notahoe_albn83_sel_v2.tif"
-# WW_watershed_shapefile = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_Basins_noSNM_notahoe_albn83_sel_v2.shp"
-# WW_band_shapefile = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinsBanded_noSNM_notahoe_albn83_sel_v2.shp"
+# WW_band_zones = r"M:\SWE\WestWide\data\hydro\outdated\WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
+# WW_watershed_zones = r"M:\SWE\WestWide\data\hydro\outdated\WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
+# WW_watershed_shapefile = r"M:\SWE\WestWide\data\hydro\outdated\WW_Basins_noSNM_notahoe_sel_albn83.shp"
+# WW_band_shapefile = r"M:\SWE\WestWide\data\hydro\outdated\WW_BasinsBanded_noSNM_notahoe_sel_albn83.shp"
+WW_band_zones = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinBanded_noSNM_notahoe_albn83_sel_v2.tif"
+WW_watershed_zones = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinBanded_noSNM_notahoe_albn83_sel_v2.tif"
+WW_watershed_shapefile = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_Basins_noSNM_notahoe_albn83_sel_v2.shp"
+WW_band_shapefile = "M:/SWE/WestWide/data/hydro/20260113_BasinUpdatesNoSNM/WW_BasinsBanded_noSNM_notahoe_albn83_sel_v2.shp"
 
 
 # masks
@@ -642,7 +642,7 @@ if biasCorrection == "Y":
             if os.path.exists(raster):
                 bias_correction_vetting(raster=raster, point=sensors_SNM, domain="SNM", swe_col="pillowswe",
                                         id_col="Site_ID", rundate=rundate,
-                                        name=name, method=method, out_csv=SNM_out_csv_vetting, folder=BC_path, control_out_folder=rf"J:/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun}/",
+                                        name=name, method=method, out_csv=SNM_out_csv_vetting, folder=BC_path, control_out_folder=rf"J:/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun_SNM}/",
                                         control_raster=control_raster_SNM)
             else:
                 print(f'{raster} RASTER DOES NOT EXISTS')
@@ -707,25 +707,30 @@ if biasCorrection == "Y":
 
     ## pick the best file
     print("\n Choosing and mosaic for WW...")
-    aso_choice_and_mosaic(rundate=rundate, domain= "WW", aso_error_csv=WW_out_csv_vetting, error_metric=error_metric, aso_region="WW",
+    WW_ASO_biasCorr_basins = aso_choice_and_mosaic(rundate=rundate, domain= "WW", aso_error_csv=WW_out_csv_vetting, error_metric=error_metric, aso_region="WW",
                           bias_correction_workspace=f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun_WW}/",
                           snapRaster=snapRaster_albn83, control_raster=f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun_WW}/p8_{rundate}_noneg.tif")
 
     print("\n Choosing and mosaic for SNM...")
-    aso_choice_and_mosaic(rundate=rundate, domain="SNM", aso_error_csv=SNM_out_csv_vetting, error_metric=error_metric, aso_region="SNM",
+    SNM_ASO_biasCorr_basins = aso_choice_and_mosaic(rundate=rundate, domain="SNM", aso_error_csv=SNM_out_csv_vetting, error_metric=error_metric, aso_region="SNM",
                           bias_correction_workspace=f"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun_SNM}/",
                           snapRaster=SNM_snapRaster_albn83,
                           control_raster=f"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun_SNM}/p8_{rundate}_noneg.tif")
 
+else:
+    SNM_ASO_biasCorr_basins = []
+    WW_ASO_biasCorr_basins = []
+
+
 #      ###### TO DO ##############3
 #     # mosaic and run vetting again
 #
-# # run tables code
-# SNM_tables_for_report(rundate=rundate, modelRunName=ChosenModelRun_SNM, averageRunName=model_woCCR, results_workspace=SNM_results_workspace + f"{rundate}_results_ET/",
-#                      reports_workspace=SNM_reports_workspace + f"{rundate}_RT_report_ET/", difference="N")
-#
-# WW_tables_for_report(rundate=rundate, modelRunName=ChosenModelRun_WW, averageRunName=model_woCCR, results_workspace=WW_results_workspace + f"{rundate}_results_ET/",
-#                       reports_workspace=WW_reports_workspace + f"{rundate}_RT_report_ET/", difference="N")
+# run tables code
+SNM_tables_for_report(rundate=rundate, modelRunName=ChosenModelRun_SNM, averageRunName=model_woCCR, results_workspace=SNM_results_workspace + f"{rundate}_results_ET/",
+                     reports_workspace=SNM_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=SNM_ASO_biasCorr_basins, aso_symbol = "++")
+
+WW_tables_for_report(rundate=rundate, modelRunName=ChosenModelRun_WW, averageRunName=model_woCCR, results_workspace=WW_results_workspace + f"{rundate}_results_ET/",
+                     reports_workspace=WW_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=WW_ASO_biasCorr_basins, aso_symbol = "++")
 
 # Run vetting code
 end = time.time()
