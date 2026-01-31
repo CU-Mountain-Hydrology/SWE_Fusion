@@ -373,20 +373,20 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                 print(f"Basin: {basin} | Sub-Basin: {sub_basin} | fracErr_path: {fraErr_path}")
 
                 # Create p8 mask if it doesn't exist
-                mask_path = f"{results_workspace}ASO_BiasCorrect_{ModelRun}/p8_{rundate}_noneg_msk.tif"
+                mask_path = f"{results_workspace}ASO_BiasCorrect_{ModelRun}/p8_{rundate}_noneg_ASO_msk.tif"
                 if not os.path.isfile(mask_path):
                     p8masking = Con(Raster(p8_forBC) >= 0, 1, Raster(p8_forBC))
                     p8masking.save(mask_path)
-                    print("p8 mask created")
+                    # print("p8 mask created")
                 else:
-                    print("p8 mask exists, moving on")
+                    print("P8 mask exists, moving on")
 
                 # Mask just the basin boundary
                 arcpy.env.mask = mask_path
                 arcpy.env.cellSize = p8_forBC
                 arcpy.env.snapRaster = p8_forBC
                 if os.path.exists(f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_msk.tif"):
-                    print('basin mask already exists')
+                    print('Basin mask already exists')
                 else:
                     basinBound = ExtractByMask(mask_path, basinSHP)
                     basinBound.save(f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_msk.tif")
@@ -402,10 +402,10 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                              Raster(
                                  f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_fracError_v2.tif"))
                 noNull.save(f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_fracError_v3.tif")
-                print("non-zero fractional layer created")
+                # print("non-zero fractional layer created")
 
                 # Snap and clip to the extent of basin
-                print("Extracting and setting boundaries")
+                # print("Extracting and setting boundaries")
                 extract_fracError = ExtractByMask(
                     f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_fracError_v3.tif",
                     f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/{sub_basin}_msk.tif")
@@ -432,7 +432,7 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                 basinFix.append(f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/Fix_Files/{file}")
             elif not file.endswith(".tif"):
                 arcpy.Delete_management(file)
-                print(f"Deleted non-TIF file: {file}")
+                # print(f"Deleted non-TIF file: {file}")
 
         if basinFix:
             arcpy.env.snapRaster = p8_forBC

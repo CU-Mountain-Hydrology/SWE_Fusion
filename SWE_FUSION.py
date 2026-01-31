@@ -28,23 +28,23 @@ arcpy.env.parallelProcessingFactor = "0"
 ######################################
 ## date info
 user = "Olaf"
-year = 2026
-rundate = "20260125"
+year = 2025
+rundate = "20250402"
 survey_date = "20260101"
-pillow_date = "25Jan2026"
-mean_date = "0125"
+pillow_date = "02Apr2025"
+mean_date = "0402"
 prev_rundate = "20260115"
 
 # flags
 difference = "N" # should be Y if you want to compare against a previous model run
-biasCorrection = "N"
+biasCorrection = "Y"
 surveys_use = "N"
 
 # model run information
 domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"]
 # ChosenModelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis_UseAvg" ## TEMP
-model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
-model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens"
+model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens_testReport"
+model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
 modelRuns = [model_woCCR, model_wCCR]
 model_labels = ["woCCR", "wCCR"]
 prev_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis_UseAvg"
@@ -229,7 +229,7 @@ tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_da
                   masking="N", watershed_zones=WW_watershed_zones, band_zones=WW_band_zones, HUC6_zones=HUC6_zones,
                   region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,case_field_band=case_field_band,
                   watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83, snapRaster_albn83=snapRaster_albn83,
-                  projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, bias="N")
+                  projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, run_type="Normal")
 
 # clear memory
 sleep(30)
@@ -240,7 +240,7 @@ print(f'\nRunning Tables and Layers Code for all domains for {model_wCCR}')
 tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_wCCR, masking="N", watershed_zones=WW_watershed_zones,
                   band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,
                   case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83,
-                  snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, bias="N")
+                  snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, run_type="Normal")
 
 # get zero sensors for all domains
 for domain in domainList:
@@ -471,7 +471,6 @@ if difference == "Y":
                                      output_path=fSCA_vetting_WS + f"{rundate}_{domain}_fSCA_aspect_comparison.png", num_bins=16)
 
 
-## ERIC: prompt for best model run with sensor counts and % error
 sensors_SNM = SNM_results_workspace + f"{rundate}_results_ET/SNM_{rundate}_sensors_albn83.shp"
 sensors_WW = WW_results_workspace + f"{rundate}_results_ET/{rundate}_sensors_albn83.shp"
 if biasCorrection == "Y":
@@ -704,33 +703,133 @@ if biasCorrection == "Y":
             unit="m",
             output_png=f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun_SNM}/{rundate}_{basin}_SWE_maps.png"
         )
+    clear_arcpy_locks()
+    sleep(30)
 
     ## pick the best file
     print("\n Choosing and mosaic for WW...")
+    arcpy.env.snapRaster = snapRaster_albn83
+    arcpy.env.extent = snapRaster_albn83
+    arcpy.env.cellSize = snapRaster_albn83
     WW_ASO_biasCorr_basins = aso_choice_and_mosaic(rundate=rundate, domain= "WW", aso_error_csv=WW_out_csv_vetting, error_metric=error_metric, aso_region="WW",
                           bias_correction_workspace=f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun_WW}/",
-                          snapRaster=snapRaster_albn83, control_raster=f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun_WW}/p8_{rundate}_noneg.tif")
+                          snapRaster=snapRaster_albn83, control_raster=control_raster_WW)
+
+    tables_and_layers(user=user, year=year, report_date=rundate, mean_date=mean_date, meanWorkspace=meanWorkspace,
+                      model_run=f"ASO_BiasCorrect_{ChosenModelRun_WW}/", masking="N", watershed_zones=WW_watershed_zones,
+                      band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones,
+                      case_field_wtrshd=case_field_wtrshd,
+                      case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask,
+                      snapRaster_geon83=snapRaster_geon83,
+                      snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM,
+                      run_type="Bias")
+
+    clear_arcpy_locks()
+    sleep(30)
 
     print("\n Choosing and mosaic for SNM...")
+    arcpy.env.snapRaster = SNM_snapRaster_albn83
+    arcpy.env.extent = SNM_snapRaster_albn83
+    arcpy.env.cellSize = SNM_snapRaster_albn83
     SNM_ASO_biasCorr_basins = aso_choice_and_mosaic(rundate=rundate, domain="SNM", aso_error_csv=SNM_out_csv_vetting, error_metric=error_metric, aso_region="SNM",
                           bias_correction_workspace=f"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun_SNM}/",
                           snapRaster=SNM_snapRaster_albn83,
-                          control_raster=f"M:/SWE/Sierras/Spatial_SWE/SNM_regression/RT_report_data/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun_SNM}/p8_{rundate}_noneg.tif")
+                          control_raster=control_raster_SNM)
+
+    tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_woCCR, SNM_results_workspace=SNM_results_workspace,
+                          watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
+                          case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
+                          glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type='Bias',
+                          snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
+                          Difference=difference, bias_model_run=f"ASO_BiasCorrect_{ChosenModelRun_SNM}/")
+
+    for domain in domainList:
+        if domain == "SNM":
+            raster = f"{SNM_results_workspace}/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun_SNM}/p8_{rundate}_noneg.tif"
+            sensors_SNM = SNM_results_workspace + f"{rundate}_results_ET/SNM_{rundate}_sensors_albn83.shp"
+            surveys_SNM = SNM_results_workspace + f"{rundate}_results_ET/{rundate}_surveys_albn83.shp"
+
+            ## make vetting folder
+            outVettingWS_SNM = SNM_reports_workspace + f"{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun_SNM}/vetting_domains/"
+            os.makedirs(outVettingWS_SNM, exist_ok=True)
+
+            # move p8 to vetting space
+            arcpy.CopyRaster_management(raster, outVettingWS_SNM + f"p8_{rundate}_noneg.tif")
+
+            # add in snowTrax comparison
+            snowtrax_comparision(rundate=rundate, snowTrax_csv=snowTrax_csv, results_WS=SNM_results_workspace,
+                                 output_csv = outVettingWS_SNM + f"{rundate}_snowTrax_comparison.csv", model_list=modelRuns,
+                                 model_labels=model_labels, reference_col=reference_col, output_png= SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_snowTrax_comparison_ASO.png")
+
+        else:
+            # extract by mask
+            arcpy.env.snapRaster = snapRaster_albn83
+            arcpy.env.cellSize = snapRaster_albn83
+            raster = f"{WW_results_workspace}/{rundate}_results_ET/ASO_BiasCorrect_{ChosenModelRun_SNM}/p8_{rundate}_noneg.tif"
+            prev_vetting_WS = f"W:/documents/2026_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
+            sensors_WW = WW_results_workspace + f"{rundate}_results_ET/{rundate}_sensors_albn83.shp"
+            surveys_WW = WW_results_workspace + f"{rundate}_results_ET/{rundate}_surveys_albn83.shp"
+            prev_fSCA_raster = prev_vetting_WS + f"fSCA_{prev_rundate}_{domain}_clp.tif"
+
+            ## make vetting folder
+            outVettingWS_WW = f"{WW_reports_workspace}/{rundate}_RT_report_ET/ASO_BiasCorrect_{ChosenModelRun_SNM}/vetting_domains/"
+            os.makedirs(outVettingWS_WW, exist_ok=True)
+            outMask = ExtractByMask(raster, clipbox_WS + f"WW_{domain}_Clipbox_albn83.shp")
+            outMask.save(outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif")
+            print(f"{domain} clipped and saved")
+
+    for domain in domainList:
+        if domain == "SNM":
+            print('domain is SNM')
+            raster = outVettingWS_SNM + f"p8_{rundate}_noneg.tif"
+            if surveys_use == "Y":
+
+
+                model_domain_vetting(raster=raster, point=surveys_SNM, swe_col=swe_col_surv, id_col=id_col_surv,
+                                     rundate=rundate, domain=domain, modelRun=f"ASO_BiasCorrect_{ChosenModelRun_SNM}",
+                                     out_csv=SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_surveys_error.csv")
+
+            swe_col_sens = 'pillowswe'
+            id_col_sens = 'Site_ID'
+            model_domain_vetting(raster=raster, point=sensors_SNM, swe_col=swe_col_sens, id_col=id_col_sens,
+                                 rundate=rundate, domain=domain,
+                                 modelRun=f"ASO_BiasCorrect_{ChosenModelRun_SNM}", out_csv=SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_sensors_error.csv")
+        else:
+            raster = outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif"
+            swe_col_sens = 'pillowswe'
+            id_col_sens = 'Site_ID'
+            if surveys_use == "Y":
+
+
+                model_domain_vetting(raster=raster, point=surveys_WW, swe_col=swe_col_surv, id_col=id_col_surv, rundate=rundate,
+                                     domain=domain, modelRun=f"ASO_BiasCorrect_{ChosenModelRun_SNM}", out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_surveys_error.csv")
+
+            model_domain_vetting(raster=raster, point=sensors_WW, swe_col=swe_col_sens, id_col=id_col_sens, rundate=rundate, domain=domain,
+                                 modelRun=f"ASO_BiasCorrect_{ChosenModelRun_SNM}", out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_sensors_error.csv")
+
 
 else:
     SNM_ASO_biasCorr_basins = []
     WW_ASO_biasCorr_basins = []
 
 
-#      ###### TO DO ##############3
-#     # mosaic and run vetting again
-#
-# run tables code
-SNM_tables_for_report(rundate=rundate, modelRunName=ChosenModelRun_SNM, averageRunName=model_woCCR, results_workspace=SNM_results_workspace + f"{rundate}_results_ET/",
-                     reports_workspace=SNM_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=SNM_ASO_biasCorr_basins, aso_symbol = "++")
+# get tables and layers
+if biasCorrection == "Y" and len(SNM_ASO_biasCorr_basins) > 0:
+    # run tables code
+    SNM_tables_for_report(rundate=rundate, modelRunName=f"ASO_BiasCorrect_{ChosenModelRun_SNM}", averageRunName=model_woCCR, results_workspace=SNM_results_workspace + f"{rundate}_results_ET/",
+                         reports_workspace=SNM_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=SNM_ASO_biasCorr_basins, aso_symbol = "++")
 
-WW_tables_for_report(rundate=rundate, modelRunName=ChosenModelRun_WW, averageRunName=model_woCCR, results_workspace=WW_results_workspace + f"{rundate}_results_ET/",
-                     reports_workspace=WW_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=WW_ASO_biasCorr_basins, aso_symbol = "++")
+elif biasCorrection == "Y" and len(WW_ASO_biasCorr_basins) > 0:
+    WW_tables_for_report(rundate=rundate, modelRunName=f"ASO_BiasCorrect_{ChosenModelRun_WW}", averageRunName=model_woCCR, results_workspace=WW_results_workspace + f"{rundate}_results_ET/",
+                         reports_workspace=WW_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=WW_ASO_biasCorr_basins, aso_symbol = "++")
+else:
+
+    # run tables code
+    SNM_tables_for_report(rundate=rundate, modelRunName=ChosenModelRun_SNM, averageRunName=model_woCCR, results_workspace=SNM_results_workspace + f"{rundate}_results_ET/",
+                          reports_workspace=SNM_reports_workspace + f"{rundate}_RT_report_ET/", difference="N",  aso_bc_basins=SNM_ASO_biasCorr_basins, aso_symbol="++")
+
+    WW_tables_for_report(rundate=rundate, modelRunName=ChosenModelRun_WW, averageRunName=model_woCCR, results_workspace=WW_results_workspace + f"{rundate}_results_ET/",
+                         reports_workspace=WW_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=WW_ASO_biasCorr_basins, aso_symbol="++")
 
 # Run vetting code
 end = time.time()

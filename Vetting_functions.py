@@ -1243,6 +1243,11 @@ def aso_choice_and_mosaic(rundate, domain, aso_error_csv, error_metric, aso_regi
     os.makedirs(bias_correction_workspace + "final_mosaic", exist_ok=True)
     mosaics_WS = bias_correction_workspace + "final_mosaic/"
 
+    for old_file in os.listdir(mosaics_WS):
+        if old_file.endswith(".tif"):
+            os.remove(mosaics_WS + old_file)
+            print(f"Removed old file: {old_file}")
+
     # isolate based on domain (SNM or WW)
     aso_df = aso_df[aso_df["Domain"] == aso_region]
 
@@ -1303,7 +1308,11 @@ def aso_choice_and_mosaic(rundate, domain, aso_error_csv, error_metric, aso_regi
             mosaic_colormap_mode="FIRST"
         )
 
+        arcpy.env.snapRaster = snapRaster
+        arcpy.env.extent = snapRaster
+        arcpy.env.cellSize = snapRaster
         # do a Con Is Null
+        print(control_raster)
         final_mos = Con(IsNull(Raster(mosaics_WS + f"{domain}_final_ASO_bias_correction.tif")), Raster(control_raster),
                         Raster(mosaics_WS + f"{domain}_final_ASO_bias_correction.tif"))
         final_mos.save(mosaics_WS + f"p8_{rundate}_noneg.tif")
