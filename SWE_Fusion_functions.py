@@ -2478,6 +2478,17 @@ def clean_numeric(val):
         return float(val.replace(',', ''))
     return float(val)
 
+def safe_weighted_mean(values, weights):
+    values = pd.to_numeric(values, errors="coerce")
+    weights = pd.to_numeric(weights, errors="coerce")
+
+    mask = (~values.isna()) & (~weights.isna()) & (weights > 0)
+
+    if not mask.any():
+        return np.nan
+
+    return (values[mask] * weights[mask]).sum() / weights[mask].sum()
+
 def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspace, reports_workspace, difference,
                          prev_tables_workspace=None, survey_date=None, prev_rundate=None, surveys_use=False):
 
@@ -2631,10 +2642,10 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                 sum_vals = subset[['VOL_AF', 'AREA_MI2']].sum()
 
                 weights = subset['AREA_MI2']
-                swe_weighted = (subset['SWE_IN'].mul(weights).sum() / weights.sum())
-                snodas_weighted = (subset['SNODAS'].mul(weights).sum() / weights.sum())
-                pct_weighted = (subset['Avg'].mul(weights).sum() / weights.sum())
-                sca_weighted = (subset['Percent'].mul(weights).sum() / weights.sum())
+                swe_weighted = safe_weighted_mean(subset['SWE_IN'], subset['AREA_MI2'])
+                snodas_weighted = safe_weighted_mean(subset['SNODAS'], subset['AREA_MI2'])
+                pct_weighted = safe_weighted_mean(subset['Avg'], subset['AREA_MI2'])
+                sca_weighted = safe_weighted_mean(subset['Percent'], subset['AREA_MI2'])
 
                 subset[['SWE_from_sensors', 'Num_sensors']] = subset['sensors'].apply(
                             lambda x: pd.Series(parse_sensors(x)))
@@ -2834,33 +2845,10 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
 
             weights = subset['AREA_MI2']
 
-            swe_weighted = (
-                    subset['SWE_IN']
-                    .mul(weights)
-                    .sum()
-                    / weights.sum()
-            )
-
-            snodas_weighted = (
-                    subset['SNODAS']
-                    .mul(weights)
-                    .sum()
-                    / weights.sum()
-            )
-
-            pct_weighted = (
-                    subset['Avg']
-                    .mul(weights)
-                    .sum()
-                    / weights.sum()
-            )
-
-            sca_weighted = (
-                    subset['Percent']
-                    .mul(weights)
-                    .sum()
-                    / weights.sum()
-            )
+            swe_weighted = safe_weighted_mean(subset['SWE_IN'], subset['AREA_MI2'])
+            snodas_weighted = safe_weighted_mean(subset['SNODAS'], subset['AREA_MI2'])
+            pct_weighted = safe_weighted_mean(subset['Avg'], subset['AREA_MI2'])
+            sca_weighted = safe_weighted_mean(subset['Percent'], subset['AREA_MI2'])
 
             subset[['SWE_from_sensors', 'Num_sensors']] = subset['sensors'].apply(lambda x: pd.Series(parse_sensors(x)))
 
@@ -3111,7 +3099,8 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
     merged_df['Basin_rw'] = merged_df['SrtNmeBand'].str[2:-5]
     merged_df['Num'] = merged_df['SrtNmeBand'].str[:2].astype(int).astype(str) + '.'
     merged_df['Basin'] = merged_df['Num'] + " " + merged_df['Basin_rw']
-    merged_df['Elevation Band'] = merged_df['SrtNmeBand'].str[-5:]
+    # merged_df['Elevation Band'] = merged_df['SrtNmeBand'].str[-5:]
+    merged_df['Elevation Band'] = merged_df['SrtNmeBand'].apply(lambda x: x[-7:] if x[-2:] == "GT" else x[-5:])
     merged_df['Elevation Band'] = merged_df['Elevation Band'].map(elevationBands)
 
     if difference == "Y":
