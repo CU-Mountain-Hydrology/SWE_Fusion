@@ -1228,7 +1228,7 @@ def plot_rasters_side_by_side(
     print(f"Saved raster visualization: {output_png}")
 
 
-def aso_choice_and_mosaic(rundate, aso_error_csv, error_metric, aso_region, bias_correction_workspace, snapRaster,
+def aso_choice_and_mosaic(rundate, domain, aso_error_csv, error_metric, aso_region, bias_correction_workspace, snapRaster,
                           control_raster):
     # make mosaic workspace
     arcpy.env.snapRaster = snapRaster
@@ -1303,8 +1303,8 @@ def aso_choice_and_mosaic(rundate, aso_error_csv, error_metric, aso_region, bias
         )
 
         # do a Con Is Null
-        final_mos = Con(IsNull(Raster(mosaics_WS + "SNM_final_ASO_bias_correction.tif")), Raster(control_raster),
-                        Raster(mosaics_WS + "SNM_final_ASO_bias_correction.tif"))
+        final_mos = Con(IsNull(Raster(mosaics_WS + f"{domain}_final_ASO_bias_correction.tif")), Raster(control_raster),
+                        Raster(mosaics_WS + f"{domain}_final_ASO_bias_correction.tif"))
         final_mos.save(mosaics_WS + f"p8_{rundate}_noneg.tif")
 
 from matplotlib.colors import TwoSlopeNorm
@@ -1381,3 +1381,104 @@ def sensor_difference_map(rundate, prev_rundate, sensors, prev_sensors, domain, 
     plt.tight_layout()
     plt.savefig(outfile, dpi=300, bbox_inches='tight')
     plt.show()
+
+
+import pandas as pd
+from collections import Counter
+
+
+def chosing_best_model_run(rundate, domain_list, WW_reports_workspace, SNM_reports_workspace, error_metric):
+    domain_best_models = []
+    for domain in domain_list:
+        if domain == "SNM":
+            sensor_error = f"{SNM_reports_workspace}/{rundate}_RT_report_ET/{rundate}_sensors_error.csv"
+
+            # get error stats
+            error_df = pd.read_csv(sensor_error)
+
+            # isolate based on domain)
+            error_df = error_df[error_df["Domain"] == domain]
+
+            # get unique values for the domainst
+            idx = error_df.groupby("Domain")[error_metric].idxmin()
+            best_df = error_df.loc[idx]
+            best_model = best_df['ModelRun'].iloc[0]
+            domain_best_models.append((domain, best_model))
+
+        else:
+            sensor_error = f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_sensors_error.csv"
+
+            # get error stats
+            error_df = pd.read_csv(sensor_error)
+
+            # isolate based on domain)
+            error_df = error_df[error_df["Domain"] == domain]
+
+            # get unique values for the domainst
+            idx = error_df.groupby("Domain")[error_metric].idxmin()
+            best_df = error_df.loc[idx]
+            best_model = best_df['ModelRun'].iloc[0]
+            domain_best_models.append((domain, best_model))
+
+    # get the list
+    values = [best for _, best in domain_best_models]
+    most_common_value, count = Counter(values).most_common(1)[0]
+    ChosenModelRun_WW = most_common_value
+
+    print(f"Most common value: {most_common_value} ({count} domains)")
+    snm_model = next(best for domain, best in domain_best_models if domain == "SNM")
+
+    if snm_model != most_common_value:
+        print("\n!!!!!!!!!!!!!!!! SNM model differs from most common model !!!!!!!!!!!!!!!!")
+
+        # reload SNM error table
+        sensor_error = f"{SNM_reports_workspace}/{rundate}_RT_report_ET/{rundate}_sensors_error.csv"
+        snm_df = pd.read_csv(sensor_error)
+
+        # isolate SNM
+        snm_df = snm_df[snm_df["Domain"] == "SNM"]
+
+        # get error for SNM-selected model
+        snm_err = snm_df.loc[
+            snm_df["ModelRun"] == snm_model, error_metric
+        ].iloc[0]
+
+        # get error for most common model
+        common_err = snm_df.loc[
+            snm_df["ModelRun"] == most_common_value, error_metric
+        ].iloc[0]
+
+        diff = snm_err - common_err
+
+        print(f"SNM model: {snm_model}")
+        print(f"  {error_metric}: {snm_err:.4f}")
+
+        print(f"Most common model: {most_common_value}")
+        print(f"  {error_metric}: {common_err:.4f}")
+
+        print(f"Difference (SNM - common): {diff:.4f}")
+
+        print("\nChoose which model to use for SNM:")
+        print(f"  [1] Use most common model: {most_common_value}")
+        print(f"  [2] Use SNM-specific best model: {snm_model}")
+
+        while True:
+            choice = input("Enter 1 or 2: ").strip()
+
+            if choice == "1":
+                ChosenModelRun_SNM = most_common_value
+                break
+            elif choice == "2":
+                ChosenModelRun_SNM = snm_model
+                break
+            else:
+                print("Invalid input. Please enter 1 or 2.")
+
+    else:
+        print("Sierra (SNM) uses the most common model")
+
+    print("\nCHOSEN MODEL RUN")
+    print(f"West Wide: {ChosenModelRun_WW}")
+    print(f"Sierras: {ChosenModelRun_SNM}")
+
+    return ChosenModelRun_WW, ChosenModelRun_SNM
