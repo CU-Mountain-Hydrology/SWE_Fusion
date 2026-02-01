@@ -347,7 +347,7 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
 
             # Pattern: starts with basename, ends with swe_50m_fraErr.tif
             # This will match: ASO_BoulderCreek_2025Apr09*swe_50m_fraErr.tif
-            search_pattern = os.path.join(fraErr_dir, f"{fraErr_basename[:-19]}*swe_50m_fraErr.tif")
+            search_pattern = os.path.join(fraErr_dir, f"{fraErr_basename[:-15]}*swe_50m_fraErr.tif")
 
             print(f"Basin: {basin} | Sub-Basin: {sub_basin} | Search pattern: {search_pattern}")
 
@@ -355,6 +355,31 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                 basinSHP = f"{shapefile_workspace}/{sub_basin}_albn83.shp"
             elif domain == "WW":
                 basinSHP = f"{shapefile_workspace}ASO_{sub_basin}_albn83.shp"
+
+                # Handle special basin merging cases
+                if sub_basin in ["Truckee", "Tahoe"]:
+                    # Merge Truckee and Tahoe - use same merged shapefile for both
+                    merge_output = f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/TruckeeTahoeMerge_albn83.shp"
+                    if not os.path.exists(merge_output):
+                        arcpy.Merge_management(
+                            [f"{shapefile_workspace}/Truckee_albn83.shp",
+                             f"{shapefile_workspace}/Tahoe_albn83.shp"],
+                            merge_output
+                        )
+                        print(f"Created merged shapefile: {merge_output}")
+                    basinSHP = merge_output
+
+                elif sub_basin in ["ECarson", "WCarson"]:
+                    # Merge East and West Carson - use same merged shapefile for both
+                    merge_output = f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/CarsonMerge_albn83.shp"
+                    if not os.path.exists(merge_output):
+                        arcpy.Merge_management(
+                            [f"{shapefile_workspace}/WCarson_albn83.shp",
+                             f"{shapefile_workspace}/ECarson_albn83.shp"],
+                            merge_output
+                        )
+                        print(f"Created merged shapefile: {merge_output}")
+                    basinSHP = merge_output
 
             matching_files = glob.glob(search_pattern)
 
