@@ -3209,11 +3209,33 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                 sum_vals = subset[['VOL_AF', 'AREA_MI2']].sum()
 
                 # Weighted averages by AREA_MI2
+                # weights = subset['AREA_MI2']
+                # swe_weighted = (subset['SWE_IN'].mul(weights).sum() / weights.sum())
+                # snodas_weighted = (subset['SNODAS'].mul(weights).sum() / weights.sum())
+                # pct_weighted = (subset['Avg'].mul(weights).sum() / weights.sum())
+                # sca_weighted = (subset['Percent'].mul(weights).sum() / weights.sum())
+
                 weights = subset['AREA_MI2']
-                swe_weighted = (subset['SWE_IN'].mul(weights).sum() / weights.sum())
-                snodas_weighted = (subset['SNODAS'].mul(weights).sum() / weights.sum())
-                pct_weighted = (subset['Avg'].mul(weights).sum() / weights.sum())
-                sca_weighted = (subset['Percent'].mul(weights).sum() / weights.sum())
+
+                # SWE_IN
+                valid_swe = subset['SWE_IN'].notna()
+                swe_weighted = (subset.loc[valid_swe, 'SWE_IN'].mul(subset.loc[valid_swe, 'AREA_MI2']).sum() /
+                                subset.loc[valid_swe, 'AREA_MI2'].sum()) if valid_swe.any() else np.nan
+
+                # SNODAS
+                valid_snodas = subset['SNODAS'].notna()
+                snodas_weighted = (subset.loc[valid_snodas, 'SNODAS'].mul(subset.loc[valid_snodas, 'AREA_MI2']).sum() /
+                                   subset.loc[valid_snodas, 'AREA_MI2'].sum()) if valid_snodas.any() else np.nan
+
+                # Avg (percent of average)
+                valid_avg = subset['Avg'].notna()
+                pct_weighted = (subset.loc[valid_avg, 'Avg'].mul(subset.loc[valid_avg, 'AREA_MI2']).sum() /
+                                subset.loc[valid_avg, 'AREA_MI2'].sum()) if valid_avg.any() else np.nan
+
+                # Percent (SCA)
+                valid_pct = subset['Percent'].notna()
+                sca_weighted = (subset.loc[valid_pct, 'Percent'].mul(subset.loc[valid_pct, 'AREA_MI2']).sum() /
+                                subset.loc[valid_pct, 'AREA_MI2'].sum()) if valid_pct.any() else np.nan
 
                 subset[['SWE_from_sensors', 'Num_sensors']] = subset['sensors'].apply(
                     lambda x: pd.Series(parse_sensors(x)))
@@ -3431,11 +3453,33 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
             sum_vals = subset[['VOL_AF', 'AREA_MI2']].sum()
 
             # Weighted averages by AREA_MI2
+            # weights = subset['AREA_MI2']
+            # swe_weighted = (subset['SWE_IN'].mul(weights).sum() / weights.sum())
+            # snodas_weighted = (subset['SNODAS'].mul(weights).sum() / weights.sum())
+            # pct_weighted = (subset['Avg'].mul(weights).sum() / weights.sum())
+            # sca_weighted = (subset['Percent'].mul(weights).sum() / weights.sum())
+
             weights = subset['AREA_MI2']
-            swe_weighted = (subset['SWE_IN'].mul(weights).sum() / weights.sum())
-            snodas_weighted = (subset['SNODAS'].mul(weights).sum() / weights.sum())
-            pct_weighted = (subset['Avg'].mul(weights).sum() / weights.sum())
-            sca_weighted = (subset['Percent'].mul(weights).sum() / weights.sum())
+
+            # SWE_IN
+            valid_swe = subset['SWE_IN'].notna()
+            swe_weighted = (subset.loc[valid_swe, 'SWE_IN'].mul(subset.loc[valid_swe, 'AREA_MI2']).sum() /
+                            subset.loc[valid_swe, 'AREA_MI2'].sum()) if valid_swe.any() else np.nan
+
+            # SNODAS
+            valid_snodas = subset['SNODAS'].notna()
+            snodas_weighted = (subset.loc[valid_snodas, 'SNODAS'].mul(subset.loc[valid_snodas, 'AREA_MI2']).sum() /
+                               subset.loc[valid_snodas, 'AREA_MI2'].sum()) if valid_snodas.any() else np.nan
+
+            # Avg (percent of average)
+            valid_avg = subset['Avg'].notna()
+            pct_weighted = (subset.loc[valid_avg, 'Avg'].mul(subset.loc[valid_avg, 'AREA_MI2']).sum() /
+                            subset.loc[valid_avg, 'AREA_MI2'].sum()) if valid_avg.any() else np.nan
+
+            # Percent (SCA)
+            valid_pct = subset['Percent'].notna()
+            sca_weighted = (subset.loc[valid_pct, 'Percent'].mul(subset.loc[valid_pct, 'AREA_MI2']).sum() /
+                            subset.loc[valid_pct, 'AREA_MI2'].sum()) if valid_pct.any() else np.nan
 
             subset[['SWE_from_sensors', 'Num_sensors']] = subset['sensors'].apply(
                 lambda x: pd.Series(parse_sensors(x)))
@@ -3479,6 +3523,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
         state_wtshd_df['Percent'] = state_wtshd_df['Percent'].round(1)
         state_wtshd_df['Avg'] = state_wtshd_df['Avg'].fillna("NA")
         state_wtshd_df['Avg'] = state_wtshd_df['Avg'].apply(lambda x: int(round(x)) if x != "NA" else x)
+        state_wtshd_df['SNODAS'] = state_wtshd_df['SNODAS'].round(1)
 
         if difference == "Y":
             difference_cols = ['prev_SWE_IN', 'prev_sensors', 'prev_Avg']
