@@ -1717,17 +1717,7 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     arcpy.ProjectRaster_management(meanMap, meanMapMask, projALB,
                                    "NEAREST", "500 500",
                                    "", "", projGEO)
-
-    if run_type == "Normal":
-        arcpy.ProjectRaster_management(rcn_glacMask, rcn_raw_proj, projALB,
-                                       "NEAREST", "500 500",
-                                       "", "")
-
-        rcn_final = Raster(rcn_raw_proj) * Raster(watermask)
-        rcn_final_wtshd = (Con((IsNull(rcn_final)) & (Raster(modscag_per_msk) >= 0), 0, rcn_final))
-        rcn_final_wtshd.save(rcnFinal)
-        print("rcn final created")
-
+    # project fSCA
     arcpy.ProjectRaster_management(MODSCAG_tif_plus, MODSCAG_tif_plus_proj, projALB,
                                    "NEAREST", "500 500",
                                    "", "")
@@ -1752,14 +1742,22 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     mod_per_Allmsk.save(modscag_per_msk)
     print("fSCA percent layer created")
 
-
-
     # ASK LEANNE, WHAT'S THE DIFFERENCE BETWEEN TIF MASK AND WATER MASK
     print(f"Creating snowline shapefile: {snowPolyElim}")
     mod_01_mask = Raster(modscag_0_1) * Raster(watermask)
     mod_01_mask_glacier = Raster(modscag_0_1) * Raster(glacierMask)
     mod_01_msk_null = SetNull(mod_01_mask_glacier == 0, mod_01_mask_glacier)
     mod_01_msk_null.save(mod_null)
+
+    if run_type == "Normal":
+        arcpy.ProjectRaster_management(rcn_glacMask, rcn_raw_proj, projALB,
+                                       "NEAREST", "500 500",
+                                       "", "")
+
+        rcn_final = Raster(rcn_raw_proj) * Raster(watermask)
+        rcn_final_wtshd = (Con((IsNull(rcn_final)) & (Raster(modscag_per_msk) >= 0), 0, rcn_final))
+        rcn_final_wtshd.save(rcnFinal)
+        print("rcn final created")
 
     # Convert raster to polygon
     arcpy.RasterToPolygon_conversion(mod_null, mod_poly, "NO_SIMPLIFY", "Value")
@@ -3239,6 +3237,22 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                 state_df.at[san_juan_index, 'Percent'] = sca_weighted
                 state_df.at[san_juan_index, 'sensors'] = sensors_weighted_str
 
+                if surveys_use:
+                    subset[['SWE_from_surveys', 'Num_surveys']] = subset['surveys'].apply(
+                        lambda x: pd.Series(parse_sensors(x)))
+
+                    # Weighted average SWE for sensors
+                    if subset['Num_surveys'].sum() > 0:
+                        weighted_swe = (subset['SWE_from_surveys'] * subset['Num_surveys']).sum() / subset[
+                            'Num_surveys'].sum()
+                        total_surveys = subset['Num_surveys'].sum()
+                        surveys_weighted_str = f"{weighted_swe:.1f} ( {total_surveys:.0f} )"
+                    else:
+                        surveys_weighted_str = "NA"
+
+                    state_df.at[san_juan_index, 'surveys'] = surveys_weighted_str
+
+
                 # assert combined_row['AREA_MI2'] == subset['AREA_MI2'].sum()
         state_df['VOL_AF'] = state_df['VOL_AF'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
         state_df['AREA_MI2'] = state_df['AREA_MI2'].apply(lambda x: f"{x:,.1f}" if isinstance(x, (int, float)) else x)
@@ -3443,6 +3457,21 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
             state_wtshd_df.at[san_juan_index, 'SNODAS'] = snodas_weighted
             state_wtshd_df.at[san_juan_index, 'Percent'] = sca_weighted
             state_wtshd_df.at[san_juan_index, 'sensors'] = sensors_weighted_str
+
+            if surveys_use:
+                subset[['SWE_from_surveys', 'Num_surveys']] = subset['surveys'].apply(
+                    lambda x: pd.Series(parse_sensors(x)))
+
+                # Weighted average SWE for sensors
+                if subset['Num_surveys'].sum() > 0:
+                    weighted_swe = (subset['SWE_from_surveys'] * subset['Num_surveys']).sum() / subset[
+                        'Num_surveys'].sum()
+                    total_surveys = subset['Num_surveys'].sum()
+                    surveys_weighted_str = f"{weighted_swe:.1f} ( {total_surveys:.0f} )"
+                else:
+                    surveys_weighted_str = "NA"
+
+                state_wtshd_df.at[san_juan_index, 'surveys'] = surveys_weighted_str
 
         state_wtshd_df['VOL_AF'] = state_wtshd_df['VOL_AF'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
         state_wtshd_df['AREA_MI2'] = state_wtshd_df['AREA_MI2'].apply(lambda x: f"{x:,.1f}" if isinstance(x, (int, float)) else x)

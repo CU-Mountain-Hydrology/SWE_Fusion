@@ -783,7 +783,8 @@ def snowtrax_comparision(rundate, snowTrax_csv, results_WS, output_csv, model_li
               'SNODAS_SWE_AF', 'SNOW17_SWE_AF', 'SWANN_UA_SWE_AF']
     models.append(f'{model_labels[0]}_VOL_AF')
     models.append(f'{model_labels[1]}_VOL_AF')
-    models.append(f'{model_labels[2]}_VOL_AF')
+    if len(model_list) > 2:
+        models.append(f'{model_labels[2]}_VOL_AF')
 
     # Filter to only models with data
     filtered_df = filtered_df.sort_values('BASIN_CODE', ascending=True)
