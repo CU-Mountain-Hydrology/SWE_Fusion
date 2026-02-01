@@ -273,6 +273,13 @@ def model_domain_vetting(raster, point, swe_col, id_col, rundate, domain, modelR
         print(f"Raster not found: {raster}")
         return
 
+    # calculated stats
+    print(f"Calculating statistics for {os.path.basename(raster)}...")
+    try:
+        arcpy.management.CalculateStatistics(raster)
+    except Exception as e:
+        print(f"Can't calculate statistics {e}")
+
     # Load points within raster
     from SWE_Fusion_functions import get_points_within_raster
     gdf_pts, site_ids = get_points_within_raster(point, raster, id_column=id_col)
@@ -748,24 +755,35 @@ def snowtrax_comparision(rundate, snowTrax_csv, results_WS, output_csv, model_li
 
     # calculate % error
     # Calculate percent error: ((model - reference) / reference) × 100
-    filtered_df['woCCR_pct_error'] = ((filtered_df['woCCR_VOL_AF'] - filtered_df[reference_col]) /
+    filtered_df[f'{model_labels[0]}_pct_error'] = ((filtered_df[f'{model_labels[0]}_VOL_AF'] - filtered_df[reference_col]) /
                                       filtered_df[reference_col]) * 100
 
-    filtered_df['wCCR_pct_error'] = ((filtered_df['wCCR_VOL_AF'] - filtered_df[reference_col]) /
+    filtered_df[f'{model_labels[1]}_pct_error'] = ((filtered_df[f'{model_labels[1]}_VOL_AF'] - filtered_df[reference_col]) /
                                      filtered_df[reference_col]) * 100
+    if len(model_list) > 2:
+        filtered_df[f'{model_labels[2]}_pct_error'] = ((filtered_df[f'{model_labels[2]}_VOL_AF'] - filtered_df[reference_col]) /
+                                         filtered_df[reference_col]) * 100
 
     # Calculate mean absolute percent error for each model
-    woCCR_mean_error = filtered_df['woCCR_pct_error'].abs().mean()
-    wCCR_mean_error = filtered_df['wCCR_pct_error'].abs().mean()
+    woCCR_mean_error = filtered_df[f'{model_labels[0]}_pct_error'].abs().mean()
+    wCCR_mean_error = filtered_df[f'{model_labels[1]}_pct_error'].abs().mean()
+
+    if len(model_list) > 2:
+        BC_mean_error = filtered_df[f'{model_labels[2]}_pct_error'].abs().mean()
 
     print(f"\nMean Absolute Percent Error vs {reference_col.replace('_SWE_AF', '')}:")
     print(f"  woCCR: {woCCR_mean_error:6.2f}%")
     print(f"  wCCR:  {wCCR_mean_error:6.2f}%")
+    if len(model_list) > 2:
+        print(f"  {model_labels[2]}:  {BC_mean_error:6.2f}%")
 
     # make bar graph
     # Method 2: Grouped bar chart for multiple models
     models = ['ASO_SWE_AF', 'ISNOBAL_DWR_SWE_AF', 'ISNOBAL_M3WORKS_SWE_AF',
-              'SNODAS_SWE_AF', 'SNOW17_SWE_AF', 'SWANN_UA_SWE_AF', f'woCCR_VOL_AF', f'wCCR_VOL_AF']
+              'SNODAS_SWE_AF', 'SNOW17_SWE_AF', 'SWANN_UA_SWE_AF']
+    models.append(f'{model_labels[0]}_VOL_AF')
+    models.append(f'{model_labels[1]}_VOL_AF')
+    models.append(f'{model_labels[2]}_VOL_AF')
 
     # Filter to only models with data
     filtered_df = filtered_df.sort_values('BASIN_CODE', ascending=True)

@@ -722,7 +722,7 @@ if biasCorrection == "Y":
                       case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask,
                       snapRaster_geon83=snapRaster_geon83,
                       snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM,
-                      run_type="Bias")
+                      run_type="Bias", bias_model_run=f"/ASO_BiasCorrect_{ChosenModelRun_WW}/")
 
     clear_arcpy_locks()
     sleep(30)
@@ -757,8 +757,10 @@ if biasCorrection == "Y":
             arcpy.CopyRaster_management(raster, outVettingWS_SNM + f"p8_{rundate}_noneg.tif")
 
             # add in snowTrax comparison
+            modelRuns.append(f"ASO_BiasCorrect_{ChosenModelRun_SNM}")
+            model_labels.append("ASO_BC")
             snowtrax_comparision(rundate=rundate, snowTrax_csv=snowTrax_csv, results_WS=SNM_results_workspace,
-                                 output_csv = outVettingWS_SNM + f"{rundate}_snowTrax_comparison.csv", model_list=modelRuns,
+                                 output_csv = outVettingWS_SNM + f"{rundate}_snowTrax_comparison_wASO.csv", model_list=modelRuns,
                                  model_labels=model_labels, reference_col=reference_col, output_png= SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_snowTrax_comparison_ASO.png")
 
         else:
@@ -778,34 +780,33 @@ if biasCorrection == "Y":
             outMask.save(outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif")
             print(f"{domain} clipped and saved")
 
+    print(f"\n DOMAIN LIST: {domainList}")
     for domain in domainList:
         if domain == "SNM":
             print('domain is SNM')
             raster = outVettingWS_SNM + f"p8_{rundate}_noneg.tif"
             if surveys_use == "Y":
-
-
                 model_domain_vetting(raster=raster, point=surveys_SNM, swe_col=swe_col_surv, id_col=id_col_surv,
                                      rundate=rundate, domain=domain, modelRun=f"ASO_BiasCorrect_{ChosenModelRun_SNM}",
-                                     out_csv=SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_surveys_error.csv")
+                                     out_csv=SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_surveys_error_wASO.csv")
 
             swe_col_sens = 'pillowswe'
             id_col_sens = 'Site_ID'
             model_domain_vetting(raster=raster, point=sensors_SNM, swe_col=swe_col_sens, id_col=id_col_sens,
                                  rundate=rundate, domain=domain,
-                                 modelRun=f"ASO_BiasCorrect_{ChosenModelRun_SNM}", out_csv=SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_sensors_error.csv")
-        else:
-            raster = outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif"
-            swe_col_sens = 'pillowswe'
-            id_col_sens = 'Site_ID'
-            if surveys_use == "Y":
-
-
-                model_domain_vetting(raster=raster, point=surveys_WW, swe_col=swe_col_surv, id_col=id_col_surv, rundate=rundate,
-                                     domain=domain, modelRun=f"ASO_BiasCorrect_{ChosenModelRun_SNM}", out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_surveys_error.csv")
-
-            model_domain_vetting(raster=raster, point=sensors_WW, swe_col=swe_col_sens, id_col=id_col_sens, rundate=rundate, domain=domain,
-                                 modelRun=f"ASO_BiasCorrect_{ChosenModelRun_SNM}", out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_sensors_error.csv")
+                                 modelRun=f"ASO_BiasCorrect_{ChosenModelRun_SNM}", out_csv=SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_sensors_error_wASO.csv")
+        # else:
+        #     raster = outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif"
+        #     swe_col_sens = 'pillowswe'
+        #     id_col_sens = 'Site_ID'
+        #     if surveys_use == "Y":
+        #
+        #
+        #         model_domain_vetting(raster=raster, point=surveys_WW, swe_col=swe_col_surv, id_col=id_col_surv, rundate=rundate,
+        #                              domain=domain, modelRun=f"ASO_BiasCorrect_{ChosenModelRun_SNM}", out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_surveys_error_wASO.csv")
+        #
+        #     model_domain_vetting(raster=raster, point=sensors_WW, swe_col=swe_col_sens, id_col=id_col_sens, rundate=rundate, domain=domain,
+        #                          modelRun=f"ASO_BiasCorrect_{ChosenModelRun_SNM}", out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_sensors_error_wASO.csv")
 
 
 else:

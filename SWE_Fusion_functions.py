@@ -1722,34 +1722,37 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
         arcpy.ProjectRaster_management(rcn_glacMask, rcn_raw_proj, projALB,
                                        "NEAREST", "500 500",
                                        "", "")
-        arcpy.ProjectRaster_management(MODSCAG_tif_plus, MODSCAG_tif_plus_proj, projALB,
-                                       "NEAREST", "500 500",
-                                       "", "")
-        print("fSCA and rcn raw image and mean map projected")
-
-        mod_01 = Con((Raster(MODSCAG_tif_plus_proj) < 101) & (Raster(MODSCAG_tif_plus_proj) > 0),
-                     1, 0)
-        mod_01_Wtrmask = mod_01 * Raster(watermask)
-        mod_01_AllMaks = mod_01_Wtrmask * Raster(glacierMask)
-        mod_01_AllMaks.save(modscag_0_1)
-        print(f"fSCA mask tif saved")
-
-        # create fSCA percent layer
-        Mod_per = (Float(SetNull(Raster(MODSCAG_tif_plus_proj) > 100, Raster(MODSCAG_tif_plus_proj))) / 100)
-        Mod_per.save(modscag_per)
-        print(f"fSCA percent layer saved")
-
-        # create fsca percent layer ASK LEANNE, WHAT'S THE DIFFERENT BETWEEN LAKES MASK AND WATER MASK
-        mod_01_mask = Con(Raster(modscag_per) > 0.0001, 1, 0)
-        mod_per_msk = Raster(watermask) * mod_01_mask
-        mod_per_Allmsk = Raster(glacierMask) * mod_per_msk
-        mod_per_Allmsk.save(modscag_per_msk)
-        print("fSCA percent layer created")
 
         rcn_final = Raster(rcn_raw_proj) * Raster(watermask)
         rcn_final_wtshd = (Con((IsNull(rcn_final)) & (Raster(modscag_per_msk) >= 0), 0, rcn_final))
         rcn_final_wtshd.save(rcnFinal)
         print("rcn final created")
+
+    arcpy.ProjectRaster_management(MODSCAG_tif_plus, MODSCAG_tif_plus_proj, projALB,
+                                   "NEAREST", "500 500",
+                                   "", "")
+    print("fSCA and rcn raw image and mean map projected")
+
+    mod_01 = Con((Raster(MODSCAG_tif_plus_proj) < 101) & (Raster(MODSCAG_tif_plus_proj) > 0),
+                 1, 0)
+    mod_01_Wtrmask = mod_01 * Raster(watermask)
+    mod_01_AllMaks = mod_01_Wtrmask * Raster(glacierMask)
+    mod_01_AllMaks.save(modscag_0_1)
+    print(f"fSCA mask tif saved")
+
+    # create fSCA percent layer
+    Mod_per = (Float(SetNull(Raster(MODSCAG_tif_plus_proj) > 100, Raster(MODSCAG_tif_plus_proj))) / 100)
+    Mod_per.save(modscag_per)
+    print(f"fSCA percent layer saved")
+
+    # create fsca percent layer ASK LEANNE, WHAT'S THE DIFFERENT BETWEEN LAKES MASK AND WATER MASK
+    mod_01_mask = Con(Raster(modscag_per) > 0.0001, 1, 0)
+    mod_per_msk = Raster(watermask) * mod_01_mask
+    mod_per_Allmsk = Raster(glacierMask) * mod_per_msk
+    mod_per_Allmsk.save(modscag_per_msk)
+    print("fSCA percent layer created")
+
+
 
     # ASK LEANNE, WHAT'S THE DIFFERENCE BETWEEN TIF MASK AND WATER MASK
     print(f"Creating snowline shapefile: {snowPolyElim}")
