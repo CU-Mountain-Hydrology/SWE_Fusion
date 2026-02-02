@@ -5,7 +5,6 @@
 \setlength{\belowrulesep}{0pt}
 \fontsize{10}{12}\selectfont
 
-% DEBUG: Headers = {{ headers }}
 
 {# These groups should have 2-row headers (group title on top, dates below) #}
 {% set date_groups = ["% of Average", "SWE (in)", "Pillows", "SNODAS*"] %}
@@ -21,7 +20,7 @@
 {# Total columns = Basin + flattened cols #}
 {% set total_cols = 1 + flat_cols|length %}
 
-\begin{longtable}{@{}p{3.2cm}{% for _ in range(flat_cols|length) %}c{% endfor %}}
+\begin{longtable}{@{}p{3.5cm}{% for _ in range(flat_cols|length) %}c{% endfor %}}
     \toprule
     \multicolumn{ {{ total_cols }} }{c}{\large{ {{ title }} SWE Report for {{ date[4:6]|int }}/{{ date[6:8]|int }}/{{ date[0:4] }} }} \\
     \specialrule{0.3pt}{0pt}{0pt}
@@ -152,16 +151,30 @@
             {% endif %}
             {% set ns.current_basin = basin_name %}
 
-            {% if basin_name|length > 22 %}
-                {% set mid = (basin_name|length // 2) %}
-                {% set split_idx = (
-                    (basin_name.rfind('-', 0, mid) if basin_name.rfind('-', 0, mid) != -1 else
-                     basin_name.rfind('\\_', 0, mid) if basin_name.rfind('\\_', 0, mid) != -1 else
-                     mid)
-                ) %}
-                \makecell[l]{ {{ basin_name[:split_idx+1] }} \\ {{ basin_name[split_idx+1:] }} }
+            {% set raw_name = basin_name %}
+            {% if raw_name|length > 22 and (" " in raw_name) %}
+                {% set mid = raw_name|length // 2 %}
+
+                {# find last space before mid #}
+                {% set left_space = raw_name.rfind(" ", 0, mid) %}
+                {# find first space after mid #}
+                {% set right_space = raw_name.find(" ", mid) %}
+
+                {% if left_space != -1 %}
+                    {% set split_idx = left_space %}
+                {% elif right_space != -1 %}
+                    {% set split_idx = right_space %}
+                {% else %}
+                    {% set split_idx = -1 %}
+                {% endif %}
+
+                {% if split_idx != -1 %}
+                    \shortstack[l]{ {{ raw_name[:split_idx] }} \\ {{ raw_name[split_idx+1:] }} }
+                {% else %}
+                    {{ raw_name }}
+                {% endif %}
             {% else %}
-                \makecell[l]{ {{ basin_name }} }
+                {{ raw_name }}
             {% endif %}
         {% else %}
             \makecell[l]{}
@@ -170,7 +183,7 @@
         {% for val in row[1:] %}
             & {{ ("NA" if (val != val) else val) | replace('%', '\\%') }}
         {% endfor %}
-        \\[-2pt]
+        \\
     {% endfor %}
 
     \specialrule{0.3pt}{4pt}{4pt}
