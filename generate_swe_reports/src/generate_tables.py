@@ -14,6 +14,7 @@ ww_table_data = {
 
 snm_table_data = {
     "5" : "Sierra Nevada",
+    "10" : "Elevation Banded",
 }
 #########################
 #       END CONFIG      #
@@ -95,7 +96,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
             report_dir = fr"W:\documents\{date_str[:4]}_RT_Reports\{date_str}_RT_report_ET"
             table_data = ww_table_data
         case "SNM":
-            report_dir = fr"J:\paperwork\0_UCSB_DWR_Project\{date_str[:4]}_RT_Reports\{date_str}_RT_report_ET"
+            report_dir = fr"J:\paperwork\0_UCSB_DWR_Project\{date_str[:4]}_RT_Reports\{date_str}_RT_report_ET_hold"
             table_data = snm_table_data
         case _:
             raise Exception(f"Unrecognized report type: {report_type}")
@@ -125,16 +126,23 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
         if len(matches) == 0:
             print(f"No table {table_id} found!")
         table = matches[0]
+        print(table)
 
         # Read in the csv
         df = pd.read_csv(table)
+
+        # Check if this is an elevation band table by looking for "Elevation Band" in header
+        is_elevation_table = "Elevation Band" in df.iloc[0].astype(str).values
+        print(df.iloc[0].astype(str).values)
+        print(f"Is elevation table: {is_elevation_table}")
+
         df = df.iloc[:, 1:] # Drop the first column containing indices
 
-        # Format SNODAS dates to 3 decimal places
+        # Format SNODAS dates to 1 decimal place (matching our SWE precision)
         last_col = df.columns[-1]
         df.loc[1:, last_col] = (
             pd.to_numeric(df.loc[1:, last_col], errors="coerce")
-            .round(3) # TODO: magic number
+            .round(1)
         )
 
         # Check how many dates have data (first report does not have a previous date)
@@ -144,37 +152,44 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
             # TODO: error handling
             pass
 
+        # Determine column offset based on table type
+        col_offset = 2 if is_elevation_table else 1
 
         # Get current date and previous date if it exists
         if date_count > 1:
-            previous_date = df.iloc[0, 1].strip("%").replace(" Avg.", "")
-            current_date = df.iloc[0, 2].strip("%").replace(" Avg.", "")
+            previous_date = df.iloc[0, col_offset].strip("%").replace(" Avg.", "")
+            current_date = df.iloc[0, col_offset+1].strip("%").replace(" Avg.", "")
         else:
-            current_date = df.iloc[0, 1].strip("%").replace(" Avg.", "")
+            current_date = df.iloc[0, col_offset].strip("%").replace(" Avg.", "")
 
         # Get header data
         headers = {}
+        if is_elevation_table:
+            headers[""] = ["Elevation Band"]
         headers["% of Average"] = (
             [previous_date, current_date] if date_count > 1 else [current_date]
         )
         headers["SWE (in)"] = (
             [previous_date, current_date] if date_count > 1 else [current_date]
         )
-        headers[""] = ["SCA"]
-        headers[" "] = ["Vol. (AF)"]
-        headers["   "] = ["Area (mi$^2$)"]
+        headers[" "] = ["SCA"]
+        headers["  "] = ["Vol. (AF)"]
+        headers["    "] = ["Area (mi$^2$)"]
         headers["Pillows"] = (
             [previous_date, current_date] if date_count > 1 else [current_date]
         )
         headers["SNODAS*"] = [current_date]
 
-        # Check for ASO 
+        # Check for ASO
         aso_corrected = df.iloc[:, 0].astype(str).str.contains("§").any()
 
         # Load table template
         templates_dir = Path(__file__).parent.parent / "report_templates"
         env = Environment(loader=FileSystemLoader(str(templates_dir)))
-        template = env.get_template("TEMPLATE_SWE_Table.tex")
+
+        # Select template based on table type
+        template_name = "TEMPLATE_Elev_SWE_Table.tex" if is_elevation_table else "TEMPLATE_SWE_Table.tex"
+        template = env.get_template(template_name)
 
         latex_table = template.render(df=df,
                                       title=table_data[table_id],

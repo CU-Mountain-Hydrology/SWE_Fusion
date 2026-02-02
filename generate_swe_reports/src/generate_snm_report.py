@@ -28,16 +28,16 @@ def generate_snm_report(date: int) -> Path:
         "instaar_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "INSTAAR_75_Logo.png").replace("\\", "/"),
         "date": date,
         "date_string": datetime.strptime(str(date), "%Y%m%d").strftime("%B %d, %Y"),
-        # "fig1a_path" : str(maps_dir / f"{date}_WW_Fig1a.jpg").replace("\\", "/"),
-        # "fig1b_path": str(maps_dir / f"{date}_WW_Fig1b.jpg").replace("\\", "/"),
-        # "fig2a_path": str(maps_dir / f"{date}_WW_Fig2a.jpg").replace("\\", "/"),
-        # "fig2b_path": str(maps_dir / f"{date}_WW_Fig2b.jpg").replace("\\", "/"),
-        # "fig3_path": str(maps_dir / f"{date}_WW_Fig3.jpg").replace("\\", "/"),
-        # "fig4_path": str(maps_dir / f"{date}_WW_Fig4.jpg").replace("\\", "/"),
-        # "fig5_path": str(maps_dir / f"{date}_WW_Fig5.jpg").replace("\\", "/"),
-        # "fig6_path": str(maps_dir / f"{date}_WW_Fig6.jpg").replace("\\", "/"),
+        # "fig0_path" : str(maps_dir / f"{date}_SNM_Fig0.jpg").replace("\\", "/"),
+        # "fig1_path": str(maps_dir / f"{date}_SNM_Fig1.jpg").replace("\\", "/"),
+        # "fig2_path": str(maps_dir / f"{date}_SNM_Fig2.jpg").replace("\\", "/"),
+        # "fig3_path": str(maps_dir / f"{date}_SNM_Fig3.jpg").replace("\\", "/"),
+        # "fig4_path": str(maps_dir / f"{date}_SNM_Fig4.jpg").replace("\\", "/"),
+        # "fig5_path": str(maps_dir / f"{date}_SNM_Fig5.jpg").replace("\\", "/"),
+        # "fig6_path": str(maps_dir / f"{date}_SNM_Fig6.jpg").replace("\\", "/"),
+        # "fig7_path": str(maps_dir / f"{date}_SNM_Fig7.jpg").replace("\\", "/"),
         "table5_path": str(tables_dir / f"{date}_SNM_Table5.tex").replace("\\", "/"),
-        # "table10_path": str(tables_dir / f"{date}_SNM_Table10.tex").replace("\\", "/"),
+        "table10_path": str(tables_dir / f"{date}_SNM_Table10.tex").replace("\\", "/"),
     }
 
     rendered_tex = template.render(**context)
@@ -71,18 +71,18 @@ def main():
 
     # Automatically compile LaTeX file (twice)
     # TODO: docs on how to set up pdflatex and get subprocess working
-    for _ in range(2):
-        print("Compiling LaTeX to PDF.")
-        subprocess.run(
-            ["pdflatex",
-            "-file-line-error",
-            "-synctex=1",
-            "-output-format=pdf",
-            "-interaction=nonstopmode",
-            output_path.name],
-            cwd = Path(__file__).parent.parent / "output", # TODO: make output path a config
-            check=True
-        )
+    # for _ in range(2):
+    #     print("Compiling LaTeX to PDF.")
+    #     subprocess.run(
+    #         ["pdflatex",
+    #         "-file-line-error",
+    #         "-synctex=1",
+    #         "-output-format=pdf",
+    #         "-interaction=nonstopmode",
+    #         output_path.name],
+    #         cwd = Path(__file__).parent.parent / "output", # TODO: make output path a config
+    #         check=True
+    #     )
 
 if __name__ == "__main__":
     main()
