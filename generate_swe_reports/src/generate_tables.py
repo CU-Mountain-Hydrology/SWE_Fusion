@@ -96,7 +96,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
             report_dir = fr"W:\documents\{date_str[:4]}_RT_Reports\{date_str}_RT_report_ET"
             table_data = ww_table_data
         case "SNM":
-            report_dir = fr"J:\paperwork\0_UCSB_DWR_Project\{date_str[:4]}_RT_Reports\00_PracticeReport\{date_str}_RT_report_ET_hold"
+            report_dir = fr"J:\paperwork\0_UCSB_DWR_Project\{date_str[:4]}_RT_Reports\{date_str}_RT_report_ET"
             table_data = snm_table_data
         case _:
             raise Exception(f"Unrecognized report type: {report_type}")
@@ -176,6 +176,9 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
         headers["  "] = ["Vol. (AF)"]
         headers["    "] = ["Area (mi$^2$)"]
         headers["Pillows"] = (
+            [previous_date, current_date] if date_count > 1 else [current_date]
+        )
+        headers["Surveys"] = (
             [previous_date, current_date] if date_count > 1 else [current_date]
         )
         headers["SNODAS*"] = [current_date]

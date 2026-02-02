@@ -26,7 +26,7 @@ snm_aprx = "U:\EricG\MapTemplate\SNM_Template.aprx"
 product_source_dir = r"W:\documents\2026_RT_Reports"    # Parent directory of the YYYYMMDD_RT_Report folders
 # TODO: separate source & output dirs for WW and SNM
 # snm_source_dir = r"U:\EricG\testing_Directory\SNM"
-snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports\00_PracticeReport"
+snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports"
 output_parent_dir = "../output/"                        # Directory the figures will be exported to
 
 # Figure configs
@@ -189,7 +189,7 @@ snm_fig_data = {
         "maps": {
             "mean_swe": [
                 {"layer": "mean_msk", "format": "tif", "dir": "*UseThis*", "label": "None"},
-                {"layer": "Zero_sensors", "format": "shp", "dir": "", "label": "None"},
+                # {"layer": "Zero_sensors", "format": "shp", "dir": "", "label": "None"},
                 # {"layer": "sensors_SNM", "format": "shp", "dir": "", "label": "None"},
                 # {"layer": "Zero_CCR", "format": "shp", "dir": "", "label": "None"},
                 # {"layer": "CCR_sensors", "format": "shp", "dir": "", "label": "None"},
@@ -289,7 +289,7 @@ def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user =
     if report_type == "WW":
         rt_report_dir = os.path.join(product_source_dir, str(date) + "_RT_report_ET")
     else: # SNM
-        rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_report_ET_hold")
+        rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_report_ET")
         # rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_Report")
 
     # Find the directory containing the layer products to be used e.g. "...UseThis"
