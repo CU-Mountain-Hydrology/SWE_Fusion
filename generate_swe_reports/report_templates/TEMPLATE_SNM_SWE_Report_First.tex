@@ -1,0 +1,244 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{xcolor}
+\usepackage{anyfontsize}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{makecell}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage[sfdefault,light]{roboto}
+\usepackage[T1]{fontenc}
+\usepackage{wrapfig}
+
+
+\geometry{
+    top=0.8in,
+    bottom=0.6in,
+    left=0.7in,
+    right=0.7in
+}
+
+\definecolor{linkblue}{HTML}{0563C1}
+\hypersetup{
+    colorlinks=true,        % false = boxed links
+    linkcolor=linkblue,     % internal links
+    urlcolor=linkblue,      % external URLs
+    citecolor=linkblue
+}
+\renewcommand\UrlFont{\color{black}\sffamily}
+
+\fancypagestyle{firstpage}{
+    \fancyhf{}
+    \fancyhead[C]{
+        \noindent
+        \begin{minipage}[c]{0.15\textwidth}
+            \begin{flushleft}
+                \includegraphics[width=0.7\textwidth]{ {{ cu_logo_path }} }
+            \end{flushleft}
+        \end{minipage}
+        \hfill
+        \begin{minipage}[c]{0.15\textwidth}
+            \begin{flushright}
+                \includegraphics[width=0.8\textwidth]{ {{ instaar_logo_path }} }
+            \end{flushright}
+        \end{minipage}
+    }
+    \renewcommand{\headrulewidth}{0pt}
+}
+
+\begin{document}
+
+\thispagestyle{firstpage}
+\vspace*{3em}
+
+\fontsize{14}{18}
+\begin{center}
+    \textbf{\textcolor[HTML]{1F497D}{
+        Real-Time Spatial Estimates of Snow-Water Equivalent (SWE)\\
+    }}
+    \textbf{
+        Sierra Nevada Mountains, California\\
+        {{ date_string }}\\
+    }
+\end{center}
+
+\begin{wrapfigure}{r}{0.22\textwidth}
+    \vspace{-5\baselineskip}
+    \centering
+    \includegraphics[width=0.21\textwidth]{ {{ fig0_path }} }
+    \vspace{-1\baselineskip}
+\end{wrapfigure}
+
+\vspace{1em}
+
+\fontsize{10}{14}
+\noindent\textbf{Team:} Noah Molotch$^{1,2}$, Emma Tyrrell$^1$, and Eric Gosnell$^1$\\
+\noindent\textbf{Contributors:} Leanne Lestak$^1$, Karl Rittger$^1$, and Kehan Yang$^1$\\
+$^1$ Institute of Arctic and Alpine Research, University of Colorado Boulder\\
+$^2$ Jet Propulsion Laboratory, California Institute of Technology\\
+\textit{Contact: Emma.Tyrrell@colorado.edu}\\
+
+\vspace{1em}
+
+\fontsize{12}{16}
+\noindent\textbf{\textit{Summary of current conditions}}\\
+\fontsize{10}{14}
+The regional summary map above shows the mean SWE above 5000' elevation for three major regions of the Sierra Nevada, percent of average is calculated from a long-term average of 2001-2021. Detailed SWE maps (in JPG format) and summaries of SWE (in Excel format) by individual basin and elevation band accompany the report and are publicly available on our website \href{https://github.com/CU-Mountain-Hydrology/SierraNevada}{\textbf{\underline{here}}}.\\
+
+\includegraphics[width=\textwidth]{ {{ fig1_path }} }
+
+\noindent\textbf{\textit{Figure 1. Estimated SWE and \% of Average SWE across the Sierra Nevada, Current Report.}} SWE amounts (left), and percent of average (2001-2021) SWE for the Sierra Nevada, calculated for each pixel (middle) and basin-wide (right). Basin-wide percent of average is calculated across all model pixels >5000’ elevation.\\
+
+\noindent\textbf{\textit{Location of Reports and Excel Format Tables}}\\
+\href{https://github.com/CU-Mountain-Hydrology/SierraNevada}{\underline{https://github.com/CU-Mountain-Hydrology/SierraNevada}}
+
+\newpage
+\noindent\textbf{\textit{About this report}}\\
+This is an experimental research product that provides near-real-time estimates of snow-water equivalent (SWE) at a spatial resolution of 500 m for the Sierra Nevada in California from mid-winter through the melt season. The report is typically released within a week of the date of data acquisition at the top of the report. A similar report covering the entire Western United States is available and is distributed to water managers across the western U.S.
+
+\noindent The spatial SWE-fusion analysis method for the Sierra Nevada uses the following data as inputs:
+- In-situ SWE from all operational CA and NV snow pillow sensor sites and CoCoRaHS SWE values when available and
+applicable
+\begin{itemize}
+    \item[-] Fractional snow-covered area (fSCA) data from recent cloud-free satellite images or model
+    \item[-] Physiographic information (elevation, latitude, upwind mountain barriers, slope, etc.)
+    \item[-] Historical daily SWE patterns (1985-2021) retrospectively generated using historical fSCA data and an energy-balance model that back-calculates SWE given the fSCA time-series and meltout date for each pixel.
+    \item[-] Satellite-observed daily mean fractional snow-covered area (DMFSCA)
+\end{itemize}
+
+\noindent For more details on the estimation method see the \hyperref[sec:methods]{\textit{\textcolor{black}{Methods}}} section below. Please be sure to read the \hyperref[sec:data_issues]{\textit{\textcolor{black}{Data Issues / Caveats}}} section for a discussion of persistent challenges or uncertainties of the SWE product.\\
+
+\noindent\textbf{\textit{Data availability in this report}}\\
+There are a total of 134 snow pillow sites in the Sierra Nevada network that are used by the SWE-fusion model and when applicable there are typically 10-20 CoCoRaHS measurements that can be used. Sites that are recording SWE, offline sites, sites recording zero, and CoCoRaHS measurements are shown in \hyperref[sec:figure_6]{\textcolor{black}{Figure 4}}, on the left map (shown in black, red, yellow, and green respectively).\\
+
+\noindent\textbf{\textit{The value of spatially explicit estimates of SWE}}\\
+Snowmelt makes up the large majority (\textasciitilde60-85\%) of the annual streamflow in the Sierra Nevada. The spatial distribution of snow-water equivalent (SWE) across the landscape is complex. While broad aspects of this spatial pattern (e.g., more SWE at higher elevations and on north-facing exposures) are fairly consistent, the details vary a lot from year to year, influencing the magnitude and timing of snowmelt-driven runoff.\\
+
+\noindent SWE is operationally monitored at over a hundred and thirty snow pillow sensor sites spread across the Sierra Nevada, providing a critical first-order snapshot of conditions, and the basis for runoff forecasts from the CA DWR, NRCS, and NOAA. However, conditions at snow pillow sites (e.g., percent of normal SWE) may not be representative of conditions in the large areas between these point measurements, and at elevations above and below the range of the sensor sites. The spatial snow analysis creates a detailed picture of the spatial pattern of SWE using snow sensors, satellite, and other data, extending beyond the snow sensor sites to unmonitored areas.\\
+
+\noindent\textbf{\textit{Interpreting the spatial SWE estimates in the context of snow pillows}}\\
+The spatial product estimates SWE for every pixel where the fSCA product identifies snow-cover. Comparatively, snow sensor samples 8-20 points per basin within a narrower elevation range. Thus, the basin-wide percent of average from the spatial SWE estimates is not directly comparable with the snow sensor basin-wide percent of average. A better comparison might be made with the \% of average in the elevation bands (\hyperref[sec:table_2]{\textcolor{black}{Table 2}}) that contain snow sensor sites.
+
+\newpage
+\begin{center}
+\includegraphics[width=0.7\textwidth]{ {{ fig4_path }} }
+\end{center}
+
+\noindent\textbf{\textit{Figure 2. Estimated SWE with Fire Perimeters, Sierra Nevada.}} SWE amounts are shown with fire perimeters from 2018-2024 (colored from yellow to red).
+
+\newpage
+\begin{center}
+\includegraphics[width=0.7\textwidth]{ {{ fig5_path }} }
+\end{center}
+
+\noindent\textbf{\textit{Figure 3. MODIS image, Sierra Nevada.}} The most recent cloud-free true color MODIS image, showing the Sierra Nevada as close to the model run as possible. Model input fractional snow-covered area (fSCA) was derived from the MODIS Snow Today product (Rittger, et al. 2019) which was calculated using the SPIRES algorithm (Bair, et al. 2021) and from the MODIS cloud-gapfilled product (Hall, et al. 2019).
+
+\newpage
+\section*{}\label{sec:figure_6}
+\includegraphics[width=\textwidth]{ {{ fig6_path }} }
+\noindent\textbf{\textit{Figure 4. Comparison of CU regression SWE product and SNODAS SWE for the Sierra Nevada.}} The map on the left shows estimated SWE from the NOAA National Weather Service's National Operational Hydrologic Remote Sensing Center (NOHRSC) SNOw Data Assimilation System (SNODAS). The middle map shows the difference between the SNODAS SWE estimate and CU SWE-fusion estimate. Red pixels denote areas where SNODAS SWE is less than CU SWE and blue pixels show areas where SNODAS SWE is higher than CU SWE. The map on the right shows the snow-cover extent of SNODAS and CU SWE estimates. Yellow pixels show where the location of CU snow extends beyond the location of the SNODAS snow extent. Blue pixels show where the SNODAS snow extends beyond the CU snow extent. Gray areas indicate regions where both products agree on the snow-cover extent.
+
+\newpage
+\includegraphics[width=\textwidth]{ {{ fig7_path }} }
+\noindent\textbf{\textit{Figure 5. Historical average CU SWE and Elevation Bands for the Sierra Nevada.}} Long-term (2001-2021) average CU SWE (left), and the Banded Elevation map (right) identifies basins used in this report (black boundaries) and 1000’ elevation bands (colored shading) that match those used in (\hyperref[sec:table_1]{\textcolor{black}{Table 1}}) and (\hyperref[sec:table_2]{\textcolor{black}{Table 2}}). Map on left shows snow pillow sensor sites recording SWE (black), sites that were offline are shown in red, and sites recording zero are shown in yellow. CoCoRaHS observations if applicable are shown in green and zero values are shown in yellow.
+
+\vspace*{-3em}
+\section*{}\label{sec:methods}
+\noindent\textbf{\textit{Methods}}\\
+The spatial SWE-fusion estimation method is described in Yang, et al. (2022) and Schneider and Molotch (2016). The method uses linear regression in which the dependent variable is derived from the operationally measured in situ SWE from all online snow pillow sensor sites in the domain. The snow pillow sensor SWE observations are scaled by the fractional snow-covered area (fSCA) across the 500 m pixel containing that snow pillow sensor site before being used in the linear regression model. The fSCA is a combination of a near-real-time gap-filled and cloud-free MODIS satellite image which has been processed using the Snow Today algorithm (Rittger, et al. 2019, \href{https://nsidc.org/snow-today}{\underline{https://nsidc.org/snow-today}}), the SPIReS algorithm (Bair, et al. 2021), and the MODIS cloud-gap-filled algorithm (Hall, et al. 2019).\\
+
+\noindent The following independent variables (predictors) enter into the linear regression model:
+\begin{itemize}
+    \item[-] Physiographic variables that affect snow accumulation, melt, and redistribution, including elevation, latitude, upwind mountain barriers, slope, and others. See Table 1 in Yang, et al. (2022) for the full set of these variables.
+    \item[-] The historical daily SWE pattern (1985-2021) retrospectively generated using historical MODSCAG data, and an energy-balance model that back-calculates SWE given the fractional Snow-Covered Area (fSCA) time series and meltout date for each pixel. See Fang, et al. (2022) for details. (For computational efficiency, only one image during the 1985-2021 period that best matches the real-time snow pillow-observed pattern is selected as an independent variable.)
+\end{itemize}
+
+\noindent The real-time regression SWE-fusion model for this date has been validated by cross-validation, whereby 10\% of the snow pillow data are randomly removed and the model prediction is compared to the measured value at the removed snow pillow stations. This is repeated 12 times to obtain an average R-squared value, which denotes how closely the model fits the snow pillow data. During development of this regression method, the model was also validated against independent historical SWE data collected in snow surveys at 9 locations in Colorado, and an intensive field survey in north-central Colorado. Data utilized to generate this report change to optimize model performance. To maintain consistency across the historical record, the percent of average values are based on our baseline algorithm and therefore there can be discrepancies between absolute SWE values and corresponding percent of averages.\\
+
+\section*{}\label{sec:data_issues}
+\noindent\textbf{\textit{List of All Known Data Issues/Caveats – any of these could apply to this model run}}
+\begin{itemize}
+    \item SATELLITE FSCA - Recent snowpack accumulation may be under-estimated due to issues with satellite-observed fSCA.
+    \item NEW AVERAGE CALCULATIONS – Average calculations are based on 2001-2021 model values, this includes the drought years (2012-2016) which brings our overall average SWE down considerably, thereby increasing percent of averages.
+    \item RECENT SNOWFALL – There are occasionally problems with lower-elevation SWE estimates due to recent snowfall events that result in extensive snow-cover extending to valley locations where measurements are not available. This scenario results in an over-estimation of lower- elevation SWE.
+    \item LIMITED SNOW PILLOW DATA – When snow at the snow pillow sites melts out, but remains at higher elevations, the model tends to underestimate SWE at the under-monitored upper elevations. This issue typically occurs late in the melt season, resulting in less accurate SWE prediction at higher elevations compared to earlier in the snow season.
+    \item CLOUD COVER – Cloud cover can obscure satellite measurements of snow-cover. While careful checks are made, occasionally the misclassification of clouds as snow or vice versa may result in the mischaracterization of SWE or bareground.
+    \item LOW LOOK ANGLE – When a satellite does not pass directly over a region but the area is still included within the satellite sensor’s field of view, this is referred to as a low “look angle”. The resulting image has lower effective resolution – this “blurry” MODSCAG data still contains useful information but may lead to overestimation of SWE near the margins of the snow-cover extent.
+    \item POOR QUALITY SNOW SENSOR DATA – Although data QA/QC is performed, occasional sensor malfunction may result in localized SWE errors.
+    \item ANOMALOUS SNOW PATTERNS – Anomalous snow years or snow distributions may cause SWE error due to the model design to search for similar SWE distributions from previous years. If no close seasonal analogue exists, the model is forced to find the most similar year, which may result in error.
+    \item DENSE FOREST COVER – Dense forest cover at lower elevations where snow-cover is discontinuous can cause the satellite to underestimate the snow-cover extent, leading to underestimation of SWE.
+    \item MISSING SWE VALUES - Data omitted due to inconsistencies with independent SWE estimates.
+    \item PERCENT OF AVERAGE CALCULATIONS - Data utilized to generate this report change to optimize model performance. To maintain consistency across the historical record, the percent of average values are based on our baseline algorithm and therefore there can be discrepancies between absolute SWE values and corresponding percent of averages.
+    \item MODELING METHODS - We work to generate the best SWE estimates for each reporting date. Our methods can change from one report to another. Sometimes data changes between reports is an artifact of method changes.
+\end{itemize}
+
+\newpage
+\section*{}\label{sec:table_1}
+\noindent\textbf{\textit{Table 1. Estimated SWE by basin.}} The basin-wide SWE values and averages, are across all pixels at elevations >5000’. Shown are percent of current average SWE (between 2001-2021 as derived from the regression model), mean SWE, percent of snowcovered area, water volume (acre-feet), the area (mi$^2$) inside each basin that contains data pixels (not including cloud-covered pixels, lakes or other satellite no data pixels), survey data, and snow pillow data, for those areas collected, summarized for each basin. The last column shows mean SWE by basin from SNODAS*.
+\input{ {{ table5_path }} }
+
+\newpage
+\section*{}\label{sec:table_2}
+\noindent\normalsize{\textbf{\textit{Table 2. Estimated SWE by basin and elevation band.}}} The basin-wide SWE values and averages, are across all pixels at elevations >5000’. Elevation bands begin at 5000’ and extend past the highest point in the basin. Note that the area of the highest 2-5 bands is typically much smaller than the lower bands. Shown are percent of current average SWE (between 2001-2021 as derived from the regression model), mean SWE, percent of snow-covered area, water volume (acre-feet), the area (mi$^2$) inside each basin that contains data pixels (not including cloud-covered pixels, lakes or other satellite no data pixels), survey data, and snow pillow data, for those areas collected, summarized for each 1000’ elevation band inside each basin. The last column shows mean SWE from SNODAS*.
+\input{ {{ table10_path }} }
+
+\noindent\textbf{\textit{Location of Reports and Excel Format Tables}}\\
+\href{https://github.com/CU-Mountain-Hydrology/SierraNevada}{\underline{https://github.com/CU-Mountain-Hydrology/SierraNevada}}
+
+\newpage
+\fontsize{12}{16}
+\noindent\textbf{\textit{References and Additional Sources}}\\
+\fontsize{10}{14}
+
+\noindent
+\hangindent=1.5em
+Bair, E.H., T. Stillinger, and J. Dozier (2021). Snow Property Inversion From Remote Sensing (SPIReS): A Generalized Multispectral Unmixing Approach With Examples From MODIS and Landsat 8 OLI. \textit{IEEE Transactions on Geoscience and Remote Sensing}, 59(9): 7270–7284. doi: \url{https://doi.org/10.1109/TGRS.2020.3040328}.
+
+\noindent
+\hangindent=1.5em
+Fang, Y., Y. Liu, and S.A. Margulis (2022). A western United States snow reanalysis dataset over the Landsat era from water years 1985 to 2021. \textit{Scientific Data}, 9, 677. doi: \url{https://doi.org/10.1038/s41597-022-01768-7}.
+
+\noindent
+\hangindent=1.5em
+Hall, D. K., G. A. Riggs, N.E. DiGirolamo, and M.O. Román (2019). MODIS Cloud-Gap Filled Snow-Cover Products: Advantages and Uncertainties. \textit{Hydrology and Earth System Sciences}, 23: 5227–5241. doi: \url{https://doi.org/10.5194/hess-23-5227-2019}.
+
+\noindent
+\hangindent=1.5em
+Molotch, N.P. (2009). Reconstructing snow water equivalent in the Rio Grande headwaters using remotely sensed snow cover data and a spatially distributed snowmelt model. \textit{Hydrological Processes}, 23, 1076–1089. doi: \url{https://doi.org/10.1002/hyp.7206}.
+
+\noindent
+\hangindent=1.5em
+Molotch, N.P. and S.A. Margulis (2008). Estimating the distribution of snow water equivalent using remotely sensed snow cover data and a spatially distributed snowmelt model: A multi-resolution, multi-sensor comparison. \textit{Advances in Water Resources}, 31, 1503–1514. doi: \url{https://doi.org/10.1016/j.advwatres.2008.06.010}.
+
+\noindent
+\hangindent=1.5em
+Molotch, N.P. and R.C. Bales (2006). Comparison of ground-based and airborne snow-surface albedo parameterizations in an alpine watershed: Impact on snowpack mass balance. \textit{Water Resources Research}, 42. doi: \url{https://doi.org/10.1029/2005WR004522}.
+
+\noindent
+\hangindent=1.5em
+Molotch, N.P. and R.C. Bales (2005). Scaling snow observations from the point to the grid-element: Implications for observation network design. \textit{Water Resources Research}, 41. doi: \url{https://doi.org/10.1029/2005WR004229}.
+
+\noindent
+\hangindent=1.5em
+Molotch, N.P., T.H. Painter, R.C. Bales, and J. Dozier (2004). Incorporating remotely sensed snow albedo into a spatially distributed snowmelt model. \textit{Geophysical Research Letters}, 31. doi: \url{https://doi.org/10.1029/2003GL019063}.
+
+\noindent
+\hangindent=1.5em
+Rittger, K., M.S. Raleigh, J. Dozier, A.F. Hill, J.A. Lutz, and T.H. Painter (2019). Canopy Adjustment and Improved Cloud Detection for Remotely Sensed Snow Cover Mapping. \textit{Water Resources Research}, 55(9): 7712–7727. doi: \url{https://doi.org/10.1029/2019WR024914}.
+
+\noindent
+\hangindent=1.5em
+Schneider, D. and N.P. Molotch (2016). Real-time estimation of snow water equivalent in the Upper Colorado River Basin using MODIS-based SWE reconstructions and SNOTEL data. \textit{Water Resources Research}, 52(10): 7892–7910. doi: \url{https://doi.org/10.1002/2016WR019067}.
+
+\noindent
+\hangindent=1.5em
+Yang, K., K.N. Musselman, K. Rittger, S.A. Margulis, T.H. Painter, and N.P. Molotch (2022). Combining ground-based and remotely sensed snow data in a linear regression model for real-time estimation of snow water equivalent. \textit{Advances in Water Resources}, 160: 104075. doi: \url{https://doi.org/10.1016/j.advwatres.2021.104075}.
+
+\end{document}

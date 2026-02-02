@@ -130,8 +130,7 @@
 
 
     \multicolumn{ {{ total_cols }} }{l}{
-        \small*Basin boundaries were derived from a combination of NRCS basins and HUC8 boundaries.%
-        \hfill \textit{Continued on next page}
+        \footnotesize*This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.%
     } \\
     \bottomrule
     \endfoot
@@ -187,7 +186,7 @@
     {% endfor %}
 
     \specialrule{0.3pt}{4pt}{4pt}
-    \multicolumn{ {{ total_cols }} }{l}{\small*Basin boundaries were derived from a combination of NRCS basins and HUC8 boundaries.} \\
+    \multicolumn{ {{ total_cols }} }{l}{\footnotesize*This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.} \\
     {% if aso_corrected %}
         \multicolumn{ {{ total_cols }} }{l}{\small§ASO-corrected.} \\
     {% endif %}

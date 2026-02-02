@@ -26,7 +26,7 @@ snm_aprx = "U:\EricG\MapTemplate\SNM_Template.aprx"
 product_source_dir = r"W:\documents\2026_RT_Reports"    # Parent directory of the YYYYMMDD_RT_Report folders
 # TODO: separate source & output dirs for WW and SNM
 # snm_source_dir = r"U:\EricG\testing_Directory\SNM"
-snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports"
+snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports\00_PracticeReport"
 output_parent_dir = "../output/"                        # Directory the figures will be exported to
 
 # Figure configs
@@ -289,7 +289,7 @@ def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user =
     if report_type == "WW":
         rt_report_dir = os.path.join(product_source_dir, str(date) + "_RT_report_ET")
     else: # SNM
-        rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_report_ET")
+        rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_report_ET_hold")
         # rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_Report")
 
     # Find the directory containing the layer products to be used e.g. "...UseThis"
@@ -388,9 +388,19 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
 
                 # Find and remove undefined placeholder layers/tables
                 symbology = None
+                insert_position = None
+                ref_layer = None
+
                 if file_type in layer_formats:
                     undefined_layer = _map.listLayers(f"*{layer_id}*")[0]
                     symbology = undefined_layer.symbology
+
+                    # Save position information before removing
+                    all_layers = _map.listLayers()
+                    layer_index = all_layers.index(undefined_layer)
+                    # Get reference layer (the one just above the current layer)
+                    ref_layer = all_layers[layer_index - 1] if layer_index > 0 else None
+
                     _map.removeLayer(undefined_layer)
                 elif file_type in table_formats:
                     undefined_table = _map.listTables(f"*{layer_id}*")[0]
@@ -412,14 +422,22 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
 
                 # Update labels
                 if label == "None" or label == "" or label == [] or not label:
-                    # Set the data source
-                    _map.addDataFromPath(new_layer_path)
-
-                    # Update layer symbology
                     if file_type in layer_formats:
+                        # Create layer object
+                        new_layer = arcpy.management.MakeRasterLayer(new_layer_path, f"temp_{layer_id}").getOutput(0)
+
+                        # Insert at saved position
+                        if ref_layer:
+                            _map.insertLayer(ref_layer, new_layer, "AFTER")
+                        else:
+                            _map.addLayer(new_layer, "TOP")
+
+                        # Update symbology
                         layer = _map.listLayers(f"*{layer_id}*")[0]
-                        if "snapshot" not in new_layer_path:
+                        if "snapshot" not in new_layer_path and symbology:
                             layer.symbology = symbology
+                    else:  # table
+                        _map.addDataFromPath(new_layer_path)
                 elif isinstance(label, list):  # Join table to label layer
                     label_pattern = label[0]  # Pattern of the shp layer with labels enabled
                     join_field = label[1]  # Field in both the label layer and the join table
