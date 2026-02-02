@@ -1418,7 +1418,7 @@ import pandas as pd
 from collections import Counter
 
 
-def chosing_best_model_run(rundate, domain_list, WW_reports_workspace, SNM_reports_workspace, error_metric):
+def choosing_best_model_run_sensors(rundate, domain_list, WW_reports_workspace, SNM_reports_workspace, error_metric):
     domain_best_models = []
     for domain in domain_list:
         if domain == "SNM":
@@ -1514,3 +1514,100 @@ def chosing_best_model_run(rundate, domain_list, WW_reports_workspace, SNM_repor
     print(f"Sierras: {ChosenModelRun_SNM}")
 
     return ChosenModelRun_WW, ChosenModelRun_SNM
+
+def choosing_best_model_run_surveys(rundate, domain_list, WW_reports_workspace, SNM_reports_workspace, error_metric):
+    domain_best_models = []
+    for domain in domain_list:
+        if domain == "SNM":
+            sensor_error = f"{SNM_reports_workspace}/{rundate}_RT_report_ET/{rundate}_surveys_error.csv"
+
+            # get error stats
+            error_df = pd.read_csv(sensor_error)
+
+            # isolate based on domain)
+            error_df = error_df[error_df["Domain"] == domain]
+
+            # get unique values for the domainst
+            idx = error_df.groupby("Domain")[error_metric].idxmin()
+            best_df = error_df.loc[idx]
+            best_model = best_df['ModelRun'].iloc[0]
+            domain_best_models.append((domain, best_model))
+
+        else:
+            sensor_error = f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_surveys_error.csv"
+
+            # get error stats
+            error_df = pd.read_csv(sensor_error)
+
+            # isolate based on domain)
+            error_df = error_df[error_df["Domain"] == domain]
+
+            # get unique values for the domainst
+            idx = error_df.groupby("Domain")[error_metric].idxmin()
+            best_df = error_df.loc[idx]
+            best_model = best_df['ModelRun'].iloc[0]
+            domain_best_models.append((domain, best_model))
+
+    # get the list
+    values = [best for _, best in domain_best_models]
+    most_common_value, count = Counter(values).most_common(1)[0]
+    ChosenModelRun_WW_surv = most_common_value
+
+    print(f"Most common value: {most_common_value} ({count} domains)")
+    snm_model = next(best for domain, best in domain_best_models if domain == "SNM")
+
+    if snm_model != most_common_value:
+        print("\n!!!!!!!!!!!!!!!! SNM model differs from most common model !!!!!!!!!!!!!!!!")
+
+        # reload SNM error table
+        sensor_error = f"{SNM_reports_workspace}/{rundate}_RT_report_ET/{rundate}_surveys_error.csv"
+        snm_df = pd.read_csv(sensor_error)
+
+        # isolate SNM
+        snm_df = snm_df[snm_df["Domain"] == "SNM"]
+
+        # get error for SNM-selected model
+        snm_err = snm_df.loc[
+            snm_df["ModelRun"] == snm_model, error_metric
+        ].iloc[0]
+
+        # get error for most common model
+        common_err = snm_df.loc[
+            snm_df["ModelRun"] == most_common_value, error_metric
+        ].iloc[0]
+
+        diff = snm_err - common_err
+
+        print(f"SNM model: {snm_model}")
+        print(f"  {error_metric}: {snm_err:.4f}")
+
+        print(f"Most common model: {most_common_value}")
+        print(f"  {error_metric}: {common_err:.4f}")
+
+        print(f"Difference (SNM - common): {diff:.4f}")
+
+        print("\nChoose which model to use for SNM:")
+        print(f"  [1] Use most common model: {most_common_value}")
+        print(f"  [2] Use SNM-specific best model: {snm_model}")
+
+        while True:
+            choice = input("Enter 1 or 2: ").strip()
+
+            if choice == "1":
+                ChosenModelRun_SNM_surv = most_common_value
+                break
+            elif choice == "2":
+                ChosenModelRun_SNM_surv = snm_model
+                break
+            else:
+                print("Invalid input. Please enter 1 or 2.")
+
+    else:
+        print("Sierra (SNM) uses the most common model")
+        ChosenModelRun_SNM_surv = most_common_value
+
+    print("\nCHOSEN MODEL RUN FOR SURVEYS")
+    print(f"West Wide: {ChosenModelRun_WW_surv}")
+    print(f"Sierras: {ChosenModelRun_SNM_surv}")
+
+    return ChosenModelRun_WW_surv, ChosenModelRun_SNM_surv

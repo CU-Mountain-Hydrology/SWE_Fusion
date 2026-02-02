@@ -28,23 +28,23 @@ arcpy.env.parallelProcessingFactor = "0"
 ######################################
 ## date info
 user = "Olaf"
-year = 2025
-rundate = "20250402"
-survey_date = "20260101"
-pillow_date = "02Apr2025"
-mean_date = "0402"
+year = 2026
+rundate = "20260201"
+survey_date = "20260201"
+pillow_date = "01Feb2026"
+mean_date = "0201"
 prev_rundate = "20260115"
 
 # flags
 difference = "N" # should be Y if you want to compare against a previous model run
-biasCorrection = "Y"
-surveys_use = "N"
+biasCorrection = "N"
+surveys_use = "Y"
 
 # model run information
 domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"]
 # ChosenModelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis_UseAvg" ## TEMP
-model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens_testReport"
-model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens_testReport"
+model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
+model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens"
 modelRuns = [model_woCCR, model_wCCR]
 model_labels = ["woCCR", "wCCR"]
 prev_model_run = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis_UseAvg"
@@ -230,161 +230,175 @@ Cellsize = "500"
 #                   region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,case_field_band=case_field_band,
 #                   watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83, snapRaster_albn83=snapRaster_albn83,
 #                   projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, run_type="Normal")
-#
-# # clear memory
-# sleep(30)
-# clear_arcpy_locks()
-#
-# # run tables and layers code for the wCCR model run for West Wide
-# print(f'\nRunning Tables and Layers Code for all domains for {model_wCCR}')
-# tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_wCCR, masking="N", watershed_zones=WW_watershed_zones,
-#                   band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,
-#                   case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83,
-#                   snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, run_type="Normal")
-#
-# # get zero sensors for all domains
-# for domain in domainList:
-#     zero_CCR_sensors(rundate=rundate, results_workspace=WW_results_workspace, pillow_date=pillow_date, domain=domain,
-#                      sensors=WW_results_workspace + f"{rundate}_results_ET/{rundate}_sensors_{domain}.shp", zero_sensors=True,
-#                      CCR=False, model_workspace_domain=model_workspace + f"{domain}/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
-#
-# # clear memory
-# sleep(30)
-# clear_arcpy_locks()
-#
-# # organize and reprocess the sensors for Sierras
-# print('\nProcessing and sorting the sensors for the Sierra... ')
-# merge_sort_sensors_surveys(report_date=rundate, results_workspace=SNM_results_workspace + f"/{rundate}_results_ET/", surveys=surveys_use, difference=difference,
-#                            watershed_shapefile=SNM_watershed_shapefile, case_field_wtrshd=case_field_wtrshd, band_shapefile=SNM_band_shapefile,
-#                            case_field_band=case_field_band, projOut=projALB, projIn=projGEO, domain = "SNM",
-#                             merge="N", domain_shapefile=SNM_sensors, prev_report_date=prev_rundate,
-#                            prev_results_workspace=SNM_results_workspace + f"/{prev_rundate}_results_ET/")
-#
-# # Run SNODAS for SNM
-# print("\nSNODAS for SNM...")
-# SNODAS_Processing(report_date=rundate, RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
-#                   results_workspace=SNM_results_workspace,
-#                   projin=projGEO, projout=projALB, Cellsize=500, snapRaster=SNM_snapRaster_albn83,
-#                   watermask=watermask, glacierMask=glacierMask,
-#                   band_zones=SNM_band_zones, watershed_zones=SNM_watershed_zones, unzip_SNODAS="N")
-#
-# # clear memory
-# sleep(30)
-# clear_arcpy_locks()
-#
-# print(f'\nRunning Tables and Layers Code for Sierra {model_woCCR}...')
-# tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_woCCR, SNM_results_workspace=SNM_results_workspace,
-#                       watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
-#                       case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
-#                       glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
-#                       snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
-#                       Difference=difference, prev_report_date=prev_rundate, previous_model_run=prev_model_run)
-# # clear memory
-# sleep(30)
-# clear_arcpy_locks()
-#
-# print(f'\nRunning Tables and Layers Code for Sierra {model_wCCR}...')
-# tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_wCCR, SNM_results_workspace=SNM_results_workspace,
-#                       watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
-#                       case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
-#                       glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
-#                       snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
-#                       Difference=difference, prev_report_date=prev_rundate, previous_model_run=prev_model_run)
-# # clear memory
-# clear_arcpy_locks()
-# sleep(30)
-#
-# zero_CCR_sensors(rundate=rundate, results_workspace=SNM_results_workspace, pillow_date=pillow_date, domain="SNM",
-#                      sensors=SNM_results_workspace + f"{rundate}_results_ET/SNM_{rundate}_sensors_albn83.shp", zero_sensors=True,
-#                      CCR=True, model_workspace_domain=model_workspace + f"SNM/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
-#
-# ############### START VETTING ######################
-# # loop through domains
-# for modelRun in modelRuns:
-#     for domain in domainList:
-#         if domain == "SNM":
-#             raster = f"{SNM_results_workspace}/{rundate}_results_ET/{modelRun}/p8_{rundate}_noneg.tif"
-#             sensors_SNM = SNM_results_workspace + f"{rundate}_results_ET/SNM_{rundate}_sensors_albn83.shp"
-#             surveys_SNM = SNM_results_workspace + f"{rundate}_results_ET/{rundate}_surveys_albn83.shp"
-#
-#             ## make vetting folder
-#             outVettingWS_SNM = SNM_reports_workspace + f"{rundate}_RT_report_ET/{modelRun}/vetting_domains/"
-#             os.makedirs(outVettingWS_SNM, exist_ok=True)
-#
-#             # fsca variables
-#             fSCA_raster = f"{SNM_results_workspace}/{rundate}_results_ET/{model_woCCR}/SNM_fSCA_{rundate}_albn83.tif"
-#             prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
-#             vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/{modelRun}/vetting_domains/"
-#             prev_raster = prev_vetting_WS + f"SNM_fSCA_{prev_rundate}_albn83.tif"
-#
-#             # move p8 to vetting space
-#             arcpy.CopyRaster_management(raster, outVettingWS_SNM + f"p8_{rundate}_noneg.tif")
-#
-#             # move fsca to vetting space
-#             arcpy.CopyRaster_management(fSCA_raster, outVettingWS_SNM + f"SNM_fSCA_{rundate}_albn83.tif")
-#
-#             # add in snowTrax comparison
-#             snowtrax_comparision(rundate=rundate, snowTrax_csv=snowTrax_csv, results_WS=SNM_results_workspace,
-#                                  output_csv = outVettingWS_SNM + f"{rundate}_snowTrax_comparison.csv", model_list=modelRuns,
-#                                  model_labels=model_labels, reference_col=reference_col, output_png= SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_snowTrax_comparison.png")
-#
-#         else:
-#             # extract by mask
-#             arcpy.env.snapRaster = snapRaster_albn83
-#             arcpy.env.cellSize = snapRaster_albn83
-#             raster = f"{WW_results_workspace}/{rundate}_results_ET/{modelRun}/p8_{rundate}_noneg.tif"
-#             fSCA_raster = f"{WW_results_workspace}/{rundate}_results_ET/{model_woCCR}/fSCA_{rundate}_albn83.tif"
-#             prev_vetting_WS = f"W:/documents/2026_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
-#             sensors_WW = WW_results_workspace + f"{rundate}_results_ET/{rundate}_sensors_albn83.shp"
-#             surveys_WW = WW_results_workspace + f"{rundate}_results_ET/{rundate}_surveys_albn83.shp"
-#             prev_fSCA_raster = prev_vetting_WS + f"fSCA_{prev_rundate}_{domain}_clp.tif"
-#
-#             ## make vetting folder
-#             outVettingWS_WW = f"{WW_reports_workspace}/{rundate}_RT_report_ET/{modelRun}/vetting_domains/"
-#             os.makedirs(outVettingWS_WW, exist_ok=True)
-#             outMask = ExtractByMask(raster, clipbox_WS + f"WW_{domain}_Clipbox_albn83.shp")
-#             outMask.save(outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif")
-#             print(f"{domain} clipped and saved")
-#
-#             ## make vetting folder
-#             outMask = ExtractByMask(fSCA_raster, clipbox_WS + f"WW_{domain}_Clipbox_albn83.shp")
-#             outMask.save(outVettingWS_WW + f"fSCA_{rundate}_{domain}_clp.tif")
-#             print(f"{domain} clipped and saved for FSCA")
-#
-#     for domain in domainList:
-#         if domain == "SNM":
-#             print('domain is SNM')
-#             raster = outVettingWS_SNM + f"p8_{rundate}_noneg.tif"
-#             if surveys_use == "Y":
-#
-#
-#                 model_domain_vetting(raster=raster, point=surveys_SNM, swe_col=swe_col_surv, id_col=id_col_surv,
-#                                      rundate=rundate, domain=domain, modelRun=modelRun,
-#                                      out_csv=SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_surveys_error.csv")
-#
-#             swe_col_sens = 'pillowswe'
-#             id_col_sens = 'Site_ID'
-#             model_domain_vetting(raster=raster, point=sensors_SNM, swe_col=swe_col_sens, id_col=id_col_sens,
-#                                  rundate=rundate, domain=domain,
-#                                  modelRun=modelRun, out_csv=SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_sensors_error.csv")
-#         else:
-#             raster = outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif"
-#             swe_col_sens = 'pillowswe'
-#             id_col_sens = 'Site_ID'
-#             if surveys_use == "Y":
-#
-#
-#                 model_domain_vetting(raster=raster, point=surveys_WW, swe_col=swe_col_surv, id_col=id_col_surv, rundate=rundate,
-#                                      domain=domain, modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_surveys_error.csv")
-#
-#             model_domain_vetting(raster=raster, point=sensors_WW, swe_col=swe_col_sens, id_col=id_col_sens, rundate=rundate, domain=domain,
-#                                  modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_sensors_error.csv")
+
+# clear memory
+sleep(30)
+clear_arcpy_locks()
+
+# run tables and layers code for the wCCR model run for West Wide
+print(f'\nRunning Tables and Layers Code for all domains for {model_wCCR}')
+tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_wCCR, masking="N", watershed_zones=WW_watershed_zones,
+                  band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,
+                  case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83,
+                  snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, run_type="Normal")
+
+# get zero sensors for all domains
+for domain in domainList:
+    zero_CCR_sensors(rundate=rundate, results_workspace=WW_results_workspace, pillow_date=pillow_date, domain=domain,
+                     sensors=WW_results_workspace + f"{rundate}_results_ET/{rundate}_sensors_{domain}.shp", zero_sensors=True,
+                     CCR=False, model_workspace_domain=model_workspace + f"{domain}/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
+
+# clear memory
+sleep(30)
+clear_arcpy_locks()
+
+# organize and reprocess the sensors for Sierras
+print('\nProcessing and sorting the sensors for the Sierra... ')
+merge_sort_sensors_surveys(report_date=rundate, results_workspace=SNM_results_workspace + f"/{rundate}_results_ET/", surveys=surveys_use, difference=difference,
+                           watershed_shapefile=SNM_watershed_shapefile, case_field_wtrshd=case_field_wtrshd, band_shapefile=SNM_band_shapefile,
+                           case_field_band=case_field_band, projOut=projALB, projIn=projGEO, domain = "SNM",
+                            merge="N", domain_shapefile=SNM_sensors, prev_report_date=prev_rundate,
+                           prev_results_workspace=SNM_results_workspace + f"/{prev_rundate}_results_ET/")
+
+# Run SNODAS for SNM
+print("\nSNODAS for SNM...")
+SNODAS_Processing(report_date=rundate, RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
+                  results_workspace=SNM_results_workspace,
+                  projin=projGEO, projout=projALB, Cellsize=500, snapRaster=SNM_snapRaster_albn83,
+                  watermask=watermask, glacierMask=glacierMask,
+                  band_zones=SNM_band_zones, watershed_zones=SNM_watershed_zones, unzip_SNODAS="N")
+
+# clear memory
+sleep(30)
+clear_arcpy_locks()
+
+print(f'\nRunning Tables and Layers Code for Sierra {model_woCCR}...')
+tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_woCCR, SNM_results_workspace=SNM_results_workspace,
+                      watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
+                      case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
+                      glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
+                      snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
+                      Difference=difference, prev_report_date=prev_rundate, previous_model_run=prev_model_run)
+# clear memory
+sleep(30)
+clear_arcpy_locks()
+
+print(f'\nRunning Tables and Layers Code for Sierra {model_wCCR}...')
+tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_wCCR, SNM_results_workspace=SNM_results_workspace,
+                      watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
+                      case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
+                      glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
+                      snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
+                      Difference=difference, prev_report_date=prev_rundate, previous_model_run=prev_model_run)
+# clear memory
+clear_arcpy_locks()
+sleep(30)
+
+zero_CCR_sensors(rundate=rundate, results_workspace=SNM_results_workspace, pillow_date=pillow_date, domain="SNM",
+                     sensors=SNM_results_workspace + f"{rundate}_results_ET/SNM_{rundate}_sensors_albn83.shp", zero_sensors=True,
+                     CCR=True, model_workspace_domain=model_workspace + f"SNM/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
+
+############### START VETTING ######################
+# loop through domains
+for modelRun in modelRuns:
+    for domain in domainList:
+        if domain == "SNM":
+            raster = f"{SNM_results_workspace}/{rundate}_results_ET/{modelRun}/p8_{rundate}_noneg.tif"
+            sensors_SNM = SNM_results_workspace + f"{rundate}_results_ET/SNM_{rundate}_sensors_albn83.shp"
+            surveys_SNM = SNM_results_workspace + f"{rundate}_results_ET/{rundate}_surveys_albn83.shp"
+
+            ## make vetting folder
+            outVettingWS_SNM = SNM_reports_workspace + f"{rundate}_RT_report_ET/{modelRun}/vetting_domains/"
+            os.makedirs(outVettingWS_SNM, exist_ok=True)
+
+            # fsca variables
+            fSCA_raster = f"{SNM_results_workspace}/{rundate}_results_ET/{model_woCCR}/SNM_fSCA_{rundate}_albn83.tif"
+            prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
+            vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report_ET/{modelRun}/vetting_domains/"
+            prev_raster = prev_vetting_WS + f"SNM_fSCA_{prev_rundate}_albn83.tif"
+
+            # move p8 to vetting space
+            arcpy.CopyRaster_management(raster, outVettingWS_SNM + f"p8_{rundate}_noneg.tif")
+
+            # move fsca to vetting space
+            arcpy.CopyRaster_management(fSCA_raster, outVettingWS_SNM + f"SNM_fSCA_{rundate}_albn83.tif")
+
+            # add in snowTrax comparison
+            snowtrax_comparision(rundate=rundate, snowTrax_csv=snowTrax_csv, results_WS=SNM_results_workspace,
+                                 output_csv = outVettingWS_SNM + f"{rundate}_snowTrax_comparison.csv", model_list=modelRuns,
+                                 model_labels=model_labels, reference_col=reference_col, output_png= SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_snowTrax_comparison.png")
+
+        else:
+            # extract by mask
+            arcpy.env.snapRaster = snapRaster_albn83
+            arcpy.env.cellSize = snapRaster_albn83
+            raster = f"{WW_results_workspace}/{rundate}_results_ET/{modelRun}/p8_{rundate}_noneg.tif"
+            fSCA_raster = f"{WW_results_workspace}/{rundate}_results_ET/{model_woCCR}/fSCA_{rundate}_albn83.tif"
+            prev_vetting_WS = f"W:/documents/2026_RT_Reports/{prev_rundate}_RT_report_ET/{prev_model_run}/vetting_domains/"
+            sensors_WW = WW_results_workspace + f"{rundate}_results_ET/{rundate}_sensors_albn83.shp"
+            surveys_WW = WW_results_workspace + f"{rundate}_results_ET/{rundate}_surveys_albn83.shp"
+            prev_fSCA_raster = prev_vetting_WS + f"fSCA_{prev_rundate}_{domain}_clp.tif"
+
+            ## make vetting folder
+            outVettingWS_WW = f"{WW_reports_workspace}/{rundate}_RT_report_ET/{modelRun}/vetting_domains/"
+            os.makedirs(outVettingWS_WW, exist_ok=True)
+            outMask = ExtractByMask(raster, clipbox_WS + f"WW_{domain}_Clipbox_albn83.shp")
+            outMask.save(outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif")
+            print(f"{domain} clipped and saved")
+
+            ## make vetting folder
+            outMask = ExtractByMask(fSCA_raster, clipbox_WS + f"WW_{domain}_Clipbox_albn83.shp")
+            outMask.save(outVettingWS_WW + f"fSCA_{rundate}_{domain}_clp.tif")
+            print(f"{domain} clipped and saved for FSCA")
+
+    for domain in domainList:
+        if domain == "SNM":
+            print('domain is SNM')
+            raster = outVettingWS_SNM + f"p8_{rundate}_noneg.tif"
+            if surveys_use == "Y":
+
+
+                model_domain_vetting(raster=raster, point=surveys_SNM, swe_col=swe_col_surv, id_col=id_col_surv,
+                                     rundate=rundate, domain=domain, modelRun=modelRun,
+                                     out_csv=SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_surveys_error.csv")
+
+            swe_col_sens = 'pillowswe'
+            id_col_sens = 'Site_ID'
+            model_domain_vetting(raster=raster, point=sensors_SNM, swe_col=swe_col_sens, id_col=id_col_sens,
+                                 rundate=rundate, domain=domain,
+                                 modelRun=modelRun, out_csv=SNM_reports_workspace + f"{rundate}_RT_report_ET/{rundate}_sensors_error.csv")
+        else:
+            raster = outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif"
+            swe_col_sens = 'pillowswe'
+            id_col_sens = 'Site_ID'
+            if surveys_use == "Y":
+
+
+                model_domain_vetting(raster=raster, point=surveys_WW, swe_col=swe_col_surv, id_col=id_col_surv, rundate=rundate,
+                                     domain=domain, modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_surveys_error.csv")
+
+            model_domain_vetting(raster=raster, point=sensors_WW, swe_col=swe_col_sens, id_col=id_col_sens, rundate=rundate, domain=domain,
+                                 modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report_ET/{rundate}_sensors_error.csv")
 
 #####
 
 #PROMPT TO PICK THE BEST ERROR FROM THE CSV
-ChosenModelRun_WW, ChosenModelRun_SNM = chosing_best_model_run(rundate=rundate, domain_list=domainList, WW_reports_workspace=WW_reports_workspace,
+ChosenModelRun_WW, ChosenModelRun_SNM = choosing_best_model_run_sensors(rundate=rundate, domain_list=domainList, WW_reports_workspace=WW_reports_workspace,
                                                                SNM_reports_workspace=SNM_reports_workspace, error_metric=error_metric)
+if surveys_use == "Y":
+    ChosenModelRun_WW_surv, ChosenModelRun_SNM_surv = choosing_best_model_run_surveys(rundate=rundate, domain_list=domainList, WW_reports_workspace=WW_reports_workspace,
+                                    SNM_reports_workspace=SNM_reports_workspace, error_metric=error_metric)
+
+    # opt for the best model run on the surveys
+    if ChosenModelRun_WW != ChosenModelRun_WW_surv:
+        ChosenModelRun_WW = ChosenModelRun_WW_surv
+
+    if ChosenModelRun_SNM != ChosenModelRun_SNM_surv:
+        ChosenModelRun_SNM = ChosenModelRun_SNM_surv
+
+print("\n BEST MODEL RUNS FOR THE DOMAINS")
+print(f"West Wide = {ChosenModelRun_WW}")
+print(f"Sierras = {ChosenModelRun_SNM}")
 
 if difference == "Y":
     print("Running Plots...")
