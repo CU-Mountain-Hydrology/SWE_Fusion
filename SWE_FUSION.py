@@ -834,19 +834,19 @@ print(f"SNM ASO BIAS BASINS USED: {SNM_ASO_biasCorr_basins}")
 if biasCorrection == "Y" and len(SNM_ASO_biasCorr_basins) > 0:
     # run tables code
     SNM_tables_for_report(rundate=rundate, modelRunName=f"ASO_BiasCorrect_{ChosenModelRun_SNM}", averageRunName=model_woCCR, results_workspace=SNM_results_workspace + f"{rundate}_results_ET/",
-                         reports_workspace=SNM_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=SNM_ASO_biasCorr_basins, aso_symbol = "++")
+                         reports_workspace=SNM_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=SNM_ASO_biasCorr_basins, aso_symbol = "++", surveys_use=True, survey_date=survey_date)
 
 elif biasCorrection == "Y" and len(WW_ASO_biasCorr_basins) > 0:
     WW_tables_for_report(rundate=rundate, modelRunName=f"ASO_BiasCorrect_{ChosenModelRun_WW}", averageRunName=model_woCCR, results_workspace=WW_results_workspace + f"{rundate}_results_ET/",
-                         reports_workspace=WW_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=WW_ASO_biasCorr_basins, aso_symbol = "++")
+                         reports_workspace=WW_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=WW_ASO_biasCorr_basins, aso_symbol = "++", surveys_use=True, survey_date=survey_date)
 else:
 
     # run tables code
     SNM_tables_for_report(rundate=rundate, modelRunName=ChosenModelRun_SNM, averageRunName=model_woCCR, results_workspace=SNM_results_workspace + f"{rundate}_results_ET/",
-                          reports_workspace=SNM_reports_workspace + f"{rundate}_RT_report_ET/", difference="N",  aso_bc_basins=SNM_ASO_biasCorr_basins, aso_symbol="++")
+                          reports_workspace=SNM_reports_workspace + f"{rundate}_RT_report_ET/", difference="N",  aso_bc_basins=SNM_ASO_biasCorr_basins, aso_symbol="++", surveys_use=True, survey_date=survey_date)
 
     WW_tables_for_report(rundate=rundate, modelRunName=ChosenModelRun_WW, averageRunName=model_woCCR, results_workspace=WW_results_workspace + f"{rundate}_results_ET/",
-                         reports_workspace=WW_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=WW_ASO_biasCorr_basins, aso_symbol="++")
+                         reports_workspace=WW_reports_workspace + f"{rundate}_RT_report_ET/", difference="N", aso_bc_basins=WW_ASO_biasCorr_basins, aso_symbol="++", surveys_use=True, survey_date=survey_date)
 
 # Run vetting code
 end = time.time()
