@@ -189,10 +189,10 @@ snm_fig_data = {
         "maps": {
             "mean_swe": [
                 {"layer": "mean_msk", "format": "tif", "dir": "*UseThis*", "label": "None"},
-                # {"layer": "Zero_sensors", "format": "shp", "dir": "", "label": "None"},
-                # {"layer": "sensors_SNM", "format": "shp", "dir": "", "label": "None"},
+                {"layer": "Zero_sensors", "format": "shp", "dir": "", "label": "None"},
+                {"layer": "SNM_*_sensors", "format": "shp", "dir": "", "label": "None"},
                 # {"layer": "Zero_CCR", "format": "shp", "dir": "", "label": "None"},
-                # {"layer": "CCR_sensors", "format": "shp", "dir": "", "label": "None"},
+                {"layer": "CCR_sensors", "format": "shp", "dir": "", "label": "None"},
             ],
             "banded_elev": []
         }
@@ -289,7 +289,7 @@ def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user =
     if report_type == "WW":
         rt_report_dir = os.path.join(product_source_dir, str(date) + "_RT_report_ET")
     else: # SNM
-        rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_report_ET")
+        rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_report_ET") # TODO: config
         # rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_Report")
 
     # Find the directory containing the layer products to be used e.g. "...UseThis"
@@ -388,7 +388,6 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
 
                 # Find and remove undefined placeholder layers/tables
                 symbology = None
-                insert_position = None
                 ref_layer = None
 
                 if file_type in layer_formats:
@@ -424,7 +423,10 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                 if label == "None" or label == "" or label == [] or not label:
                     if file_type in layer_formats:
                         # Create layer object
-                        new_layer = arcpy.management.MakeRasterLayer(new_layer_path, f"temp_{layer_id}").getOutput(0)
+                        if file_type == "shp":
+                            new_layer = arcpy.management.MakeFeatureLayer(new_layer_path, f"temp_{layer_id}").getOutput(0)
+                        else:  # raster (tif)
+                            new_layer = arcpy.management.MakeRasterLayer(new_layer_path, f"temp_{layer_id}").getOutput(0)
 
                         # Insert at saved position
                         if ref_layer:
