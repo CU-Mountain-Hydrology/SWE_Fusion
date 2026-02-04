@@ -58,11 +58,17 @@
     \endhead
 
     \multicolumn{ {{ 1 + df.shape[1]-1 }} }{l}{
+        \footnotesize $\ddagger$ Basin boundaries were derived from a combination of NRCS and HUC8 boundaries.%
+    } \\[-6pt]
+    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{l}{
         \footnotesize* This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.%
     } \\[-6pt]
     \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
-        \footnotesize $\ddagger$ For volume totals above Shasta Lake add Upper Sac, McCloud and Pit volumes. For volume totals above Bend Bridge add Upper Sac, McCloud, Pit and Sac at Bend Bridge volumes.%
+        \footnotesize** The Animas Basin is part of the San Juan Basin. The values present in the San Juan Basin include those of the Animas by either a summation or weighted average based on the area that is referenced in the table.%
     } \\
+%     \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
+%         \footnotesize $\ddagger$ For volume totals above Shasta Lake add Upper Sac, McCloud and Pit volumes. For volume totals above Bend Bridge add Upper Sac, McCloud, Pit and Sac at Bend Bridge volumes.%
+%     } \\
     \bottomrule
     \endfoot
 
@@ -87,10 +93,18 @@
         {% endfor %} \\
         \specialrule{0.1pt}{4pt}{4pt}
     {% endfor %}
-    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{l}{\footnotesize* This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.} \\[-6pt]
+    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{l}{
+        \footnotesize $\ddagger$ Basin boundaries were derived from a combination of NRCS and HUC8 boundaries.%
+    } \\[-6pt]
+    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{l}{
+        \footnotesize* This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.
+    } \\[-6pt]
     \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
-        \footnotesize $\ddagger$ For volume totals above Shasta Lake add Upper Sac, McCloud and Pit volumes. For volume totals above Bend Bridge add Upper Sac, McCloud, Pit and Sac at Bend Bridge volumes.%
+        \footnotesize** The Animas Basin is part of the San Juan Basin. The values present in the San Juan Basin include those of the Animas by either a summation or weighted average based on the area that is referenced in the table.%
     } \\
+%     \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
+%         \footnotesize $\ddagger$ For volume totals above Shasta Lake add Upper Sac, McCloud and Pit volumes. For volume totals above Bend Bridge add Upper Sac, McCloud, Pit and Sac at Bend Bridge volumes.%
+%     } \\
     {% if aso_corrected %}
         \multicolumn{ {{ 1 + df.shape[1]-1 }} }{l}{\footnotesize*This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.} \\
     {% endif %}

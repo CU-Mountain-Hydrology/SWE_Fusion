@@ -110,12 +110,12 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
     id_list = interpret_ids(ids, report_type)
 
     # Merge WW tables 04a and 04b into a single table
-    if report_type == "WW" and "04" in id_list:
-        table04a = os.path.join(table_dir, f"INMT1_{date}_Table04a_final.csv")
-        table04b = os.path.join(table_dir, f"INMT2_{date}_Table04b_final.csv")
-        table04_output = os.path.join(table_dir, f"INMT0_{date}_Table04_final.csv")
-        if not os.path.exists(table04_output):
-            merge_swe_csv(table04a, table04b, table04_output)
+    # if report_type == "WW" and "04" in id_list:
+    #     table04a = os.path.join(table_dir, f"INMT1_{date}_Table04a_final.csv")
+    #     table04b = os.path.join(table_dir, f"INMT2_{date}_Table04b_final.csv")
+    #     table04_output = os.path.join(table_dir, f"INMT0_{date}_Table04_final.csv")
+    #     if not os.path.exists(table04_output):
+    #         merge_swe_csv(table04a, table04b, table04_output)
 
     # Generate tables
     for table_id in id_list:
@@ -136,7 +136,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
         print(df.iloc[0].astype(str).values)
         print(f"Is elevation table: {is_elevation_table}")
 
-        df = df.iloc[:, 1:] # Drop the first column containing indices
+        # df = df.iloc[:, 1:] # Drop the first column containing indices
 
         # Format SNODAS dates to 1 decimal place (matching our SWE precision)
         last_col = df.columns[-1]
@@ -173,7 +173,10 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
             [previous_date, current_date] if date_count > 1 else [current_date]
         )
         headers[" "] = ["SCA"]
-        headers["  "] = ["Vol. (AF)$\ddagger$"]
+        if report_type == "WW":
+            headers["  "] = ["Vol. (AF)"]
+        else: # SNM
+            headers["  "] = ["Vol. (AF)$\ddagger$"]
         headers["    "] = ["Area (mi$^2$)"]
         headers["Pillows"] = (
             [previous_date, current_date] if date_count > 1 else [current_date]

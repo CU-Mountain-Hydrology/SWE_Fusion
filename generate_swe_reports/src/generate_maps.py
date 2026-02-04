@@ -580,11 +580,11 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
         text_elements = layout.listElements("TEXT_ELEMENT")
         for element in text_elements:
             if "date" in element.name.lower():
-                if "date_modis" in element.name.lower() and modis_date:
+                if "date_modis" in element.name.lower() and modis_date: # January 1, 2000
                     formatted_date = datetime.strptime(str(modis_date), "%Y%m%d").strftime("%B %#d, %Y")
-                elif "date_noyear" in element.name.lower(): # January 01
+                elif "date_noyear" in element.name.lower(): # January 1
                     formatted_date = datetime.strptime(str(date), "%Y%m%d").strftime("%B %#d")
-                else: # January 01, 2000
+                else: # January 1, 2000
                     formatted_date = datetime.strptime(str(date), "%Y%m%d").strftime("%B %#d, %Y")
                 element.text = f"{formatted_date}"
 
