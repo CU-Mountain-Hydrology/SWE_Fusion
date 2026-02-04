@@ -27,7 +27,7 @@ def generate_snm_report(date: int) -> Path:
         "cu_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "CU_Logo_Notext.jpg").replace("\\", "/"),
         "instaar_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "INSTAAR_75_Logo.png").replace("\\", "/"),
         "date": date,
-        "date_string": datetime.strptime(str(date), "%Y%m%d").strftime("%B %d, %Y"),
+        "date_string": datetime.strptime(str(date), "%Y%m%d").strftime("%B %#d, %Y"),
         "fig0_path" : str(maps_dir / f"{date}_SNM_Fig0.jpg").replace("\\", "/"),
         "fig1_path": str(maps_dir / f"{date}_SNM_Fig1.jpg").replace("\\", "/"),
         # "fig2_path": str(maps_dir / f"{date}_SNM_Fig2.jpg").replace("\\", "/"),

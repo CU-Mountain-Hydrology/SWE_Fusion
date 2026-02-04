@@ -173,7 +173,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
             [previous_date, current_date] if date_count > 1 else [current_date]
         )
         headers[" "] = ["SCA"]
-        headers["  "] = ["Vol. (AF)"]
+        headers["  "] = ["Vol. (AF)$\ddagger$"]
         headers["    "] = ["Area (mi$^2$)"]
         headers["Pillows"] = (
             [previous_date, current_date] if date_count > 1 else [current_date]
@@ -181,7 +181,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
         headers["Surveys"] = (
             [previous_date, current_date] if date_count > 1 else [current_date]
         )
-        headers["SNODAS*"] = [current_date]
+        headers["SNODAS* (in)"] = [current_date]
 
         # Check for ASO
         aso_corrected = df.iloc[:, 0].astype(str).str.contains("§").any()

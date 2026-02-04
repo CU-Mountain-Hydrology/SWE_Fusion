@@ -79,8 +79,8 @@
 \vspace{1em}
 
 \fontsize{10}{14}
-\noindent\textbf{Team:} Noah Molotch$^{1,2}$, Emma Tyrrell$^1$, and Eric Gosnell$^1$\\
-\noindent\textbf{Contributors:} Leanne Lestak$^1$, Karl Rittger$^1$, and Kehan Yang$^1$\\
+\noindent\textbf{Team:} Noah Molotch$^{1,2}$, Emma Tyrrell$^1$, Eric Gosnell$^1$, and Leanne Lestak$^1$\\
+\noindent\textbf{Contributors:} Karl Rittger$^1$, and Kehan Yang$^1$\\
 $^1$ Institute of Arctic and Alpine Research, University of Colorado Boulder\\
 $^2$ Jet Propulsion Laboratory, California Institute of Technology\\
 \textit{Contact: Emma.Tyrrell@colorado.edu}\\
@@ -108,7 +108,7 @@ This is an experimental research product that provides near-real-time estimates 
     \item[-] In-situ SWE from all operational CA and NV snow pillow sensor sites and CoCoRaHS SWE values when available and applicable
     \item[-] Fractional snow-covered area (fSCA) data from recent cloud-free satellite images or model
     \item[-] Physiographic information (elevation, latitude, upwind mountain barriers, slope, etc.)
-    \item[-] Historical daily SWE patterns (1985-2021) retrospectively generated using historical fSCA data and an energy-balance model that back-calculates SWE given the fSCA time-series and meltout date for each pixel.
+    \item[-] Historical daily SWE patterns (1985-2021) retrospectively generated using historical fSCA data and an energy-balance model that back-calculates SWE given the fSCA time-series and meltout date for each pixel
     \item[-] Satellite-observed daily mean fractional snow-covered area (DMFSCA)
 \end{itemize}
 
@@ -130,14 +130,14 @@ The spatial product estimates SWE for every pixel where the fSCA product identif
 \includegraphics[width=0.7\textwidth]{ {{ fig4_path }} }
 \end{center}
 
-\noindent\textbf{\textit{Figure 2. Estimated SWE with Fire Perimeters, Sierra Nevada.}} SWE amounts are shown with fire perimeters from 2018-2024 (colored from yellow to red).
+\noindent\textbf{\textit{Figure 2. Estimated SWE with Fire Perimeters, Sierra Nevada.}} SWE amounts are shown with fire perimeters from 2018-2024 (colored from yellow to red, and magenta for the most recent).
 
 \newpage
 \begin{center}
 \includegraphics[width=0.7\textwidth]{ {{ fig5_path }} }
 \end{center}
 
-\noindent\textbf{\textit{Figure 3. MODIS image, Sierra Nevada.}} The most recent cloud-free true color MODIS image, showing the Sierra Nevada as close to the model run as possible. Model input fractional snow-covered area (fSCA) was derived from the MODIS Snow Today product (Rittger, et al. 2019) which was calculated using the SPIRES algorithm (Bair, et al. 2021) and from the MODIS cloud-gapfilled product (Hall, et al. 2019).
+\noindent\textbf{\textit{Figure 3. MODIS image, Sierra Nevada.}} The most recent cloud-free true-color MODIS image, showing the Sierra Nevada as close to the model run as possible. Model input fractional snow-covered area (fSCA) was derived from the MODIS Snow Today product (Rittger, et al. 2019) which was calculated using the SPIRES algorithm (Bair, et al. 2021) and from the MODIS cloud-gap-filled product (Hall, et al. 2019).
 
 \newpage
 \section*{}\label{sec:figure_6}
@@ -152,12 +152,12 @@ The spatial product estimates SWE for every pixel where the fSCA product identif
 \vspace*{-3em}
 \section*{}\label{sec:methods}
 \noindent\textbf{\textit{Methods}}\\
-The spatial SWE-fusion estimation method is described in Yang, et al. (2022) and Schneider and Molotch (2016). The method uses linear regression in which the dependent variable is derived from the operationally measured in situ SWE from all online snow pillow sensor sites in the domain. The gridded model output is then scaled by the fractional Snow-Covered Area (fSCA). The fSCA is a combination of a near-real-time gap-filled and cloud-free MODIS satellite image which has been processed using the Snow Today algorithm (Rittger, et al. 2019, \href{https://nsidc.org/snow-today}{\underline{https://nsidc.org/snow-today}}), the SPIReS algorithm (Bair, et al. 2021), and the MODIS cloud-gap-filled algorithm (Hall, et al. 2019).\\
+The spatial SWE-fusion estimation method is described in Yang, et al. (2022) and Schneider and Molotch (2016). The method uses a generalized linear regression in which the dependent variable is derived from the operationally measured in situ SWE from all online snow pillow sensor sites in the domain. The gridded model output is then scaled by the fractional snow-covered area (fSCA). The fSCA is a combination of a near-real-time gap-filled and cloud-free MODIS satellite image which has been processed using the Snow Today algorithm (Rittger, et al. 2019, \href{https://nsidc.org/snow-today}{\underline{https://nsidc.org/snow-today}}), the SPIReS algorithm (Bair, et al. 2021), and the MODIS cloud-gap-filled algorithm (Hall, et al. 2019).\\
 
-\noindent The following independent variables (predictors) enter into the linear regression model:
+\noindent The following independent variables (predictors) enter into the generalized linear regression model:
 \begin{itemize}
     \item[-] Physiographic variables that affect snow accumulation, melt, and redistribution, including elevation, latitude, upwind mountain barriers, slope, and others. See Table 1 in Yang, et al. (2022) for the full set of these variables.
-    \item[-] The historical daily SWE pattern (1985-2021) retrospectively generated using historical Landsat data, and an energy balance model that back-calculates SWE given the fractional Snow-Covered Area (fSCA) time series and meltout date for each pixel. See Fang, et. al., (2022) for details. (For computational efficiency, only one image during the 1985-2021 period that best matches the real-time snow pillow-observed pattern is selected as an independent variable.)
+    \item[-] The historical daily SWE pattern (1985-2021) retrospectively generated using historical Landsat data, and an energy balance model that back-calculates SWE given the fractional snow-covered area (fSCA) time series and meltout date for each pixel. See Fang, et. al., (2022) for details. (For computational efficiency, only one image during the 1985-2021 period that best matches the real-time snow pillow-observed pattern is selected as an independent variable.)
 \end{itemize}
 
 \noindent The real-time regression SWE-fusion model for this date has been validated by cross-validation, whereby 10\% of the snow pillow data are randomly removed and the model prediction is compared to the measured value at the removed snow pillow stations. This is repeated 12 times to obtain an average $R^2$ value, which denotes how closely the model fits the snow pillow data. During development of this regression method, the model was also validated against independent historical SWE data collected in snow surveys at 9 locations in Colorado, and an intensive field survey in north-central Colorado. Data utilized to generate this report change to optimize model performance. To maintain consistency across the historical record, the percent of average values are based on our baseline algorithm and therefore there can be discrepancies between absolute SWE values and corresponding percent of averages.\\
@@ -167,9 +167,9 @@ The spatial SWE-fusion estimation method is described in Yang, et al. (2022) and
 \begin{itemize}
     \item SATELLITE FSCA – Recent snowpack accumulation may be under-estimated due to issues with satellite-observed fSCA.
     \item NEW AVERAGE CALCULATIONS – Average calculations are based on 2001-2025 model values, which includes both drought years (2012-2016) and the 2023 record snow year. This can impact our percent of averages in comparison to other products.
-    \item RECENT SNOWFALL – There are occasionally problems with lower-elevation SWE estimates due to recent snowfall events that result in extensive snow-cover extending to valley locations where measurements are not available. This scenario results in an over-estimation of lower- elevation SWE.
+    \item RECENT SNOWFALL – There are occasionally problems with lower-elevation SWE estimates due to recent snowfall events that result in extensive snow-cover extending to valley locations where measurements are not available. This scenario results in an over-estimation of lower-elevation SWE.
     \item LIMITED SNOW PILLOW DATA – When snow at the snow pillow sites melts out, but remains at higher elevations, the model tends to underestimate SWE at the under-monitored upper elevations. This issue typically occurs late in the melt season, resulting in less accurate SWE prediction at higher elevations compared to earlier in the snow season.
-    \item CLOUD COVER – Cloud cover can obscure satellite measurements of snow-cover. While careful checks are made, occasionally the misclassification of clouds as snow or vice versa may result in the mischaracterization of SWE or bareground.
+    \item CLOUD COVER – Cloud cover can obscure satellite measurements of snow-cover. While careful checks are made, occasionally the misclassification of clouds as snow or vice versa may result in the mischaracterization of SWE or bare ground.
     \item POOR QUALITY SNOW SENSOR DATA – Although data QA/QC is performed, occasional sensor malfunction may result in localized SWE errors.
     \item ANOMALOUS SNOW PATTERNS – Anomalous snow years or snow distributions may cause SWE error due to the model design to search for similar SWE distributions from previous years. If no close seasonal analogue exists, the model is forced to find the most similar year, which may result in error.
     \item DENSE FOREST COVER – Dense forest cover at lower elevations where snow-cover is discontinuous can cause the satellite to underestimate the snow-cover extent, leading to underestimation of SWE.
@@ -180,7 +180,7 @@ The spatial SWE-fusion estimation method is described in Yang, et al. (2022) and
 
 \newpage
 \section*{}\label{sec:table_1}
-\noindent\textbf{\textit{Table 1. Estimated SWE by basin.}} The basin-wide SWE values and averages, are across all pixels at elevations >5000’. Shown are percent of current average SWE (between 2001-2025 as derived from the regression model), mean SWE, percent of snowcovered area, water volume (acre-feet), the area (mi$^2$) inside each basin that contains data pixels (not including cloud-covered pixels, lakes or other satellite no data pixels), survey data, and snow pillow data, for those areas collected, summarized for each basin. The last column shows mean SWE by basin from SNODAS*.
+\noindent\textbf{\textit{Table 1. Estimated SWE by basin.}} The basin-wide SWE values and averages, are across all pixels at elevations >5000’. Shown are percent of current average SWE (between 2001-2025 as derived from the regression model), mean SWE, percent of snow-covered area, water volume (acre-feet), the area (mi$^2$) inside each basin that contains data pixels (not including cloud-covered pixels, lakes or other satellite no data pixels), survey data, and snow pillow data, for those areas collected, summarized for each basin. The last column shows mean SWE by basin from SNODAS*.
 \input{ {{ table5_path }} }
 
 \newpage

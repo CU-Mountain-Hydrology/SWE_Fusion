@@ -6,7 +6,7 @@
 \fontsize{10}{12}\selectfont
 
 {# These groups should have 2-row headers (group title on top, dates below) #}
-{% set date_groups = ["% of Average", "SWE (in)", "Pillows", "Surveys", "SNODAS*"] %}
+{% set date_groups = ["% of Average", "SWE (in)", "Pillows", "Surveys", "SNODAS* (in)"] %}
 
 {# Flatten header columns in order (everything after Basin) #}
 {% set flat_cols = [] %}
@@ -128,8 +128,12 @@
     \endhead
 
 
+    \midrule
     \multicolumn{ {{ total_cols }} }{l}{
-        \footnotesize*This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.%
+        \footnotesize* This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.%
+    } \\[-4pt]
+    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
+        \footnotesize $\ddagger$ For volume totals above Shasta Lake add Upper Sac, McCloud and Pit volumes. For volume totals above Bend Bridge add Upper Sac, McCloud, Pit and Sac at Bend Bridge volumes.%
     } \\
     \bottomrule
     \endfoot
@@ -185,7 +189,10 @@
     {% endfor %}
 
     \specialrule{0.3pt}{4pt}{4pt}
-    \multicolumn{ {{ total_cols }} }{l}{\footnotesize*This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.} \\
+    \multicolumn{ {{ total_cols }} }{l}{\footnotesize* This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.} \\[-4pt]
+    \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
+        \footnotesize $\ddagger$ For volume totals above Shasta Lake add Upper Sac, McCloud and Pit volumes. For volume totals above Bend Bridge add Upper Sac, McCloud, Pit and Sac at Bend Bridge volumes.%
+    } \\
     {% if aso_corrected %}
         \multicolumn{ {{ total_cols }} }{l}{\small§ASO-corrected.} \\
     {% endif %}
