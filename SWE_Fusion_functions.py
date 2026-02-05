@@ -2553,8 +2553,9 @@ def clear_arcpy_locks():
     # Reset geoprocessing environment
     arcpy.ResetEnvironments()
 
-def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
-                         projin, projout, Cellsize, snapRaster, watermask, glacierMask, band_zones, watershed_zones, unzip_SNODAS):
+def SNODAS_Processing(report_date, domain, RunName, NOHRSC_workspace, results_workspace,
+                         projin, projout, Cellsize, snapRaster, watermask, glacierMask, band_zones, watershed_zones, unzip_SNODAS,
+                      dwr_mask=None):
     SNODASWorkspace = NOHRSC_workspace + f"SNODAS_{report_date}/"
     SWEWorkspaceBase = results_workspace + f"{report_date}_results_ET/{RunName}/"
     resultsWorkspace = results_workspace +f"{report_date}_results_ET/"
@@ -2688,9 +2689,15 @@ def SNODAS_Processing(report_date, RunName, NOHRSC_workspace, results_workspace,
     SNODASwatMsk = Raster(ProjSNODAS) * Raster(watermask)
     SNODASallMsk = SNODASwatMsk * Raster(glacierMask)
 
-    SNODASmsk = ExtractByMask(ProjSNODAS, snapRaster, "INSIDE")
-    SNODASmsk.save(ClipSNODAS)
-    clear_arcpy_locks()
+    if domain == "SNM":
+        SNODASmsk = ExtractByMask(ProjSNODAS, snapRaster, "INSIDE")
+        SNODASmsk.save(ClipSNODAS)
+        clear_arcpy_locks()
+
+    else:
+        SNODASmsk = ExtractByMask(ProjSNODAS, dwr_mask, "INSIDE")
+        SNODASmsk.save(ClipSNODAS)
+        clear_arcpy_locks()
     ## If test run previously then SCA_SNODAS will exist, delete and then create
     if arcpy.Exists(SCA_SNODAS):
         arcpy.Delete_management(SCA_SNODAS, "#")
