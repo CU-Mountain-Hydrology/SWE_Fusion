@@ -3041,7 +3041,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
 
     # dictionaries
     elevationBands = {
-        "-1000": "< 0", "00000": "0", "01000": "1,000-2,000'", "02000": "2,000-3,000'", "03000": "3,000-4,000'",
+        "-1000": "< 0", "00000": "0-1,000'", "01000": "1,000-2,000'", "02000": "2,000-3,000'", "03000": "3,000-4,000'",
         "04000": "4,000-5,000'",
         "05000": "5,000-6,000'", "06000": "6,000-7,000'", "07000": "7,000-8,000'", "08000": "8,000-9,000'",
         "09000": "9,000-10,000'",
@@ -3308,7 +3308,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                     columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
                              "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
                              "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "prev_sensors": "Pillows",
-                             "sensors": "Pillows", "SNODAS": "SNODAS*"})
+                             "sensors": "Pillows", "SNODAS": "SNODAS (in.)*"})
                 top_header = ["", "", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                               formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
                               formatted_date]
@@ -3331,7 +3331,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                     columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
                              "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
                              "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "prev_sensors": "Pillows",
-                             "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS*"})
+                             "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS (in.)*"})
                 top_header = ["", "", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                               formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
                               survey_date, formatted_date]
@@ -3352,7 +3352,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                     ["Basin", 'Elevation Band', "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "SNODAS"]]
                 df_band_export = df_band_export.rename(
                     columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-                             "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS*"})
+                             "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS (in.)*"})
                 top_header = ["", "", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
                               formatted_date, formatted_date]
                 df_band_export.columns = pd.MultiIndex.from_arrays(
@@ -3373,7 +3373,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                 df_band_export = df_band_export.rename(
                     columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
                              "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "surveys": "Surveys",
-                             "SNODAS": "SNODAS*"})
+                             "SNODAS": "SNODAS (in.)*"})
                 top_header = ["", "", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
                               formatted_date, survey_date, formatted_date]
                 df_band_export.columns = pd.MultiIndex.from_arrays(
@@ -3548,7 +3548,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                     columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
                              "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
                              "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "prev_sensors": "Pillows",
-                             "sensors": "Pillows", "SNODAS": "SNODAS*"})
+                             "sensors": "Pillows", "SNODAS": "SNODAS (in.)*"})
                 top_header = ["", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                               formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
                               formatted_date]
@@ -3570,7 +3570,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                     columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
                              "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
                              "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "prev_sensors": "Pillows",
-                             "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS*"})
+                             "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS (in.)*"})
                 top_header = ["", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                               formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
                               survey_date, formatted_date]
@@ -3593,7 +3593,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                     ["Basin", "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "SNODAS"]]
                 df_wtshd_export = df_wtshd_export.rename(
                     columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-                             "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS*"})
+                             "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS (in.)*"})
                 top_header = ["", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
                               formatted_date, formatted_date]
                 df_wtshd_export.columns = pd.MultiIndex.from_arrays(
@@ -3613,7 +3613,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                     ["Basin", "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "surveys", "SNODAS"]]
                 df_wtshd_export = df_wtshd_export.rename(
                     columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-                             "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS*"})
+                             "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS (in.)*"})
                 top_header = ["", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
                               formatted_date, survey_date, formatted_date]
                 df_wtshd_export.columns = pd.MultiIndex.from_arrays(
@@ -4143,7 +4143,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
                          "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "prev_sensors": "Pillows",
-                         "sensors": "Pillows", "SNODAS": "SNODAS*"})
+                         "sensors": "Pillows", "SNODAS": "SNODAS (in.)*"})
             top_header = ["", "", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                           formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
                           formatted_date]
@@ -4166,7 +4166,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
                          "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "prev_sensors": "Pillows",
-                         "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS*"})
+                         "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS (in.)*"})
             top_header = ["", "", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                           formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
                           survey_date, formatted_date]
@@ -4187,7 +4187,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 ["Basin", 'Elevation Band', "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "SNODAS"]]
             df_band_export = df_band_export.rename(
                 columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-                         "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS*"})
+                         "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS (in.)*"})
             top_header = ["", "", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
                           formatted_date, formatted_date]
             df_band_export.columns = pd.MultiIndex.from_arrays(
@@ -4208,7 +4208,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
             df_band_export = df_band_export.rename(
                 columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "surveys": "Surveys",
-                         "SNODAS": "SNODAS*"})
+                         "SNODAS": "SNODAS (in.)*"})
             top_header = ["", "", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
                           formatted_date, survey_date, formatted_date]
             df_band_export.columns = pd.MultiIndex.from_arrays(
@@ -4302,7 +4302,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
                          "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "prev_sensors": "Pillows",
-                         "sensors": "Pillows", "SNODAS": "SNODAS*"})
+                         "sensors": "Pillows", "SNODAS": "SNODAS (in.)*"})
             top_header = ["", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                           formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
                           formatted_date]
@@ -4324,7 +4324,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
                          "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "prev_sensors": "Pillows",
-                         "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS*"})
+                         "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS (in.)*"})
             top_header = ["", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                           formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
                           survey_date, formatted_date]
@@ -4345,7 +4345,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 ["Basin", "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "SNODAS"]]
             df_wtshd_export = df_wtshd_export.rename(
                 columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-                         "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS*"})
+                         "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS (in.)*"})
             top_header = ["", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
                           formatted_date, formatted_date]
             df_wtshd_export.columns = pd.MultiIndex.from_arrays(
@@ -4363,7 +4363,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 ["Basin", "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "surveys", "SNODAS"]]
             df_wtshd_export = df_wtshd_export.rename(
                 columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-                         "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS*"})
+                         "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "surveys":"Surveys","SNODAS": "SNODAS (in.)"})
             top_header = ["", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
                           formatted_date, survey_date, formatted_date]
             df_wtshd_export.columns = pd.MultiIndex.from_arrays(

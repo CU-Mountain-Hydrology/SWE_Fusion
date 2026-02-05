@@ -702,7 +702,7 @@ def snowtrax_comparision(rundate, snowTrax_csv, results_WS, output_csv, model_li
     basin_dictionary = {"American River Basin": "07American", "Cosumnes River Basin": "08Cosumnes",
                         "East Carson River River Basin":
                             "21E Carson", "East Walker River Basin": "23E Walker", "Feather River Basin": "05Feather",
-                        "KingsRiver  Basin River Basin": "14Kings", "Kern River Basin": "17Kern", "Kaweah River Basin":
+                        "Kings River Basin River Basin": "14Kings", "Kern River Basin": "17Kern", "Kaweah River Basin":
                             '15Kaweah', "Mokelumne River Basin": "09Mokelumne", "Merced River Basin": "12Merced",
                         "McCloud River Basin": "02McCloud", "Pit at Shasta Lake River Basin": "03Pit",
                         "Sacramento at Bend Bridge River Basin": "04Sacramento at Bend Bridge",

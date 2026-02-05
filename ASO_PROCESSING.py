@@ -17,19 +17,20 @@ from shapefile import NODATA
 print("modules imported")
 
 ## model run variables
-rundate = "20250526"
-SNM_modelRun = "RT_CanAdj_rcn_noSW_woCCR_UseAvg"
-WW_modelRun = "fSCA_RT_CanAdj_rcn_noSW_woCCR"
+year = '2026'
+rundate = "20260125"
+SNM_modelRun = "RT_CanAdj_rcn_wCCR_nofscamskSens_UseThis"
+WW_modelRun = "RT_CanAdj_rcn_wCCR_nofscamskSens_UseThis"
 
 # set parameters for zip extraction
-toProcessFolder = r"M:/SWE/WestWide/Spatial_SWE/ASO/2025/toProcess/"
+toProcessFolder = fr"M:/SWE/WestWide/Spatial_SWE/ASO/{year}/toProcess/"
 # zip_file_path = r"W:\Spatial_SWE\ASO\2025\ASO_BlueRiver_2025May24_AllData_and_Reports.zip"
 search_tag = "swe_50m.tif"
 basin_textFile = r"M:\SWE\WestWide\Spatial_SWE\ASO\ASO_Metadata\State_Basin.txt"
 basinList = []
 snotel_shp = r"W:\Spatial_SWE\ASO\ASO_Metadata\WW_CDEC_SNOTEL_geon83.shp"
 cdec_shp = r"W:\data\Snow_Instruments\pillows\SNM_CDEC_SNOTEL_geow84_20241125.shp"
-modelStatsCSV = f"M:/SWE/WestWide/Spatial_SWE/ASO/2025/data_testing/ASO_SNOTEL_DifferenceStats.csv"
+modelStatsCSV = f"M:/SWE/WestWide/Spatial_SWE/ASO/{year}/data/ASO_SNOTEL_DifferenceStats.csv"
 
 # open basin file for list
 basin_state_map = {}
@@ -52,7 +53,7 @@ for zip_file in zips_to_process:
         basin_state = basin_state_map.get(name, None)
 
 
-        data_folder = r"M:/SWE/WestWide/Spatial_SWE/ASO/2025/data_testing/"
+        data_folder = fr"M:/SWE/WestWide/Spatial_SWE/ASO/{year}/data/"
         ## add something here that is only unzips if the file doesn't already exist
         extract_zip(zip_path=zip_file_path, ext=search_tag, output_folder=data_folder)
         # print("file moved")
@@ -85,10 +86,10 @@ for file in asoSWE:
             if basin_state == "CA":
                 domain = "SNM"
                 fullDomain = "Sierras"
-                compareWS = "M:/SWE/WestWide/Spatial_SWE/ASO/2025/data_testing/SNM_comparison_testing/"
+                compareWS = f"M:/SWE/WestWide/Spatial_SWE/ASO/{year}/data/SNM_comparison/"
                 snapRaster = r"M:\SWE\WestWide\data\boundaries\SNM_SnapRaster_albn83.tif"
                 zonalRaster = r"M:\SWE\WestWide\data\hydro\SNM\dwr_band_basins_geoSort_albn83_delin.tif"
-                snotelWorkspace = "W:/Spatial_SWE/ASO/2025/data_testing/snotel_comparisons/cdec_metaData.csv"
+                snotelWorkspace = f"W:/Spatial_SWE/ASO/{year}/data/snotel_comparisons/cdec_metaData.csv"
                 pillow_shp = cdec_shp
 
                 print(f"\nBasin: {basinName}, State: {basin_state}, Domain: {domain}")
@@ -106,7 +107,7 @@ for file in asoSWE:
                 start_cdec = end_cdec - timedelta(days=7)
                 start_SNM = start_cdec.strftime("%Y%m%d")
                 end_SNM = end_cdec.strftime("%Y%m%d")
-                cdec_ws = "W:/Spatial_SWE/ASO/2025/data_testing/cdec_comparisons/"
+                cdec_ws = f"W:/Spatial_SWE/ASO/{year}/data/cdec_comparisons/"
                 cdec_merged = download_and_merge_cdec_pillow_data(start_date=start_SNM, end_date=end_SNM,
                                                                   cdec_ws=cdec_ws,
                                                                   output_csv_filename=f"cdec_snowPillows_{end_SNM}.csv")
@@ -178,9 +179,9 @@ for file in asoSWE:
             else:
                 domain = "WW"
                 fullDomain = "WestWide"
-                compareWS = "M:/SWE/WestWide/Spatial_SWE/ASO/2025/data_testing/WW_comparison_testing/"
+                compareWS = f"M:/SWE/WestWide/Spatial_SWE/ASO/{year}/data/WW_comparison/"
                 snapRaster = r"M:\SWE\WestWide\data\boundaries\SnapRaster_albn83.tif"
-                zonalRaster = r"M:\SWE\WestWide\data\hydro\WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
+                zonalRaster = r"W:\data\hydro\20260113_BasinUpdatesNoSNM\WW_BasinBanded_noSNM_notahoe_albn83_sel_v2_updated.tif"
                 snotelWS = data_folder + "snotel_comparisons/"
                 pillowMeta = r"W:\Spatial_SWE\ASO\ASO_Metadata\snotel_metaData.csv"
                 pillow_shp = snotel_shp
