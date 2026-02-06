@@ -3088,6 +3088,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
     if surveys_use:
         surv_date_obj = datetime.strptime(survey_date, "%Y%m%d")
         surv_date_abrev = f"{surv_date_obj.month}/{surv_date_obj.day}"
+        formatted_survey_date = f"{surv_date_obj.month}/{surv_date_obj.day}/{surv_date_obj.year}"
 
     # copy over files
     shutil.copy(results_workspace + f"{modelRunName}/{rundate}anomBand_table.csv",
@@ -3291,6 +3292,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
         state_df['AREA_MI2'] = state_df['AREA_MI2'].apply(lambda x: f"{x:,.1f}" if isinstance(x, (int, float)) else x)
         state_df['SWE_IN'] = state_df['SWE_IN'].round(1)
         state_df['Percent'] = state_df['Percent'].round(1)
+        state_df['SNODAS'] = state_df['SNODAS'].round(1)
 
         if difference == "Y":
             difference_cols = ['prev_SWE_IN', 'prev_sensors', 'prev_Avg']
@@ -3341,7 +3343,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                              "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS (in.)*"})
                 top_header = ["", "", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                               formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
-                              survey_date, formatted_date]
+                              formatted_survey_date, formatted_date]
                 df_band_export.columns = pd.MultiIndex.from_arrays(
                     [top_header, df_band_export.columns]
                 )
@@ -3580,7 +3582,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                              "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS (in.)*"})
                 top_header = ["", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                               formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
-                              survey_date, formatted_date]
+                              formatted_survey_date, formatted_date]
                 df_wtshd_export.columns = pd.MultiIndex.from_arrays(
                     [top_header, df_wtshd_export.columns]
                 )
@@ -3631,377 +3633,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
 
         df_wtshd_tbl.to_csv(tables_workspace + f"{abbrev}_{rundate}_table{wtshTableIndex[f'{abbrev}']}_raw.csv", index=False)
 
-# def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspace, reports_workspace, difference,
-#                          prev_tables_workspace=None, survey_date=None, prev_rundate=None, surveys_use=False):
-#
-#     # dictionaries
-#     elevationBands = {
-#         "-1000": "< 0", "00000": "0", "01000": "1,000-2,000'", "02000": "2,000-3,000'", "03000": "3,000-4,000'",
-#         "04000": "4,000-5,000'",
-#         "05000": "5,000-6,000'", "06000": "6,000-7,000'", "07000": "7,000-8,000'", "08000": "8,000-9,000'",
-#         "09000": "9,000-10,000'",
-#         "10000": "10,000-11,000'", "11000": "11,000-12,000'", "12000": "12,000-13,000'", "13000": "13,000-14,000'",
-#         "14000": "14,000-15,000'",
-#         "14000GT": ">14,000'", "13000GT": ">13,000'", "12000GT": ">12,000'", "11000GT": ">11,000'",
-#         "10000GT": ">10,000'", "09000GT": ">9,000'", "08000GT": ">8,000'",
-#         "07000GT": ">7,000'", "06000GT": ">6,000'", "05000GT": ">5,000'"}
-#
-#
-#     ## set new date structure
-#     date_obj = datetime.strptime(rundate, "%Y%m%d")
-#     formatted_date = f"{date_obj.month}/{date_obj.day}/{date_obj.year}"
-#     date_abrev = f"{date_obj.month}/{date_obj.day}"
-#
-#     if difference == "Y":
-#         prev_date_obj = datetime.strptime(prev_rundate, "%Y%m%d")
-#         prev_formatted_date = f"{prev_date_obj.month}/{prev_date_obj.day}/{prev_date_obj.year}"
-#         prev_date_abrev = f"{prev_date_obj.month}/{prev_date_obj.day}"
-#
-#     if surveys_use:
-#         surv_date_obj = datetime.strptime(survey_date, "%Y%m%d")
-#         surv_date_abrev = f"{surv_date_obj.month}/{surv_date_obj.day}"
-#
-#     # copy over files
-#     shutil.copy(results_workspace + f"{modelRunName}/{rundate}anomBand_table.csv",
-#                 reports_workspace + f"{modelRunName}/{rundate}anomBand_table.csv")
-#     shutil.copy(results_workspace + f"{modelRunName}/{rundate}anomWtshd_table.csv",
-#                 reports_workspace + f"{modelRunName}/{rundate}anomWtshd_table.csv")
-#     shutil.copy(results_workspace + f"{modelRunName}/{rundate}anomWtshd_table.csv",
-#                 reports_workspace + f"{modelRunName}/{rundate}anomWtshd_table.csv")
-#     shutil.copy(results_workspace + f"{modelRunName}/{rundate}band_table.csv",
-#                 reports_workspace + f"{modelRunName}/{rundate}band_table.csv")
-#     shutil.copy(results_workspace + f"{modelRunName}/{rundate}Wtshd_table.csv",
-#                 reports_workspace + f"{modelRunName}/{rundate}Wtshd_table.csv")
-#     shutil.copy(results_workspace + f"{averageRunName}/{rundate}anomBand_table.csv",
-#                 reports_workspace + f"{averageRunName}/{rundate}anomBand_table.csv")
-#     shutil.copy(results_workspace + f"{averageRunName}/{rundate}anomWtshd_table.csv",
-#                 reports_workspace + f"{averageRunName}/{rundate}anomWtshd_table.csv")
-#     shutil.copy(results_workspace + f"{averageRunName}/{rundate}anomWtshd_table.csv",
-#                 reports_workspace + f"{averageRunName}/{rundate}anomWtshd_table.csv")
-#     shutil.copy(results_workspace + f"{averageRunName}/{rundate}band_table.csv",
-#                 reports_workspace + f"{averageRunName}/{rundate}band_table.csv")
-#     shutil.copy(results_workspace + f"{averageRunName}/{rundate}Wtshd_table.csv",
-#                 reports_workspace + f"{averageRunName}/{rundate}Wtshd_table.csv")
-#     shutil.copy(results_workspace + f"SNODAS/{rundate}_band_SNODAS_swe_table.csv",
-#                 reports_workspace + f"{rundate}_band_SNODAS_swe_table.csv")
-#     shutil.copy(results_workspace + f"SNODAS/{rundate}_SNODAS_swe_table.csv",
-#                 reports_workspace + f"{rundate}_SNODAS_swe_table.csv")
-#     shutil.copy(results_workspace + f"{rundate}_sensors_Wtshd_Intersect_stat.csv",
-#                 reports_workspace + f"{rundate}_sensors_Wtshd_Intersect_stat.csv")
-#     shutil.copy(results_workspace + f"{rundate}_sensors_BandWtshd_Intersect.csv",
-#                 reports_workspace + f"{rundate}_sensors_BandWtshd_Intersect.csv")
-#
-#     if surveys_use:
-#         shutil.copy(results_workspace + f"{rundate}_surveys_BandWtshd_Intersect.csv",
-#                     reports_workspace + f"{rundate}_surveys_BandWtshd_Intersect.csv")
-#         shutil.copy(results_workspace + f"{rundate}_surveys_Wtshd_Intersect.csv",
-#                     reports_workspace + f"{rundate}_surveys_Wtshd_Intersect.csv")
-#
-#     # make tables folder
-#     tables_workspace = reports_workspace + f"/{modelRunName}/Tables/"
-#     os.makedirs(tables_workspace, exist_ok=True)
-#
-#     # open band table and sort
-#     df_band = pd.read_csv(reports_workspace + f"{modelRunName}/{rundate}band_table.csv")
-#     df_band['VOL_AF'] = df_band['VOL_AF'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
-#     df_band['AREA_MI2'] = df_band['AREA_MI2'].apply(lambda x: f"{x:,.1f}" if isinstance(x, (int, float)) else x)
-#     df_band['SWE_IN'] = df_band['SWE_IN'].round(1)
-#     df_band['Percent'] = df_band['Percent'].round(1)
-#
-#     # open and sort the sensors table
-#     df_bnd_sens = pd.read_csv(reports_workspace + f"{rundate}_sensors_BandWtshd_Intersect.csv")
-#     df_bnd_sens = df_bnd_sens[["SrtNmeBand", "SWE_freq"]]
-#     df_bnd_sens = df_bnd_sens.rename(columns={"SWE_freq": "sensors"})
-#
-#     # open and sort the banded percent of average table
-#     df_band_avg = pd.read_csv(reports_workspace + f"{averageRunName}/{rundate}anomBand_table.csv")
-#     df_band_avg = df_band_avg[["SrtNmeBand", "Average"]]
-#     df_band_avg = df_band_avg.rename(columns={"Average": "Avg"})
-#
-#     # open and sort SNODAS code
-#     df_bnd_snodas = pd.read_csv(reports_workspace + f"{rundate}_band_SNODAS_swe_table.csv")
-#     df_bnd_snodas = df_bnd_snodas[["SrtNmeBand", "SWE_IN"]]
-#     df_bnd_snodas = df_bnd_snodas.rename(columns={"SWE_IN": "SNODAS"})
-#
-#     # merge tables together
-#     merged_df = pd.merge(df_band, df_band_avg, on="SrtNmeBand", how="left")
-#     merged_df = pd.merge(merged_df, df_bnd_sens, on="SrtNmeBand", how="left")
-#     merged_df = pd.merge(merged_df, df_bnd_snodas, on="SrtNmeBand", how="left")
-#
-#     if surveys_use:
-#         df_bnd_surv = pd.read_csv(reports_workspace + f"{rundate}_surveys_BandWtshd_Intersect.csv")
-#         df_bnd_surv = df_bnd_surv[["SrtNmeBand", "SWE_freq"]]
-#         df_bnd_surv = df_bnd_surv.rename(columns={"SWE_freq": "surveys"})
-#         merged_df = pd.merge(merged_df, df_bnd_surv, on="SrtNmeBand", how="left")
-#         merged_df['surveys'] = merged_df['surveys'].fillna('NA')
-#
-#     # merge to include NAs -- Check to see if this is done multiple times
-#     merged_df['Avg'] = merged_df['Avg'].fillna("NA")
-#     merged_df['Avg'] = merged_df['Avg'].apply(lambda x: int(round(x)) if x != "NA" else x)
-#     merged_df['sensors'] = merged_df['sensors'].fillna('NA')
-#
-#     # separate into tables for domain
-#     # merged_df['Basin_rw'] = merged_df['SrtNmeBand'].str[2:-5]
-#     # state_df['Basin_rw'] = state_df['SrtNmeBand'].apply(lambda x: x[9:-8] if x[-2:] == "GT" else x[9:-6])
-#     merged_df['Basin_rw'] = merged_df['SrtNmeBand'].apply(lambda x: x[2:-7] if x[-2:] == "GT" else x[2:-5])
-#     merged_df['Num'] = merged_df['SrtNmeBand'].str[:2].astype(int).astype(str) + '.'
-#     merged_df['Basin'] = merged_df['Num'] + " " + merged_df['Basin_rw']
-#     # merged_df['Elevation Band'] = merged_df['SrtNmeBand'].str[-5:]
-#     merged_df['Elevation Band'] = merged_df['SrtNmeBand'].apply(lambda x: x[-7:] if x[-2:] == "GT" else x[-5:])
-#     merged_df['Elevation Band'] = merged_df['Elevation Band'].map(elevationBands)
-#
-#     if difference == "Y":
-#         difference_cols = ['prev_SWE_IN', 'prev_sensors', 'prev_Avg']
-#         df_band_prev = pd.read_csv(
-#             prev_tables_workspace + f"SNM_{prev_rundate}_table10_raw.csv")
-#         df_band_prev = df_band_prev.rename(
-#             columns={"SWE_IN": "prev_SWE_IN", "sensors": "prev_sensors", "Avg": "prev_Avg"})
-#         df_band_prev = df_band_prev[['Basin', 'Elevation Band', 'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
-#         merged_df = pd.merge(merged_df, df_band_prev, on=['Basin', 'Elevation Band'], how='inner')
-#
-#         # edit and export
-#         if not surveys_use:
-#             df_band_tbl = merged_df[
-#                 ['Basin', 'Elevation Band', 'SWE_IN', "Percent", "AREA_MI2", 'VOL_AF', "sensors", "Avg", "SNODAS",
-#                  'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
-#
-#             # for export
-#             df_band_export = merged_df[
-#                 ["Basin", 'Elevation Band', 'prev_Avg', "Avg", "prev_SWE_IN", "SWE_IN", "Percent", "VOL_AF",
-#                  "AREA_MI2", 'prev_sensors', "sensors", "SNODAS"]]
-#             df_band_export = df_band_export.rename(
-#                 columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
-#                          "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-#                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "prev_sensors": "Pillows",
-#                          "sensors": "Pillows", "SNODAS": "SNODAS*"})
-#             top_header = ["", "", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
-#                           formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
-#                           formatted_date]
-#             df_band_export.columns = pd.MultiIndex.from_arrays(
-#                 [top_header, df_band_export.columns]
-#             )
-#             df_band_export.to_csv(
-#                 tables_workspace + f"SNM_{rundate}_table10_final.csv")
-#
-#         if surveys_use:
-#             df_band_tbl = merged_df[
-#                 ['Basin', 'Elevation Band', 'SWE_IN', "Percent", "AREA_MI2", 'VOL_AF', "sensors", "Avg", "surveys",
-#                  "SNODAS", 'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
-#
-#             # for export
-#             df_band_export = merged_df[
-#                 ["Basin", 'Elevation Band', 'prev_Avg', "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors",
-#                  "surveys", "SNODAS"]]
-#             df_band_export = df_band_export.rename(
-#                 columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
-#                          "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-#                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "prev_sensors": "Pillows",
-#                          "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS*"})
-#             top_header = ["", "", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
-#                           formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
-#                           survey_date, formatted_date]
-#             df_band_export.columns = pd.MultiIndex.from_arrays(
-#                 [top_header, df_band_export.columns]
-#             )
-#             df_band_export.to_csv(
-#                 tables_workspace + f"SNM_{rundate}_table10_final.csv")
-#
-#     if difference == "N":
-#         # edit and export
-#         if not surveys_use:
-#             df_band_tbl = merged_df[
-#                 ['Basin', 'Elevation Band', 'SWE_IN', "Percent", "AREA_MI2", 'VOL_AF', "sensors", "Avg", "SNODAS"]]
-#
-#             # for export
-#             df_band_export = merged_df[
-#                 ["Basin", 'Elevation Band', "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "SNODAS"]]
-#             df_band_export = df_band_export.rename(
-#                 columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-#                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS*"})
-#             top_header = ["", "", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
-#                           formatted_date, formatted_date]
-#             df_band_export.columns = pd.MultiIndex.from_arrays(
-#                 [top_header, df_band_export.columns]
-#             )
-#             df_band_export.to_csv(
-#                 tables_workspace + f"SNM_{rundate}_table10_final.csv")
-#
-#         if surveys_use:
-#             df_band_tbl = merged_df[
-#                 ['Basin', 'Elevation Band', 'SWE_IN', "Percent", "AREA_MI2", 'VOL_AF', "sensors", "Avg", "surveys",
-#                  "SNODAS"]]
-#
-#             # for export
-#             df_band_export = merged_df[
-#                 ["Basin", 'Elevation Band', "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "surveys",
-#                  "SNODAS"]]
-#             df_band_export = df_band_export.rename(
-#                 columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-#                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "surveys": "Surveys",
-#                          "SNODAS": "SNODAS*"})
-#             top_header = ["", "", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
-#                           formatted_date, survey_date, formatted_date]
-#             df_band_export.columns = pd.MultiIndex.from_arrays(
-#                 [top_header, df_band_export.columns]
-#             )
-#             df_band_export.to_csv(
-#                 tables_workspace + f"SNM_{rundate}_table10_final.csv")
-#
-#         # check for standard deviation values
-#         swe_exceeded = pd.to_numeric(df_band_tbl['SWE_IN'], errors='coerce')
-#         avg_exceeded = pd.to_numeric(df_band_tbl['Avg'], errors='coerce')
-#         swe_threshold = swe_exceeded.max() + 2 * swe_exceeded.std()
-#         avg_threshold = avg_exceeded.max() + 2 * avg_exceeded.std()
-#         swe_exceeds = df_band_tbl.loc[swe_exceeded > swe_threshold]
-#         avg_exceeds = df_band_tbl.loc[avg_exceeded > avg_threshold]
-#         print("SWE rows exceeding threshold:")
-#         print(swe_exceeds)
-#
-#         df_band_tbl.to_csv(tables_workspace + f"SNM_{rundate}_table10_raw.csv",
-#                            index=False)
-#
-#     ###
-#     print('Moving on to watershed table')
-#     # getting watershed table
-#     df_wtshd = pd.read_csv(reports_workspace + f"{modelRunName}/{rundate}Wtshd_table.csv")
-#     df_wtshd['VOL_AF'] = df_wtshd['VOL_AF'].apply(lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x)
-#     df_wtshd['AREA_MI2'] = df_wtshd['AREA_MI2'].apply(lambda x: f"{x:,.1f}" if isinstance(x, (int, float)) else x)
-#     df_wtshd['SWE_IN'] = df_wtshd['SWE_IN'].round(1)
-#     df_wtshd['Percent'] = df_wtshd['Percent'].round(1)
-#     df_wtshd['region'] = df_wtshd["SrtName"].str[:5]
-#
-#     # get and sort the sensors table
-#     df_wtshd_sens = pd.read_csv(reports_workspace + f"{rundate}_sensors_Wtshd_Intersect_stat.csv")
-#     df_wtshd_sens = df_wtshd_sens[["SrtName", "SWE_freq"]]
-#     df_wtshd_sens = df_wtshd_sens.rename(columns={"SWE_freq": "sensors"})
-#
-#     # get and sort the percent of average table
-#     df_wtshd_avg = pd.read_csv(reports_workspace + f"{averageRunName}/{rundate}anomWtshd_table.csv")
-#     df_wtshd_avg = df_wtshd_avg[["SrtName", "Average"]]
-#     df_wtshd_avg = df_wtshd_avg.rename(columns={"Average": "Avg"})
-#
-#     # open and sort SNODAS code
-#     df_wtshd_snodas = pd.read_csv(reports_workspace + f"{rundate}_SNODAS_swe_table.csv")
-#     df_wtshd_snodas = df_wtshd_snodas[["SrtName", "SWE_IN"]]
-#     df_wtshd_snodas = df_wtshd_snodas.rename(columns={"SWE_IN": "SNODAS"})
-#
-#     # merge tables together
-#     merged_wtshd_df = pd.merge(df_wtshd, df_wtshd_avg, on="SrtName", how="left")
-#     merged_wtshd_df = pd.merge(merged_wtshd_df, df_wtshd_sens, on="SrtName", how="left")
-#     merged_wtshd_df = pd.merge(merged_wtshd_df, df_wtshd_snodas, on="SrtName", how="left")
-#
-#     if surveys_use:
-#         df_wtshd_surv = pd.read_csv(reports_workspace + f"{rundate}_surveys_Wtshd_Intersect.csv")
-#         df_wtshd_surv = df_wtshd_surv[["SrtName", "SWE_freq"]]
-#         df_wtshd_surv = df_wtshd_surv.rename(columns={"SWE_freq": "surveys"})
-#         merged_wtshd_df = pd.merge(merged_wtshd_df, df_wtshd_surv, on="SrtName", how="left")
-#         merged_wtshd_df['surveys'] = merged_wtshd_df['surveys'].fillna('NA')
-#
-#     # merge to include NAs -- Check to see if this is done multiple times
-#     merged_wtshd_df['Avg'] = merged_wtshd_df['Avg'].fillna("NA")
-#     merged_wtshd_df['Avg'] = merged_wtshd_df['Avg'].apply(lambda x: int(round(x)) if x != "NA" else x)
-#     merged_wtshd_df['sensors'] = merged_wtshd_df['sensors'].fillna('NA')
-#
-#     # separate into tables for domain
-#     merged_wtshd_df['Basin_rw'] = merged_wtshd_df['SrtName'].str[2:]
-#     merged_wtshd_df['Num'] = merged_wtshd_df['SrtName'].str[:2].astype(int).astype(str) + '.'
-#     merged_wtshd_df['Basin'] = merged_wtshd_df['Num'] + " " + merged_wtshd_df['Basin_rw']
-#
-#     if difference == "Y":
-#         difference_cols = ['prev_SWE_IN', 'prev_sensors', 'prev_Avg']
-#         df_wtshed_prev = pd.read_csv(
-#             prev_tables_workspace + f"SNM_{prev_rundate}_table5_raw.csv")
-#         df_wtshed_prev = df_wtshed_prev.rename(
-#             columns={"SWE_IN": "prev_SWE_IN", "sensors": "prev_sensors", "Avg": "prev_Avg"})
-#         df_wtshed_prev = df_wtshed_prev[['Basin', 'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
-#         merged_wtshd_df = pd.merge(merged_wtshd_df, df_wtshed_prev, on='Basin', how='inner')
-#
-#         # edit and export
-#         if not surveys_use:
-#             df_wtshd_tbl = merged_wtshd_df[
-#                 ['Basin', 'SWE_IN', "Percent", "AREA_MI2", 'VOL_AF', "sensors", "Avg", "SNODAS", 'prev_SWE_IN',
-#                  'prev_sensors', 'prev_Avg']]
-#
-#             # for export
-#             df_wtshd_export = merged_wtshd_df[
-#                 ["Basin", 'prev_Avg', "Avg", 'prev_SWE_IN', "SWE_IN", "Percent", "VOL_AF", "AREA_MI2",
-#                  "prev_sensors", "sensors", "SNODAS"]]
-#             df_wtshd_export = df_wtshd_export.rename(
-#                 columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
-#                          "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-#                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "prev_sensors": "Pillows",
-#                          "sensors": "Pillows", "SNODAS": "SNODAS*"})
-#             top_header = ["", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
-#                           formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
-#                           formatted_date]
-#             df_wtshd_export.columns = pd.MultiIndex.from_arrays(
-#                 [top_header, df_wtshd_export.columns]
-#             )
-#             df_wtshd_export.to_csv(
-#                 tables_workspace + f"SNM_{rundate}_table5_final.csv")
-#
-#         if surveys_use:
-#             df_wtshd_tbl = merged_wtshd_df[
-#                 ['Basin', 'SWE_IN', "Percent", "AREA_MI2", 'VOL_AF', "sensors", "Avg", "surveys", "SNODAS",
-#                  'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
-#             # for export
-#             df_wtshd_export = merged_wtshd_df[
-#                 ["Basin", 'prev_Avg', "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "surveys",
-#                  "SNODAS"]]
-#             df_wtshd_export = df_wtshd_export.rename(
-#                 columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
-#                          "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-#                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "prev_sensors": "Pillows",
-#                          "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS*"})
-#             top_header = ["", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
-#                           formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
-#                           survey_date, formatted_date]
-#             df_wtshd_export.columns = pd.MultiIndex.from_arrays(
-#                 [top_header, df_wtshd_export.columns]
-#             )
-#             df_wtshd_export.to_csv(
-#                 tables_workspace + f"SNM_{rundate}_table5_final.csv")
-#
-#     if difference == "N":
-#         # edit and export
-#         if not surveys_use:
-#             df_wtshd_tbl = merged_wtshd_df[
-#                 ['Basin', 'SWE_IN', "Percent", "AREA_MI2", 'VOL_AF', "sensors", "Avg", "SNODAS"]]
-#
-#             # for export
-#             df_wtshd_export = merged_wtshd_df[
-#                 ["Basin", "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "SNODAS"]]
-#             df_wtshd_export = df_wtshd_export.rename(
-#                 columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-#                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS*"})
-#             top_header = ["", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
-#                           formatted_date, formatted_date]
-#             df_wtshd_export.columns = pd.MultiIndex.from_arrays(
-#                 [top_header, df_wtshd_export.columns]
-#             )
-#             df_wtshd_export.to_csv(
-#                 tables_workspace + f"SNM_{rundate}_table5_final.csv")
-#
-#         if surveys_use:
-#             df_wtshd_tbl = merged_wtshd_df[
-#                 ['Basin', 'SWE_IN', "Percent", "AREA_MI2", 'VOL_AF', "sensors", "Avg", "surveys", "SNODAS"]]
-#
-#             # for export
-#             df_wtshd_export = merged_wtshd_df[
-#                 ["Basin", "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "surveys", "SNODAS"]]
-#             df_wtshd_export = df_wtshd_export.rename(
-#                 columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
-#                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "SNODAS": "SNODAS*"})
-#             top_header = ["", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
-#                           formatted_date, survey_date, formatted_date]
-#             df_wtshd_export.columns = pd.MultiIndex.from_arrays(
-#                 [top_header, df_wtshd_export.columns]
-#             )
-#             df_wtshd_export.to_csv(
-#                 tables_workspace + f"SNM_{rundate}_table5_final.csv")
-#
-#     df_wtshd_tbl.to_csv(tables_workspace + f"SNM_{rundate}_table5_raw.csv",
-#                         index=False)
+
 def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspace, reports_workspace, difference,
                           aso_bc_basins, aso_symbol, prev_tables_workspace=None, survey_date=None, prev_rundate=None,
                           surveys_use=False):
@@ -4039,6 +3671,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
     if surveys_use:
         surv_date_obj = datetime.strptime(survey_date, "%Y%m%d")
         surv_date_abrev = f"{surv_date_obj.month}/{surv_date_obj.day}"
+        formatted_survey_date = f"{surv_date_obj.month}/{surv_date_obj.day}/{surv_date_obj.year}"
 
     # copy over files
     shutil.copy(results_workspace + f"{modelRunName}/{rundate}anomBand_table.csv",
@@ -4101,6 +3734,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
     df_bnd_snodas = pd.read_csv(reports_workspace + f"{rundate}_band_SNODAS_swe_table.csv")
     df_bnd_snodas = df_bnd_snodas[["SrtNmeBand", "SWE_IN"]]
     df_bnd_snodas = df_bnd_snodas.rename(columns={"SWE_IN": "SNODAS"})
+    df_bnd_snodas['SNODAS'] = df_bnd_snodas['SNODAS'].round(1)
 
     # merge tables together
     merged_df = pd.merge(df_band, df_band_avg, on="SrtNmeBand", how="left")
@@ -4176,7 +3810,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                          "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS (in.)*"})
             top_header = ["", "", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                           formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
-                          survey_date, formatted_date]
+                          formatted_survey_date, formatted_date]
             df_band_export.columns = pd.MultiIndex.from_arrays(
                 [top_header, df_band_export.columns]
             )
@@ -4217,7 +3851,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "surveys": "Surveys",
                          "SNODAS": "SNODAS (in.)*"})
             top_header = ["", "", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
-                          formatted_date, survey_date, formatted_date]
+                          formatted_date, formatted_survey_date, formatted_date]
             df_band_export.columns = pd.MultiIndex.from_arrays(
                 [top_header, df_band_export.columns]
             )
@@ -4261,6 +3895,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
     df_wtshd_snodas = pd.read_csv(reports_workspace + f"{rundate}_SNODAS_swe_table.csv")
     df_wtshd_snodas = df_wtshd_snodas[["SrtName", "SWE_IN"]]
     df_wtshd_snodas = df_wtshd_snodas.rename(columns={"SWE_IN": "SNODAS"})
+    df_wtshd_snodas['SNODAS'] = df_wtshd_snodas['SNODAS'].round(1)
 
     # merge tables together
     merged_wtshd_df = pd.merge(df_wtshd, df_wtshd_avg, on="SrtName", how="left")
@@ -4334,12 +3969,12 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                          "sensors": "Pillows", "surveys": "Surveys", "SNODAS": "SNODAS (in.)*"})
             top_header = ["", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                           formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
-                          survey_date, formatted_date]
+                          formatted_survey_date, formatted_date]
             df_wtshd_export.columns = pd.MultiIndex.from_arrays(
                 [top_header, df_wtshd_export.columns]
             )
             df_wtshd_export.to_csv(
-                tables_workspace + f"SNM_{rundate}_table5_final.csv")
+                tables_workspace + f"SNM_{rundate}_table05_final.csv")
 
     if difference == "N":
         # edit and export
@@ -4372,12 +4007,12 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 columns={"Avg": f"%{date_abrev} Avg.", "SWE_IN": "SWE (in)", "Percent": "%SCA",
                          "VOL_AF": "Vol (AF)", "AREA_MI2": "Area (mi2)", "sensors": "Pillows", "surveys":"Surveys","SNODAS": "SNODAS (in.)"})
             top_header = ["", formatted_date, formatted_date, formatted_date, formatted_date, formatted_date,
-                          formatted_date, survey_date, formatted_date]
+                          formatted_date, formatted_survey_date, formatted_date]
             df_wtshd_export.columns = pd.MultiIndex.from_arrays(
                 [top_header, df_wtshd_export.columns]
             )
             df_wtshd_export.to_csv(
-                tables_workspace + f"SNM_{rundate}_table5_final.csv")
+                tables_workspace + f"SNM_{rundate}_table05_final.csv")
 
     df_wtshd_tbl.to_csv(tables_workspace + f"SNM_{rundate}_table5_raw.csv",
                         index=False)
