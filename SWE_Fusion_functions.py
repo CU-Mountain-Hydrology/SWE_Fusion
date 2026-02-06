@@ -566,7 +566,7 @@ def download_snow_surveys(report_date, survey_date, survey_workspace, results_wo
         crs=gdf.crs
     )
 
-    results_dir = os.path.join(results_workspace, f"{report_date}_results_ET")
+    results_dir = os.path.join(results_workspace, f"{report_date}_results")
     os.makedirs(results_dir, exist_ok=True)
 
     gdf_stateSurvey.to_file(os.path.join(results_dir, f"{report_date}_surveys.shp"), driver="ESRI Shapefile")
@@ -592,7 +592,7 @@ def download_cdec_snow_surveys(report_date, survey_date, survey_workspace, SNM_r
     clean_csv = os.path.join(survey_workspace, f"{report_date}_SnowCourseMeasurements.csv")
     shapefile_out = os.path.join(snow_course_workspace, f"{report_date}_surveys_cdec.shp")
     merged_csv = os.path.join(survey_workspace, report_date, f"{report_date}_surveys_cdec.csv")
-    final_shapefile = os.path.join(SNM_results_workspace, f"{report_date}_results_ET", f"{report_date}_surveys.shp")
+    final_shapefile = os.path.join(SNM_results_workspace, f"{report_date}_results", f"{report_date}_surveys.shp")
 
     # Download HTML table from CDEC
     print(f"Downloading survey from: {cdec_url}")
@@ -1527,7 +1527,7 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     # End of Setting Variables
     #######################################################################
     workspaceBase = fr"M:/SWE/WestWide/Spatial_SWE/WW_regression/"
-    resultsWorkspace = workspaceBase + f"RT_report_data/{report_date}_results_ET/"
+    resultsWorkspace = workspaceBase + f"RT_report_data/{report_date}_results/"
 
     os.makedirs(resultsWorkspace, exist_ok=True)
 
@@ -2088,7 +2088,7 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
                           case_field_wtrshd, case_field_band, watermask, glacier_mask, domain_mask, run_type, snap_raster, WW_results_workspace,
                           Difference, bias_model_run=None, prev_report_date=None, previous_model_run=None):
     # create directory
-    prevRepWorkspace = SNM_results_workspace + f"{prev_report_date}_results_ET/{previous_model_run}/"
+    prevRepWorkspace = SNM_results_workspace + f"{prev_report_date}_results/{previous_model_run}/"
     where_clause = """"POLY_AREA" > 100"""
     part_area = "100 SquareKilometers"
     ProjOut_UTM = arcpy.SpatialReference(26911)
@@ -2102,26 +2102,26 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
     # case_field_band = "SrtNmeBand"
 
     if run_type == "Normal":
-        arcpy.CreateFolder_management(SNM_results_workspace + f"/{rundate}_results_ET/", WW_model_run)
-        outWorkspace = SNM_results_workspace + f"/{rundate}_results_ET/" + WW_model_run + "/"
+        arcpy.CreateFolder_management(SNM_results_workspace + f"/{rundate}_results/", WW_model_run)
+        outWorkspace = SNM_results_workspace + f"/{rundate}_results/" + WW_model_run + "/"
         print("model run workspace created")
 
     if run_type == "Vetting":
-        outWorkspace = SNM_results_workspace + f"/{rundate}_results_ET/" + WW_model_run + "/"
+        outWorkspace = SNM_results_workspace + f"/{rundate}_results/" + WW_model_run + "/"
 
     if run_type == "Bias":
-        outWorkspace = SNM_results_workspace + f"/{rundate}_results_ET/" + bias_model_run + "/"
-    SNM_results_workspace + f"/{rundate}_results_ET/"
+        outWorkspace = SNM_results_workspace + f"/{rundate}_results/" + bias_model_run + "/"
+    SNM_results_workspace + f"/{rundate}_results/"
 
     ## project and clip SNODAS
-    SNODASWorkspace = SNM_results_workspace + f"/{rundate}_results_ET/" + "SNODAS/"
+    SNODASWorkspace = SNM_results_workspace + f"/{rundate}_results/" + "SNODAS/"
     ClipSNODAS = SNODASWorkspace + "SWE_" + rundate + "_Cp_m_albn83_clp.tif"
     SWE_Diff = outWorkspace + "SNODAS_Regress_" + rundate + ".tif"
     SWE_both = outWorkspace + f"SWE_{rundate}_both.tif"
 
     meanMask = outWorkspace + f"{mean_date}_mean_msk.tif"
     MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2025.0.1_ops/NRT_FSCA_WW_N83/{year}/{rundate}.tif"
-    MODSCAG_tif_plus_proj_WW = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"fSCA_{rundate}_albn83.tif"
+    MODSCAG_tif_plus_proj_WW = WW_results_workspace + f"{rundate}_results/{WW_model_run}/" + f"fSCA_{rundate}_albn83.tif"
     MODSCAG_tif_plus_proj = outWorkspace + f"SNM_fSCA_{rundate}_albn83.tif"
 
     # define snow-no snow layer
@@ -2139,16 +2139,16 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
     snowPolyElim = outWorkspace + f"modscag_{rundate}_snowline_Sel_elim.shp"
 
     # define snow pillow gpkg
-    meanMap_proj_WW = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"WW_{mean_date}_mean_msk_albn83.tif"
+    meanMap_proj_WW = WW_results_workspace + f"{rundate}_results/{WW_model_run}/" + f"WW_{mean_date}_mean_msk_albn83.tif"
     meanMap_proj = outWorkspace + f"SNM_{mean_date}_mean_albn83.tif"
     meanMapMask = outWorkspace + f"SNM_{mean_date}_mean_msk_albn83.tif"
     lastRast = prevRepWorkspace + f"p8_{prev_report_date}_noneg.tif"
     DiffRaster = outWorkspace + f"Diff_{rundate}_{prev_report_date}.tif"
 
     ## define rasters
-    WW_product8 = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"p8_{rundate}_noneg.tif"
-    rcn_glacMask_WW = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"WW_{rundate}_phvrcn_mos_masked.tif"
-    rcn_raw_proj_WW = WW_results_workspace + f"{rundate}_results_ET/{WW_model_run}/" + f"WW_{rundate}_phvrcn_albn83.tif"
+    WW_product8 = WW_results_workspace + f"{rundate}_results/{WW_model_run}/" + f"p8_{rundate}_noneg.tif"
+    rcn_glacMask_WW = WW_results_workspace + f"{rundate}_results/{WW_model_run}/" + f"WW_{rundate}_phvrcn_mos_masked.tif"
+    rcn_raw_proj_WW = WW_results_workspace + f"{rundate}_results/{WW_model_run}/" + f"WW_{rundate}_phvrcn_albn83.tif"
     WW_p8_SNM = outWorkspace + f"WW_p8_{rundate}_noneg.tif"
     rcnFinal = outWorkspace + f"phvrcn_{rundate}_final.tif"
     product7 = outWorkspace + f"p7_{rundate}.tif"
@@ -2557,9 +2557,9 @@ def SNODAS_Processing(report_date, domain, RunName, NOHRSC_workspace, results_wo
                          projin, projout, Cellsize, snapRaster, watermask, glacierMask, band_zones, watershed_zones, unzip_SNODAS,
                       dwr_mask=None):
     SNODASWorkspace = NOHRSC_workspace + f"SNODAS_{report_date}/"
-    SWEWorkspaceBase = results_workspace + f"{report_date}_results_ET/{RunName}/"
-    resultsWorkspace = results_workspace +f"{report_date}_results_ET/"
-    SWEWorkspace = results_workspace + f"{report_date}_results_ET/SNODAS/"
+    SWEWorkspaceBase = results_workspace + f"{report_date}_results/{RunName}/"
+    resultsWorkspace = results_workspace +f"{report_date}_results/"
+    SWEWorkspace = results_workspace + f"{report_date}_results/SNODAS/"
 
     ## Set regression SWE image for the same date
     # RegressSWE = SWEWorkspaceBase + f"p8_{report_date}_noneg.tif"
@@ -2690,12 +2690,12 @@ def SNODAS_Processing(report_date, domain, RunName, NOHRSC_workspace, results_wo
     SNODASallMsk = SNODASwatMsk * Raster(glacierMask)
 
     if domain == "SNM":
-        SNODASmsk = ExtractByMask(ProjSNODAS, snapRaster, "INSIDE")
+        SNODASmsk = ExtractByMask(ProjSNODAS, dwr_mask, "INSIDE")
         SNODASmsk.save(ClipSNODAS)
         clear_arcpy_locks()
 
     else:
-        SNODASmsk = ExtractByMask(ProjSNODAS, dwr_mask, "INSIDE")
+        SNODASmsk = ExtractByMask(ProjSNODAS, snapRaster, "INSIDE")
         SNODASmsk.save(ClipSNODAS)
         clear_arcpy_locks()
     ## If test run previously then SCA_SNODAS will exist, delete and then create
@@ -2986,12 +2986,12 @@ def zero_CCR_sensors(rundate, results_workspace, pillow_date, domain, sensors, z
     # # Copy the .gpkg file to the new folder
     if CCR:
 
-        shutil.copy(pillow_gpkg, results_workspace + f"/{rundate}_results_ET/{os.path.basename(pillow_gpkg)}")
-        if os.path.exists(results_workspace + f"/{rundate}_results_ET/{os.path.basename(pillow_gpkg)}"):
+        shutil.copy(pillow_gpkg, results_workspace + f"/{rundate}_results/{os.path.basename(pillow_gpkg)}")
+        if os.path.exists(results_workspace + f"/{rundate}_results/{os.path.basename(pillow_gpkg)}"):
             print('copied successfully')
 
         # Path to the copied .gpkg file
-        new_gpkg_path = results_workspace + f"/{rundate}_results_ET/{domain}_pillow-{pillow_date}.gpkg"
+        new_gpkg_path = results_workspace + f"/{rundate}_results/{domain}_pillow-{pillow_date}.gpkg"
 
         # Read the .gpkg file (you can list the layers or specify the one you want)
         gdf_CCR = gpd.read_file(new_gpkg_path)
@@ -3009,13 +3009,13 @@ def zero_CCR_sensors(rundate, results_workspace, pillow_date, domain, sensors, z
 
         # Filter by length > 4
         gdf_filtered = gdf_CCR[gdf_CCR["Site_ID"].str.len() > 4]
-        gdf_filtered.to_file(results_workspace + f"/{rundate}_results_ET/{rundate}_CCR_sensors_albn83.shp")
+        gdf_filtered.to_file(results_workspace + f"/{rundate}_results/{rundate}_CCR_sensors_albn83.shp")
 
     if zero_sensors:
         # SNM_geopackage_CCR =
         gdf = gpd.read_file(sensors)
         gdf_zero = gdf[gdf['pillowswe'] == 0]
-        gdf_zero.to_file(results_workspace + f"/{rundate}_results_ET/{rundate}_Zero_sensors_albn83.shp")
+        gdf_zero.to_file(results_workspace + f"/{rundate}_results/{rundate}_Zero_sensors_albn83.shp")
 
 import pandas as pd
 import os

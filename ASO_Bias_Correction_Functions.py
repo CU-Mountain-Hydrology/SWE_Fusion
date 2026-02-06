@@ -10,25 +10,24 @@ from datetime import datetime
 print('modules imported')
 
 # parameters
-rundate = "20250503"
-ModelRun = "fSCA_RT_CanAdj_rcn_noSW_woCCR"
-currentYear = True
-current_year = datetime.now().year
-method_list = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
-grade = "positive"
-grade_range = False
-grade_amount = -10
-sensorTrend = "Mixed"
-SNOTEL = "Decreasing"
-domains = ['SNM', 'SOCN']
-basinList = ["SouthPlatte", "Uinta", "Kings"]
-output_csv = "Y"
-csv_outFile = r"W:/Spatial_SWE/ASO/2025/data_testing/FracError_data_test.csv"
-# asoCatalog = r"W:/Spatial_SWE/ASO/2025/data_testing/ASO_SNOTEL_DifferenceStats.csv"
-basin_List = r"W:/Spatial_SWE/ASO/ASO_Metadata/ASO_in_Basin.txt"
-fracErrorWorkspace = "W:/Spatial_SWE/ASO/2025/data_testing/"
-domainList = r"M:\SWE\WestWide\Spatial_SWE\ASO\ASO_Metadata\State_Basin.txt"
-results_workspace = f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results_ET/"
+# rundate = "20250503"
+# ModelRun = "fSCA_RT_CanAdj_rcn_noSW_woCCR"
+# currentYear = True
+# current_year = datetime.now().year
+# method_list = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
+# grade = "positive"
+# grade_range = False
+# grade_amount = -10
+# sensorTrend = "Mixed"
+# SNOTEL = "Decreasing"
+# domains = ['SNM', 'SOCN']
+# basinList = ["SouthPlatte", "Uinta", "Kings"]
+# output_csv = "Y"
+# csv_outFile = r"W:/Spatial_SWE/ASO/2025/data_testing/FracError_data_test.csv"
+# # asoCatalog = r"W:/Spatial_SWE/ASO/2025/data_testing/ASO_SNOTEL_DifferenceStats.csv"
+# # basin_List = r"W:/Spatial_SWE/ASO/ASO_Metadata/ASO_in_Basin.txt"
+# domainList = r"M:\SWE\WestWide\Spatial_SWE\ASO\ASO_Metadata\State_Basin.txt"
+# results_workspace = f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/"
 
 ## function for fix
 ## function for validation
@@ -134,7 +133,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                             closest_row = df_filtered.loc[df_filtered["diff_days"].idxmin()]
                             # get fractional error path
                             fraErrorPath = (
-                                f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison_testing/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                                f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                 f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                             print(fraErrorPath)
                             method_paths['RECENT'] = fraErrorPath
@@ -153,7 +152,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                                 if not df_filtered.empty:
                                     closest_row = df_filtered.loc[df_filtered["diff_days"].idxmin()]
                                     fraErrorPath = (
-                                        f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison_testing/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                                        f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                         f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                                     method_paths['GRADE'] = fraErrorPath
 
@@ -165,7 +164,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                                     closest_row = aso_df_grade.loc[
                                         (aso_df_grade["GradeDifference"] - grade_amount).abs().idxmin()]
                                     fraErrorPath = (
-                                        f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison_testing/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                                        f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                         f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                                     method_paths['GRADES_SPECF'] = fraErrorPath
                                 else:
@@ -188,7 +187,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                             if not aso_df_pattern.empty:
                                 closest_row = aso_df_pattern.loc[aso_df_pattern["diff_days"].idxmin()]
                                 fraErrorPath = (
-                                    f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison_testing/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                                    f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                     f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                                 method_paths['SENSOR_PATTERN'] = fraErrorPath
 
@@ -196,7 +195,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                         elif row_count == 1:
                             closest_row = aso_df_pattern.iloc[0]
                             fraErrorPath = (
-                                f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison_testing/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                                f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                 f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                             method_paths['SENSOR_PATTERN'] = fraErrorPath
                             basin_row['PATTERN_TYPE'] = sensorTrend
