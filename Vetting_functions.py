@@ -1448,7 +1448,7 @@ def aso_choice_and_mosaic(
         if method == "CONTROL":
             continue
 
-        method_dir = os.path.join(bias_correction_workspace, method)
+        method_dir = bias_correction_workspace + f"{method}/"
 
         for file in os.listdir(method_dir):
             if file.startswith(f"{rundate}_{basin}") and file.endswith("BC_fix_albn83.tif"):
@@ -1482,13 +1482,15 @@ def aso_choice_and_mosaic(
         mosaic_colormap_mode="FIRST"
     )
 
+    print(f'{control_raster}')
+    print(f'MERGING {basin} error to main p8 layer')
     final_mos = Con(
         IsNull(Raster(os.path.join(mosaics_WS, f"{domain}_final_ASO_bias_correction.tif"))),
         Raster(control_raster),
         Raster(os.path.join(mosaics_WS, f"{domain}_final_ASO_bias_correction.tif"))
     )
 
-    final_mos.save(os.path.join(mosaics_WS, f"p8_{rundate}_noneg.tif"))
+    final_mos.save(os.path.join(mosaics_WS, f"p8_{rundate}_noneg_bias.tif"))
 
     return aso_bias_corrected_basins
 

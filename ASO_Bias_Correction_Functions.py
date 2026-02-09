@@ -121,7 +121,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                 for method in method_list:
                     # getting most recent data
                     if method == "RECENT":
-                        print(f"\nMETHOD: {method}")
+                        # print(f"\nMETHOD: {method}")
                         aso_df_basin = aso_df[aso_df["Basin"] == item].copy()
                         target_date = datetime.strptime(rundate, "%Y%m%d")
                         aso_df_basin['cstm_dte'] = pd.to_datetime(aso_df_basin["Date"], format="%Y%b%d")
@@ -135,7 +135,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                             fraErrorPath = (
                                 f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                 f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
-                            print(fraErrorPath)
+                            # print(fraErrorPath)
                             method_paths['RECENT'] = fraErrorPath
 
                     if method == "GRADE" or method == "GRADES_SPECF":
@@ -143,7 +143,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                         aso_df_grade = aso_df_basin[aso_df_basin["GradeDirection"] == grade].copy()
                         if len(aso_df_grade.columns) > 1:
                             if method == "GRADE":
-                                print(f"\nMETHOD: {method}")
+                                # print(f"\nMETHOD: {method}")
                                 target_date = datetime.strptime(rundate, "%Y%m%d")
                                 aso_df_grade['cstm_dte'] = pd.to_datetime(aso_df_grade["Date"], format="%Y%b%d")
                                 aso_df_grade["diff_days"] = (aso_df_grade["cstm_dte"] - target_date).abs().dt.days
@@ -157,7 +157,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                                     method_paths['GRADE'] = fraErrorPath
 
                             if method == "GRADES_SPECF":
-                                print(f"\nMETHOD: {method}")
+                                # print(f"\nMETHOD: {method}")
 
                                 # Check if aso_df_grade has any rows before attempting to find closest match
                                 if not aso_df_grade.empty:
@@ -168,17 +168,17 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                                         f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                                     method_paths['GRADES_SPECF'] = fraErrorPath
                                 else:
-                                    print(f"No data found for grade direction '{grade}' in basin {item}")
+                                    # print(f"No data found for grade direction '{grade}' in basin {item}")
                                     method_paths['GRADES_SPECF'] = None
 
                     if method == "SENSOR_PATTERN":
-                        print(f"\nMETHOD: {method}")
+                        # print(f"\nMETHOD: {method}")
                         aso_df_basin = aso_df[aso_df["Basin"] == item].copy()
                         aso_df_pattern = aso_df_basin[aso_df_basin["OverallTrend"] == sensorTrend].copy()
                         row_count = len(aso_df_pattern)
 
                         if row_count > 1:
-                            print("More than one sensor pattern found. Selecting the most recent one.")
+                            # print("More than one sensor pattern found. Selecting the most recent one.")
                             target_date = datetime.strptime(rundate, "%Y%m%d")
                             aso_df_pattern['cstm_dte'] = pd.to_datetime(aso_df_pattern["Date"], format="%Y%b%d")
                             aso_df_pattern["diff_days"] = (aso_df_pattern["cstm_dte"] - target_date).abs().dt.days
@@ -201,7 +201,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                             basin_row['PATTERN_TYPE'] = sensorTrend
 
                         else:
-                            print(f"No sensor pattern matches found for trend: {sensorTrend}")
+                            # print(f"No sensor pattern matches found for trend: {sensorTrend}")
                             method_paths['SENSOR_PATTERN'] = "NA"
 
                 # Detect duplicates and update basin_row
@@ -674,7 +674,7 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                 else:
                     basinBound = ExtractByMask(mask_path, basinSHP)
                     basinBound.save(basin_mask_path)
-                    print(f'Created basin mask: {output_basin_name}_msk.tif')
+                    # print(f'Created basin mask: {output_basin_name}_msk.tif')
 
                 # Change all -1 to -0.999 - use output_basin_name
                 newFracError = Con(Raster(fraErr_path) == -1, -0.999, Raster(fraErr_path))
