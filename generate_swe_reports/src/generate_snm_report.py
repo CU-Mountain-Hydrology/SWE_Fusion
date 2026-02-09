@@ -64,7 +64,7 @@ def main():
     # generate_maps("WW", args.date, args.figs, False, args.verbose, args.prompt_user)
 
     # Generate tables
-    generate_tables("SNM", args.date, args.tables, args.verbose)
+    # generate_tables("SNM", args.date, args.tables, args.verbose)
 
     # Generate report
     output_path = generate_snm_report(args.date)
