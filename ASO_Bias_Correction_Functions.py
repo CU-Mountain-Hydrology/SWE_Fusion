@@ -127,7 +127,9 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                         aso_df_basin['cstm_dte'] = pd.to_datetime(aso_df_basin["Date"], format="%Y%b%d")
                         aso_df_basin["diff_days"] = (aso_df_basin["cstm_dte"] - target_date).abs().dt.days
                         df_filtered = aso_df_basin[aso_df_basin["diff_days"] > 4]
-                        print(f'{aso_df_basin} has difference of days of {aso_df_basin["diff_days"]}')
+                        print(
+                            aso_df_basin[["Basin", "Date", "diff_days"]]
+                        )
 
                         # add to the df
                         if not df_filtered.empty:

@@ -131,10 +131,10 @@ region_zones = "M:/SWE/WestWide/data/hydro/WW_Regions_albn83_v2.tif"
 # WW_watershed_zones = r"M:\SWE\WestWide\data\hydro\outdated\WW_BasinBanded_noSNM_notahoe_albn83_sel.tif"
 # WW_watershed_shapefile = r"M:\SWE\WestWide\data\hydro\outdated\WW_Basins_noSNM_notahoe_sel_albn83.shp"
 # WW_band_shapefile = r"M:\SWE\WestWide\data\hydro\outdated\WW_BasinsBanded_noSNM_notahoe_sel_albn83.shp"
-WW_band_zones = r"M:\SWE\WestWide\data\hydro\20260113_BasinUpdatesNoSNM\WW_BasinBanded_noSNM_notahoe_albn83_sel_v2_updated.tif"
-WW_watershed_zones = r"M:\SWE\WestWide\data\hydro\20260113_BasinUpdatesNoSNM\WW_BasinBanded_noSNM_notahoe_albn83_sel_v2_updated.tif"
-WW_watershed_shapefile = r"M:\SWE\WestWide\data\hydro\20260113_BasinUpdatesNoSNM\WW_Basins_noSNM_notahoe_albn83_sel_v2_dis.shp"
-WW_band_shapefile = r"M:\SWE\WestWide\data\hydro\20260113_BasinUpdatesNoSNM\WW_BasinsBanded_noSNM_notahoe_albn83_sel_v2_updated.shp"
+WW_band_zones = r"W:\data\hydro\20260113_BasinUpdatesNoSNM\WW_BasinBanded_noSNM_notahoe_albn83_sel_v2_updated.tif"
+WW_watershed_zones = r"W:\data\hydro\20260113_BasinUpdatesNoSNM\WW_BasinBanded_noSNM_notahoe_albn83_sel_v2_updated.tif"
+WW_watershed_shapefile = r"W:\data\hydro\20260113_BasinUpdatesNoSNM\WW_Basins_noSNM_notahoe_albn83_sel_v2_dis.shp"
+WW_band_shapefile = r"W:\data\hydro\20260113_BasinUpdatesNoSNM\WW_BasinsBanded_noSNM_notahoe_albn83_sel_v2_updated_20260208.shp"
 
 
 # masks
