@@ -2,7 +2,9 @@
 # TODO: docs
 """
 
+from generate_maps import get_output_dir as get_maps_dir
 from generate_maps import generate_maps
+from generate_tables import get_output_dir as get_tables_dir
 from generate_tables import generate_tables
 import argparse
 from pathlib import Path
@@ -19,9 +21,9 @@ def generate_snm_report(date: int) -> Path:
     with open(TEMPLATE_PATH, encoding="utf-8") as f:
         template = Template(f.read())
 
-    # TODO: config for changing output location
-    maps_dir = PROJECT_ROOT / "output"  / f"{date}_SNM_JPEGmaps"
-    tables_dir = PROJECT_ROOT / "output"  / f"{date}_SNM_TEXtables"
+    # Location where the maps and tables are saved
+    maps_dir = get_maps_dir(date, 'SNM')
+    tables_dir = get_tables_dir(date, 'SNM')
 
     context = {
         "cu_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "CU_Logo_Notext.jpg").replace("\\", "/"),
@@ -41,8 +43,8 @@ def generate_snm_report(date: int) -> Path:
     }
 
     rendered_tex = template.render(**context)
-    # TODO: config for output location
-    output_tex = PROJECT_ROOT / "output" / f"{date}_RT_SWE_Report.tex"
+    output_dir = Path(get_maps_dir(date, 'SNM')).parent
+    output_tex = output_dir / f"{date}_RT_SWE_Report.tex"
     with open(output_tex, "w", encoding="utf-8") as f:
         f.write(rendered_tex)
 
@@ -80,7 +82,7 @@ def main():
             "-output-format=pdf",
             "-interaction=nonstopmode",
             output_path.name],
-            cwd = Path(__file__).parent.parent / "output", # TODO: make output path a config
+            cwd = Path(get_maps_dir(args.date, 'SNM')).parent,
             check=True
         )
 

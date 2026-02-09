@@ -22,12 +22,9 @@ Automatically generates report maps in ArcPy using post-processed rasters.
 # Filepath configs
 ww_aprx = "U:\EricG\MapTemplate\MapTemplate.aprx"       # Project containing template for each figure
 snm_aprx = "U:\EricG\MapTemplate\SNM_Template.aprx"
-# product_source_dir = r"U:\EricG\testing_Directory"    # Parent directory of the YYYYMMDD_RT_Report folders
-product_source_dir = r"W:\documents\2026_RT_Reports"    # Parent directory of the YYYYMMDD_RT_Report folders
-# TODO: separate source & output dirs for WW and SNM
-# snm_source_dir = r"U:\EricG\testing_Directory\SNM"
+ww_source_dir = r"W:\documents\2026_RT_Reports"         # Parent directory of the YYYYMMDD_RT_Report folders
 snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports"
-output_parent_dir = "../output/"                        # Directory the figures will be exported to
+rt_report_pattern = "_RT_report"
 
 # Figure configs
 layer_formats = ["tif","shp"]                           # List of all layer file formats
@@ -215,6 +212,19 @@ import arcpy
 import uuid
 from datetime import datetime
 
+def get_output_dir(date:int, report_type:str) -> str:
+    # TODO: docs
+    source_dir = None
+    match report_type:
+        case 'WW':
+            source_dir = ww_source_dir
+        case 'SNM':
+            source_dir = snm_source_dir
+        case _:
+            raise Exception(f"Unrecognized report type: {report_type}")
+    output_dir=os.path.join(source_dir, str(date) + "rt_report_pattern", "Report", f"{date}_{report_type}_JPEGmaps")
+    return output_dir
+
 def interpret_figs(figs: str, report_type: str) -> list[str]:
     """
     Interprets the --figs regex flag
@@ -287,10 +297,9 @@ def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user =
     # Find RT_Report directory for this date
     # TODO: copy files out of results dir to avoid corruption problems. Automate this process
     if report_type == "WW":
-        rt_report_dir = os.path.join(product_source_dir, str(date) + "_RT_report_ET")
+        rt_report_dir = os.path.join(ww_source_dir, str(date) + rt_report_pattern)
     else: # SNM
-        rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_report_ET") # TODO: config
-        # rt_report_dir = os.path.join(snm_source_dir, str(date) + "_RT_Report")
+        rt_report_dir = os.path.join(snm_source_dir, str(date) + rt_report_pattern)
 
     # Find the directory containing the layer products to be used e.g. "...UseThis"
     try:
@@ -593,7 +602,7 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                 formatted_date = f"{int(date_str[4:6])}/{int(date_str[6:8])}" # 20250331 => 3/31
                 element.text = element.text.replace("3/31", formatted_date)
 
-        output_dir = os.path.join(output_parent_dir, f"{date}_{report_type}_JPEGmaps")
+        output_dir = get_output_dir(date,report_type)
         os.makedirs(output_dir, exist_ok=True)
         layout.exportToJPEG(os.path.join(output_dir, layout.name + ".jpg"), resolution=300)
         print(f"Finished generating maps for fig {fig_id}.")
@@ -616,7 +625,7 @@ def main():
     generate_maps(args.report_type, args.date, args.figs, args.preview, args.verbose, args.prompt_user)
 
     # Crop the whitespace of each generated map
-    output_dir = os.path.join(output_parent_dir, f"{args.date}_{args.report_type}_JPEGmaps")
+    output_dir = get_output_dir(args.date, args.report_type)
     for fig_id in interpret_figs(args.figs, args.report_type):
         matches = glob.glob(os.path.join(output_dir, f"*{fig_id}.jpg"))
         if not matches:

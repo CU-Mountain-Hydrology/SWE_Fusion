@@ -2,7 +2,9 @@
 # TODO: docs
 """
 
+from generate_maps import get_output_dir as get_maps_dir
 from generate_maps import generate_maps
+from generate_tables import get_output_dir as get_tables_dir
 from generate_tables import generate_tables
 import argparse
 from pathlib import Path
@@ -19,11 +21,10 @@ def generate_ww_report(date: int) -> Path:
     with open(TEMPLATE_PATH, encoding="utf-8") as f:
         template = Template(f.read())
 
-    # TODO: config for changing output location
-    maps_dir = PROJECT_ROOT / "output"  / f"{date}_WW_JPEGmaps"
-    snm_maps_dir = PROJECT_ROOT / "output"  / f"{date}_SNM_JPEGmaps"
-    tables_dir = PROJECT_ROOT / "output"  / f"{date}_WW_TEXtables"
-    snm_tables_dir = PROJECT_ROOT / "output" / f"{date}_SNM_TEXtables"
+    maps_dir = get_maps_dir(date, 'WW')
+    snm_maps_dir = get_maps_dir(date, 'SNM')
+    tables_dir = get_tables_dir(date, 'WW')
+    snm_tables_dir = get_tables_dir(date, 'SNM')
 
     context = {
         "instaar_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "INSTAAR_75_Logo.png").replace("\\", "/"),
@@ -48,8 +49,7 @@ def generate_ww_report(date: int) -> Path:
     }
 
     rendered_tex = template.render(**context)
-    # TODO: config for output location
-    output_tex = PROJECT_ROOT / "output" / f"0WW_SWE_Report_{date}.tex"
+    output_tex = Path(get_maps_dir(date, 'WW')).parent / f"0WW_SWE_Report_{date}.tex"
     with open(output_tex, "w", encoding="utf-8") as f:
         f.write(rendered_tex)
 
@@ -76,7 +76,7 @@ def main():
     # Generate report
     output_path = generate_ww_report(args.date)
 
-    #TODO: automatically compile LaTeX file (twice)
+    # Automatically compile LaTeX file (twice)
     for _ in range(2):
         print("Compiling LaTeX to PDF.")
         subprocess.run(
@@ -86,7 +86,7 @@ def main():
             "-output-format=pdf",
             "-interaction=nonstopmode",
             output_path.name],
-            cwd = Path(__file__).parent.parent / "output", # TODO: make output path a config
+            cwd = Path(get_maps_dir(args.date, 'WW')).parent,
             check=True
         )
 

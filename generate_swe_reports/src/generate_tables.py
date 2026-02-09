@@ -5,6 +5,11 @@
 #########################   These values should not need to be changed between runs, but may change depending on your
 #         CONFIG        #   operating system, filepaths, and preferred output location.
 #########################
+
+ww_source_dir = r"W:\documents\2026_RT_Reports"         # Parent directory of the YYYYMMDD_RT_Report folders
+snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports"
+rt_report_pattern = "_RT_report"
+
 ww_table_data = {
     "01" : "Pacific Northwest",
     "02" : "North Continental",
@@ -29,6 +34,18 @@ import pandas as pd
 from jinja2 import Template, Environment, FileSystemLoader
 import argparse
 
+def get_output_dir(date:int, report_type:str) -> str:
+    # TODO: docs
+    source_dir = None
+    match report_type:
+        case 'WW':
+            source_dir = ww_source_dir
+        case 'SNM':
+            source_dir = snm_source_dir
+        case _:
+            raise Exception(f"Unrecognized report type: {report_type}")
+    output_dir=os.path.join(source_dir, str(date) + "rt_report_pattern", "Report", f"{date}_{report_type}_TEXtables")
+    return output_dir
 
 def interpret_ids(ids: str, report_type: str) -> list[str]:
     """
@@ -93,18 +110,19 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
     table_data = None
     match report_type:
         case "WW":
-            report_dir = fr"W:\documents\{date_str[:4]}_RT_Reports\{date_str}_RT_report_ET"
+            report_dir = os.path.join(ww_source_dir, rt_report_pattern)
             table_data = ww_table_data
         case "SNM":
-            report_dir = fr"J:\paperwork\0_UCSB_DWR_Project\{date_str[:4]}_RT_Reports\{date_str}_RT_report_ET"
+            # report_dir = fr"J:\paperwork\0_UCSB_DWR_Project\{date_str[:4]}_RT_Reports\{date_str}_RT_report_ET"
+            report_dir = os.path.join(snm_source_dir, rt_report_pattern)
             table_data = snm_table_data
         case _:
             raise Exception(f"Unrecognized report type: {report_type}")
 
     use_this_dir = glob.glob(os.path.join(report_dir, "*UseThis*"))[0]
     table_dir = os.path.join(use_this_dir, "Tables")
-    output_tables_dir = Path(__file__).parent.parent / "output" / f"{date}_{report_type}_TEXtables" # TODO: move up to config
-    output_tables_dir.mkdir(parents=True, exist_ok=True)
+    output_tables_dir = get_output_dir(date, report_type)
+    os.makedirs(output_tables_dir, exist_ok=True)
 
     # Determine which tables to generate
     id_list = interpret_ids(ids, report_type)
@@ -204,7 +222,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
                                       aso_corrected=aso_corrected,)
 
         # Write table to LaTeX file in the output directory
-        output_table = output_tables_dir / f"{date}_{report_type}_Table{table_id}.tex"
+        output_table = Path(output_tables_dir) / f"{date}_{report_type}_Table{table_id}.tex"
         with open(output_table, "w") as f:
             f.write(latex_table)
 
