@@ -127,6 +127,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                         aso_df_basin['cstm_dte'] = pd.to_datetime(aso_df_basin["Date"], format="%Y%b%d")
                         aso_df_basin["diff_days"] = (aso_df_basin["cstm_dte"] - target_date).abs().dt.days
                         df_filtered = aso_df_basin[aso_df_basin["diff_days"] > 4]
+                        print(f'{aso_df_basin} has difference of days of {aso_df_basin["diff_days"]}')
 
                         # add to the df
                         if not df_filtered.empty:
@@ -135,7 +136,6 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                             fraErrorPath = (
                                 f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                 f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
-                            # print(fraErrorPath)
                             method_paths['RECENT'] = fraErrorPath
 
                     if method == "GRADE" or method == "GRADES_SPECF":
@@ -143,7 +143,6 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                         aso_df_grade = aso_df_basin[aso_df_basin["GradeDirection"] == grade].copy()
                         if len(aso_df_grade.columns) > 1:
                             if method == "GRADE":
-                                # print(f"\nMETHOD: {method}")
                                 target_date = datetime.strptime(rundate, "%Y%m%d")
                                 aso_df_grade['cstm_dte'] = pd.to_datetime(aso_df_grade["Date"], format="%Y%b%d")
                                 aso_df_grade["diff_days"] = (aso_df_grade["cstm_dte"] - target_date).abs().dt.days
@@ -157,7 +156,6 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                                     method_paths['GRADE'] = fraErrorPath
 
                             if method == "GRADES_SPECF":
-                                # print(f"\nMETHOD: {method}")
 
                                 # Check if aso_df_grade has any rows before attempting to find closest match
                                 if not aso_df_grade.empty:
@@ -168,7 +166,6 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                                         f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                                     method_paths['GRADES_SPECF'] = fraErrorPath
                                 else:
-                                    # print(f"No data found for grade direction '{grade}' in basin {item}")
                                     method_paths['GRADES_SPECF'] = None
 
                     if method == "SENSOR_PATTERN":
@@ -605,8 +602,7 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
             # This will match: ASO_BoulderCreek_2025Apr09*swe_50m_fraErr.tif
             search_pattern = os.path.join(fraErr_dir, f"{fraErr_basename[:-15]}*swe_50m_fraErr.tif")
 
-            print(
-                f"Basin: {basin} | Sub-Basin: {sub_basin} | Output Name: {output_basin_name} | Search pattern: {search_pattern}")
+            print(f"Basin: {basin} | Sub-Basin: {sub_basin} | Output Name: {output_basin_name} | Search pattern: {search_pattern}")
 
             if domain == "SNM":
                 basinSHP = f"{shapefile_workspace}/{sub_basin}_albn83.shp"
@@ -621,7 +617,7 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                              f"{shapefile_workspace}/Tahoe_albn83.shp"],
                             merge_output
                         )
-                        print(f"Created merged shapefile: {merge_output}")
+                        # print(f"Created merged shapefile: {merge_output}")
                     basinSHP = merge_output
 
                 elif sub_basin in ["ECarson", "WCarson"]:
@@ -633,7 +629,7 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                              f"{shapefile_workspace}/ECarson_albn83.shp"],
                             merge_output
                         )
-                        print(f"Created merged shapefile: {merge_output}")
+                        # print(f"Created merged shapefile: {merge_output}")
                     basinSHP = merge_output
                 else:
                     basinSHP = f"{shapefile_workspace}ASO_{sub_basin}_albn83.shp"
@@ -707,7 +703,7 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                 newFix = Con(newFrac == -1, Raster(p8_forBC), LRMfix)
                 newFix.save(
                     f"{results_workspace}ASO_BiasCorrect_{ModelRun}/{method}/Fix_Files/{rundate}_{basin}_{output_basin_name}_{method}_LRMFix_final.tif")
-                print(f"Fix completed for {output_basin_name}")
+                # print(f"Fix completed for {output_basin_name}")
             else:
                 print("File NOT found.")
 
@@ -731,7 +727,7 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                                                os.path.basename(out_raster),
                                                "",
                                                "32_BIT_FLOAT", "", 1, "LAST", "FIRST")
-            print(f"Mosaicked raster saved: {out_raster}")
+            # print(f"Mosaicked raster saved: {out_raster}")
 
 
 

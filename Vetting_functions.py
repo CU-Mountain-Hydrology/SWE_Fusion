@@ -151,13 +151,13 @@ def bias_correction_vetting(raster, point, domain, swe_col, id_col, rundate, nam
     total_swe_m3 = mean_swe * total_area
     total_swe_af = total_swe_m3 * 0.000810714  # acre-feet
 
-    print(f"\nRaster: {os.path.basename(raster)}")
-    print(f"Average Percent Error: {avg_percent_error}")
-    print(f"Average Absolute Percent Error: {avg_abs_percent_error}")
-    print(f"Average Error (bias): {avg_error}")
-    print(f"Mean Absolute Error (MAE): {mae}")
-    print(f"SWE_AF: {total_swe_af}")
-    print(f"Max Value: {max_val}")
+    # print(f"\nRaster: {os.path.basename(raster)}")
+    # print(f"Average Percent Error: {avg_percent_error}")
+    # print(f"Average Absolute Percent Error: {avg_abs_percent_error}")
+    # print(f"Average Error (bias): {avg_error}")
+    # print(f"Mean Absolute Error (MAE): {mae}")
+    # print(f"SWE_AF: {total_swe_af}")
+    # print(f"Max Value: {max_val}")
 
     # Create error frame
     error_frame = {
@@ -188,7 +188,7 @@ def bias_correction_vetting(raster, point, domain, swe_col, id_col, rundate, nam
         if not os.path.exists(control_raster_clp):
             outControlClip = ExtractByMask(control_raster, raster, 'INSIDE')
             outControlClip.save(control_raster_clp)
-            print('control_raster saved')
+            # print('control_raster saved')
 
             raster_vals = []
             with rasterio.open(control_raster_clp) as src:
