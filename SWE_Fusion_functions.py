@@ -2088,7 +2088,7 @@ def tables_and_layers_SNM(year, rundate, mean_date, WW_model_run, SNM_results_wo
                           case_field_wtrshd, case_field_band, watermask, glacier_mask, domain_mask, run_type, snap_raster, WW_results_workspace,
                           Difference, bias_model_run=None, prev_report_date=None, prev_model_run=None):
     # create directory
-    prevRepWorkspace = SNM_results_workspace + f"{prev_report_date}_results/{previous_model_run}/"
+    prevRepWorkspace = SNM_results_workspace + f"{prev_report_date}_results/{prev_model_run}/"
     where_clause = """"POLY_AREA" > 100"""
     part_area = "100 SquareKilometers"
     ProjOut_UTM = arcpy.SpatialReference(26911)

@@ -188,7 +188,7 @@ def bias_correction_vetting(raster, point, domain, swe_col, id_col, rundate, nam
         if not os.path.exists(control_raster_clp):
             outControlClip = ExtractByMask(control_raster, raster, 'INSIDE')
             outControlClip.save(control_raster_clp)
-            print('control_raster savedddddd!!!!!!!!!!')
+            print('control_raster saved')
 
             raster_vals = []
             with rasterio.open(control_raster_clp) as src:
@@ -702,7 +702,7 @@ def snowtrax_comparision(rundate, snowTrax_csv, results_WS, output_csv, model_li
     basin_dictionary = {"American River Basin": "07American", "Cosumnes River Basin": "08Cosumnes",
                         "East Carson River River Basin":
                             "21E Carson", "East Walker River Basin": "23E Walker", "Feather River Basin": "05Feather",
-                        "Kings River Basin River Basin": "14Kings", "Kern River Basin": "17Kern", "Kaweah River Basin":
+                        "Kings River Basin": "14Kings", "Kern River Basin": "17Kern", "Kaweah River Basin":
                             '15Kaweah', "Mokelumne River Basin": "09Mokelumne", "Merced River Basin": "12Merced",
                         "McCloud River Basin": "02McCloud", "Pit at Shasta Lake River Basin": "03Pit",
                         "Sacramento at Bend Bridge River Basin": "04Sacramento at Bend Bridge",
@@ -1491,6 +1491,11 @@ def aso_choice_and_mosaic(
     )
 
     final_mos.save(os.path.join(mosaics_WS, f"p8_{rundate}_noneg_bias.tif"))
+
+    if os.path.exists(bias_correction_workspace + f"p8_{rundate}_noneg.tif"):
+        arcpy.Delete_management(bias_correction_workspace + f"p8_{rundate}_noneg.tif")
+        print('DUPLICATE P8 Layer deleted!')
+        arcpy.CopyRaster_management(mosaics_WS + f"/p8_{rundate}_noneg_bias.tif", bias_correction_workspace + f"p8_{rundate}_noneg.tif")
 
     return aso_bias_corrected_basins
 
