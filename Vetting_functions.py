@@ -791,7 +791,7 @@ def snowtrax_comparision(rundate, snowTrax_csv, results_WS, output_csv, model_li
     models_with_data = [col for col in models if filtered_df[col].notna().any()]
 
     # Create figure with 2 subplots (stacked vertically)
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 12),
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(32, 12),
                                    gridspec_kw={'height_ratios': [2, 1]})
 
     # ============================================================================

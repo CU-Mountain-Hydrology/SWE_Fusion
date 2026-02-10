@@ -3058,21 +3058,21 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
         "10000GT": ">10,000'", "09000GT": ">9,000'", "08000GT": ">8,000'",
         "07000GT": ">7,000'", "06000GT": ">6,000'", "05000GT": ">5,000'"}
 
-    # states = {"0PNW0": "Pacific Northwest", "INMT1": "Intermountain", "INMT2": "Intermountain",
-    #           "SOCN0": "South Continental", "NOCN0": "North Continental"}
-    # bandTableIndex = {"0PNW0": "06", "INMT1": "09a", "INMT2": "09b", "SOCN0": "08", "NOCN0": "07"}
-    # wtshTableIndex = {"0PNW0": "01", "INMT1": "04a", "INMT2": "04b", "SOCN0": "03", "NOCN0": "02"}
+    states = {"0PNW0": "Pacific Northwest", "INMT1": "Intermountain", "INMT2": "Intermountain",
+              "SOCN0": "South Continental", "NOCN0": "North Continental"}
+    bandTableIndex = {"0PNW0": "06", "INMT1": "09a", "INMT2": "09b", "SOCN0": "08", "NOCN0": "07"}
+    wtshTableIndex = {"0PNW0": "01", "INMT1": "04a", "INMT2": "04b", "SOCN0": "03", "NOCN0": "02"}
+
+    abbrevs = ["0PNW0", "INMT1", "INMT2", "NOCN0", "SOCN0"]
+    domain_tab = {"0PNW0": "PNW", "INMT1": "INMT", "INMT2": "INMT", "NOCN0": "NOCN", "SOCN0": "SOCN"}
+
+    # states = {"0PNW": "Pacific Northwest", "INMT": "Intermountain",
+    #           "SOCN": "South Continental", "NOCN": "North Continental"}
+    # bandTableIndex = {"0PNW": "06", "INMT": "09", "SOCN": "08", "NOCN": "07"}
+    # wtshTableIndex = {"0PNW": "01", "INMT": "04", "SOCN": "03", "NOCN": "02"}
     #
-    # abbrevs = ["0PNW0", "INMT1", "INMT2", "NOCN0", "SOCN0"]
-    # domain_tab = {"0PNW0": "PNW", "INMT1": "INMT", "INMT2": "INMT", "NOCN0": "NOCN", "SOCN0": "SOCN"}
-
-    states = {"0PNW": "Pacific Northwest", "INMT": "Intermountain",
-              "SOCN": "South Continental", "NOCN": "North Continental"}
-    bandTableIndex = {"0PNW": "06", "INMT": "09", "SOCN": "08", "NOCN": "07"}
-    wtshTableIndex = {"0PNW": "01", "INMT": "04", "SOCN": "03", "NOCN": "02"}
-
-    abbrevs = ["0PNW0", "INMT", "NOCN0", "SOCN0"]
-    domain_tab = {"0PNW": "PNW", "INMT": "INMT", "NOCN": "NOCN", "SOCN": "SOCN"}
+    # abbrevs = ["0PNW", "INMT", "NOCN", "SOCN"]
+    # domain_tab = {"0PNW": "PNW", "INMT": "INMT", "NOCN": "NOCN", "SOCN": "SOCN"}
 
     # Add a helper function to append the symbol
     def add_special_symbol(basin_name, aso_bc_basins, aso_symbol):
@@ -3190,7 +3190,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
     for abbrev in abbrevs:
         state_df = merged_df[merged_df['region'] == abbrev]
         state_df['Basin_rw'] = state_df['SrtNmeBand'].apply(lambda x: x[9:-8] if x[-2:] == "GT" else x[9:-6])
-        state_df['Basin_rw'] = state_df['Basin_rw'].apply(lambda x: add_special_symbol(x, aso_bc_basins, aso_symbol))
+        # state_df['Basin_rw'] = state_df['Basin_rw'].apply(lambda x: add_special_symbol(x, aso_bc_basins, aso_symbol))
         state_df['Num'] = state_df['SrtNmeBand'].str[6:8].astype(int).astype(str) + '.'
         state_df['Basin'] = state_df['Num'] + " " + state_df['Basin_rw']
         state_df['Elevation Band'] = state_df['SrtNmeBand'].str[-5:]
@@ -3302,10 +3302,14 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
         state_df['SNODAS'] = state_df['SNODAS'].round(1)
 
         # state_df['Avg'] = state_df['Avg'].apply(lambda x: int(round(x)) if x != "NA" else x)
+        state_df['Avg'] = pd.to_numeric(state_df['Avg'], errors='coerce')
+        # Now you can safely compare and cap at 300
         state_df.loc[state_df['Avg'] > 300, 'Avg'] = 300
+
+        # Convert to string for formatting
         state_df['Avg'] = state_df['Avg'].astype(str)
-        state_df.loc[state_df['Avg'] == '300', 'Avg'] = '300†'
-        state_df.loc[state_df['Avg'] == '<NA>', 'Avg'] = 'NA'
+        state_df.loc[state_df['Avg'] == '300.0', 'Avg'] = '300†'
+        state_df.loc[state_df['Avg'] == 'nan', 'Avg'] = 'NA'
 
         if difference == "Y":
             difference_cols = ['prev_SWE_IN', 'prev_sensors', 'prev_Avg']
@@ -3451,7 +3455,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
     for abbrev in abbrevs:
         state_wtshd_df = merged_wtshd_df[merged_wtshd_df['region'] == abbrev]
         state_wtshd_df['Basin_rw'] = state_wtshd_df['SrtName'].str[9:]
-        state_wtshd_df['Basin_rw'] = state_wtshd_df['Basin_rw'].apply(lambda x: add_special_symbol(x, aso_bc_basins, aso_symbol))
+        # state_wtshd_df['Basin_rw'] = state_wtshd_df['Basin_rw'].apply(lambda x: add_special_symbol(x, aso_bc_basins, aso_symbol))
         state_wtshd_df['Num'] = state_wtshd_df['SrtName'].str[6:8].astype(int).astype(str) + '.'
         state_wtshd_df['Basin'] = state_wtshd_df['Num'] + " " + state_wtshd_df['Basin_rw']
 
@@ -3779,7 +3783,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
 
     # separate into tables for domain
     merged_df['Basin_rw'] = merged_df['SrtNmeBand'].apply(lambda x: x[2:-7] if x[-2:] == "GT" else x[2:-5])
-    merged_df['Basin_rw'] = merged_df['Basin_rw'].apply(lambda x: add_special_symbol(x, aso_bc_basins, aso_symbol))
+    # merged_df['Basin_rw'] = merged_df['Basin_rw'].apply(lambda x: add_special_symbol(x, aso_bc_basins, aso_symbol))
     merged_df['Num'] = merged_df['SrtNmeBand'].str[:2].astype(int).astype(str) + '.'
     merged_df['Basin'] = merged_df['Num'] + " " + merged_df['Basin_rw']
     merged_df['Elevation Band'] = merged_df['SrtNmeBand'].apply(lambda x: x[-7:] if x[-2:] == "GT" else x[-5:])
@@ -3816,7 +3820,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 [top_header, df_band_export.columns]
             )
             df_band_export.to_csv(
-                tables_workspace + f"SNM_{rundate}_table10_final.csv")
+                tables_workspace + f"SNM_{rundate}_table10.csv")
 
         if surveys_use:
             df_band_tbl = merged_df[
@@ -3839,7 +3843,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 [top_header, df_band_export.columns]
             )
             df_band_export.to_csv(
-                tables_workspace + f"SNM_{rundate}_table10_final.csv")
+                tables_workspace + f"SNM_{rundate}_table10.csv")
 
     if difference == "N":
         # edit and export
@@ -3859,7 +3863,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 [top_header, df_band_export.columns]
             )
             df_band_export.to_csv(
-                tables_workspace + f"SNM_{rundate}_table10_final.csv")
+                tables_workspace + f"SNM_{rundate}_table10.csv")
 
         if surveys_use:
             df_band_tbl = merged_df[
@@ -3880,7 +3884,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 [top_header, df_band_export.columns]
             )
             df_band_export.to_csv(
-                tables_workspace + f"SNM_{rundate}_table10_final.csv")
+                tables_workspace + f"SNM_{rundate}_table10.csv")
 
         # check for standard deviation values
         swe_exceeded = pd.to_numeric(df_band_tbl['SWE_IN'], errors='coerce')
@@ -3945,15 +3949,15 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
 
     # separate into tables for domain
     merged_wtshd_df['Basin_rw'] = merged_wtshd_df['SrtName'].str[2:]
-    merged_wtshd_df['Basin_rw'] = merged_wtshd_df['Basin_rw'].apply(
-        lambda x: add_special_symbol(x, aso_bc_basins, aso_symbol))
+    # merged_wtshd_df['Basin_rw'] = merged_wtshd_df['Basin_rw'].apply(
+        # lambda x: add_special_symbol(x, aso_bc_basins, aso_symbol))
     merged_wtshd_df['Num'] = merged_wtshd_df['SrtName'].str[:2].astype(int).astype(str) + '.'
     merged_wtshd_df['Basin'] = merged_wtshd_df['Num'] + " " + merged_wtshd_df['Basin_rw']
 
     if difference == "Y":
         difference_cols = ['prev_SWE_IN', 'prev_sensors', 'prev_Avg']
         df_wtshed_prev = pd.read_csv(
-            prev_tables_workspace + f"SNM_{prev_rundate}_table5_raw.csv")
+            prev_tables_workspace + f"SNM_{prev_rundate}_table05_raw.csv")
         df_wtshed_prev = df_wtshed_prev.rename(
             columns={"SWE_IN": "prev_SWE_IN", "sensors": "prev_sensors", "Avg": "prev_Avg"})
         df_wtshed_prev = df_wtshed_prev[['Basin', 'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
@@ -3981,7 +3985,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 [top_header, df_wtshd_export.columns]
             )
             df_wtshd_export.to_csv(
-                tables_workspace + f"SNM_{rundate}_table5_final.csv")
+                tables_workspace + f"SNM_{rundate}_table05.csv")
 
         if surveys_use:
             df_wtshd_tbl = merged_wtshd_df[
@@ -4003,7 +4007,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 [top_header, df_wtshd_export.columns]
             )
             df_wtshd_export.to_csv(
-                tables_workspace + f"SNM_{rundate}_table05_final.csv")
+                tables_workspace + f"SNM_{rundate}_table05.csv")
 
     if difference == "N":
         # edit and export
@@ -4023,7 +4027,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 [top_header, df_wtshd_export.columns]
             )
             df_wtshd_export.to_csv(
-                tables_workspace + f"SNM_{rundate}_table5_final.csv")
+                tables_workspace + f"SNM_{rundate}_table05.csv")
 
         if surveys_use:
             df_wtshd_tbl = merged_wtshd_df[
@@ -4041,14 +4045,14 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                 [top_header, df_wtshd_export.columns]
             )
             df_wtshd_export.to_csv(
-                tables_workspace + f"SNM_{rundate}_table05_final.csv")
+                tables_workspace + f"SNM_{rundate}_table05.csv")
 
-    df_wtshd_tbl.to_csv(tables_workspace + f"SNM_{rundate}_table5_raw.csv",
+    df_wtshd_tbl.to_csv(tables_workspace + f"SNM_{rundate}_table05_raw.csv",
                         index=False)
 
     print('output for the final tables for the reports')
-    table1_df = pd.read_csv(tables_workspace + f"SNM_{rundate}_table05_final.csv")
+    table1_df = pd.read_csv(tables_workspace + f"SNM_{rundate}_table05.csv")
     table1_df.to_excel(tables_workspace + f"{rundate}report_table1.xlsx", index=False)
-    table2_df = pd.read_csv(tables_workspace + f"SNM_{rundate}_table10_final.csv")
+    table2_df = pd.read_csv(tables_workspace + f"SNM_{rundate}_table10.csv")
     table2_df.to_excel(tables_workspace + f"{rundate}report_table2.xlsx", index=False)
 
