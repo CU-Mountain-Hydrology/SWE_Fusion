@@ -125,6 +125,9 @@ ww_fig_data = {                                         # Dictionary of metadata
     },
 }
 
+#############################################################################################################################################################
+#############################################################################################################################################################
+
 snm_fig_data = {
     "0": {
         "maps": {
@@ -137,6 +140,7 @@ snm_fig_data = {
         "maps": {
             "real_time_swe": [
                 {"layer": "p8*msk", "format": "tif", "dir": "*UseThis*", "label": "None"}
+                # {"layer": "p8*msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
             ],
             "anomaly": [
                 {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
@@ -178,7 +182,7 @@ snm_fig_data = {
                 {"layer": "SNODAS_Regress", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ],
             "SNODAS_swe_overlap": [
-                {"layer": "both", "format": "tif", "dir": "SNODAS", "label": "None"}
+                {"layer": "both", "format": "tif", "dir": "SNODAS", "label": "None"} # TODO: change to UseThis
             ]
         }
     },
@@ -189,7 +193,7 @@ snm_fig_data = {
                 {"layer": "Zero_sensors", "format": "shp", "dir": "", "label": "None"},
                 {"layer": "SNM_*_sensors", "format": "shp", "dir": "", "label": "None"},
                 # {"layer": "Zero_CCR", "format": "shp", "dir": "", "label": "None"},
-                {"layer": "CCR_sensors", "format": "shp", "dir": "", "label": "None"},
+                # {"layer": "CCR_sensors", "format": "shp", "dir": "", "label": "None"},
             ],
             "banded_elev": []
         }
@@ -222,8 +226,14 @@ def get_output_dir(date:int, report_type:str) -> str:
             source_dir = snm_source_dir
         case _:
             raise Exception(f"Unrecognized report type: {report_type}")
-    output_dir=os.path.join(source_dir, str(date) + "rt_report_pattern", "Report", f"{date}_{report_type}_JPEGmaps")
+    output_dir=os.path.join(source_dir, str(date) + rt_report_pattern, "Report", f"{date}_{report_type}_JPEGmaps")
     return output_dir
+
+def get_fig_data(report_type:str) -> dict:
+    if report_type == "WW":
+        return ww_fig_data
+    else: # SNM
+        return snm_fig_data
 
 def interpret_figs(figs: str, report_type: str) -> list[str]:
     """

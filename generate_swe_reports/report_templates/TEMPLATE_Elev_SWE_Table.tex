@@ -19,7 +19,9 @@
 {# Total columns = Basin + flattened cols #}
 {% set total_cols = 1 + flat_cols|length %}
 
-\begin{longtable}{@{}p{3.5cm}{% for _ in range(flat_cols|length) %}c{% endfor %}}
+% DEBUG: {{ headers }}
+
+\begin{longtable}{@{}p{2.6cm}{% for _ in range(flat_cols|length) %}c{% endfor %}}
     \toprule
     \multicolumn{ {{ total_cols }} }{c}{\large{ {{ title }} SWE Report for {{ date[4:6]|int }}/{{ date[6:8]|int }}/{{ date[0:4] }} }} \\
     \specialrule{0.3pt}{0pt}{0pt}
@@ -134,7 +136,11 @@
     } \\[-4pt]
     \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
         \footnotesize $\ddagger$ For volume totals above Shasta Lake add Upper Sac, McCloud and Pit volumes. For volume totals above Bend Bridge add Upper Sac, McCloud, Pit and Sac at Bend Bridge volumes.%
-    } \\
+    } \\[-4pt]
+    {% if aso_corrected %}
+        \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
+            \footnotesize \S{} Data in all ASO-collected basins have been bias-corrected using ASO data and therefore the SWE changes might not represent snowmelt/accumulation but rather an update to the SWE estimates based on airborne data.} \\
+    {% endif %}
     \bottomrule
     \endfoot
 
@@ -154,7 +160,7 @@
             {% set ns.current_basin = basin_name %}
 
             {% set raw_name = basin_name %}
-            {% if raw_name|length > 22 and (" " in raw_name) %}
+            {% if raw_name|length > 18 and (" " in raw_name) %}
                 {% set mid = raw_name|length // 2 %}
 
                 {# find last space before mid #}
@@ -192,8 +198,9 @@
     \multicolumn{ {{ total_cols }} }{l}{\footnotesize* This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.} \\[-4pt]
     \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
         \footnotesize $\ddagger$ For volume totals above Shasta Lake add Upper Sac, McCloud and Pit volumes. For volume totals above Bend Bridge add Upper Sac, McCloud, Pit and Sac at Bend Bridge volumes.%
-    } \\
+    } \\[-4pt]
     {% if aso_corrected %}
-        \multicolumn{ {{ total_cols }} }{l}{\small§ASO-corrected.} \\
+        \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
+            \footnotesize \S{} Data in all ASO-collected basins have been bias-corrected using ASO data and therefore the SWE changes might not represent snowmelt/accumulation but rather an update to the SWE estimates based on airborne data.} \\
     {% endif %}
 \end{longtable}

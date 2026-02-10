@@ -1,6 +1,7 @@
 """
 #TODO: docs
 """
+from duckdb.experimental.spark.sql.functions import printf
 
 #########################   These values should not need to be changed between runs, but may change depending on your
 #         CONFIG        #   operating system, filepaths, and preferred output location.
@@ -18,7 +19,7 @@ ww_table_data = {
 }
 
 snm_table_data = {
-    "5" : "Sierra Nevada",
+    "05" : "Sierra Nevada",
     "10" : "Elevation Banded",
 }
 #########################
@@ -44,8 +45,29 @@ def get_output_dir(date:int, report_type:str) -> str:
             source_dir = snm_source_dir
         case _:
             raise Exception(f"Unrecognized report type: {report_type}")
-    output_dir=os.path.join(source_dir, str(date) + "rt_report_pattern", "Report", f"{date}_{report_type}_TEXtables")
+    output_dir=os.path.join(source_dir, str(date) + rt_report_pattern, "Report", f"{date}_{report_type}_TEXtables")
     return output_dir
+
+def escape_latex(text):
+    """
+    Escape special LaTeX characters in text.
+    """
+    replacements = {
+        '&': r'\&',
+        '%': r'\%',
+        '$': r'\$',
+        '#': r'\#',
+        '_': r'\_',
+        '{': r'\{',
+        '}': r'\}',
+        '~': r'\textasciitilde{}',
+        '^': r'\^{}',
+        '\\': r'\textbackslash{}',
+        '§': r'\S{}',  # Section symbol
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    return text
 
 def interpret_ids(ids: str, report_type: str) -> list[str]:
     """
@@ -110,17 +132,18 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
     table_data = None
     match report_type:
         case "WW":
-            report_dir = os.path.join(ww_source_dir, rt_report_pattern)
+            report_dir = os.path.join(ww_source_dir, str(date) + rt_report_pattern)
             table_data = ww_table_data
         case "SNM":
             # report_dir = fr"J:\paperwork\0_UCSB_DWR_Project\{date_str[:4]}_RT_Reports\{date_str}_RT_report_ET"
-            report_dir = os.path.join(snm_source_dir, rt_report_pattern)
+            report_dir = os.path.join(snm_source_dir, str(date) + rt_report_pattern)
             table_data = snm_table_data
         case _:
             raise Exception(f"Unrecognized report type: {report_type}")
 
     use_this_dir = glob.glob(os.path.join(report_dir, "*UseThis*"))[0]
     table_dir = os.path.join(use_this_dir, "Tables")
+    print(table_dir)
     output_tables_dir = get_output_dir(date, report_type)
     os.makedirs(output_tables_dir, exist_ok=True)
 
@@ -147,7 +170,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
         print(table)
 
         # Read in the csv
-        df = pd.read_csv(table)
+        df = pd.read_csv(table,encoding='latin-1')
 
         # Check if this is an elevation band table by looking for "Elevation Band" in header
         is_elevation_table = "Elevation Band" in df.iloc[0].astype(str).values
@@ -166,9 +189,12 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
         # Check how many dates have data (first report does not have a previous date)
         row0 = df.iloc[0].astype(str)
         date_count = row0.str.contains("Avg").sum()
+        print(f"Date count: {date_count}")
         if date_count == 0:
             # TODO: error handling
             pass
+
+        print(f"Row 4 {df.iloc[3]}")
 
         # Determine column offset based on table type
         col_offset = 2 if is_elevation_table else 1
@@ -199,13 +225,19 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
         headers["Pillows"] = (
             [previous_date, current_date] if date_count > 1 else [current_date]
         )
-        headers["Surveys"] = (
-            [previous_date, current_date] if date_count > 1 else [current_date]
-        )
+        if "Surveys" in df.iloc[0].astype(str).values:
+            if verbose: print("Including surveys.")
+            headers["Surveys"] = (
+                [previous_date, current_date] if date_count > 1 else [current_date]
+            )
         headers["SNODAS* (in)"] = [current_date]
 
         # Check for ASO
         aso_corrected = df.iloc[:, 0].astype(str).str.contains("§").any()
+        print("ASO Corrected: ", aso_corrected)
+
+        # Escape LaTeX special characters in basin names (first column)
+        df.iloc[:, 0] = df.iloc[:, 0].astype(str).apply(escape_latex)
 
         # Load table template
         templates_dir = Path(__file__).parent.parent / "report_templates"

@@ -22,8 +22,8 @@ def generate_snm_report(date: int) -> Path:
         template = Template(f.read())
 
     # Location where the maps and tables are saved
-    maps_dir = get_maps_dir(date, 'SNM')
-    tables_dir = get_tables_dir(date, 'SNM')
+    maps_dir = Path(get_maps_dir(date, 'SNM'))
+    tables_dir = Path(get_tables_dir(date, 'SNM'))
 
     context = {
         "cu_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "CU_Logo_Notext.jpg").replace("\\", "/"),
@@ -38,7 +38,7 @@ def generate_snm_report(date: int) -> Path:
         "fig5_path": str(maps_dir / f"{date}_SNM_Fig5.jpg").replace("\\", "/"),
         "fig6_path": str(maps_dir / f"{date}_SNM_Fig6.jpg").replace("\\", "/"),
         "fig7_path": str(maps_dir / f"{date}_SNM_Fig7.jpg").replace("\\", "/"),
-        "table5_path": str(tables_dir / f"{date}_SNM_Table5.tex").replace("\\", "/"),
+        "table5_path": str(tables_dir / f"{date}_SNM_Table05.tex").replace("\\", "/"),
         "table10_path": str(tables_dir / f"{date}_SNM_Table10.tex").replace("\\", "/"),
     }
 
@@ -66,7 +66,7 @@ def main():
     # generate_maps("WW", args.date, args.figs, False, args.verbose, args.prompt_user)
 
     # Generate tables
-    # generate_tables("SNM", args.date, args.tables, args.verbose)
+    generate_tables("SNM", args.date, args.tables, args.verbose)
 
     # Generate report
     output_path = generate_snm_report(args.date)
