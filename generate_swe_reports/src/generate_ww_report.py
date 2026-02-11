@@ -4,6 +4,7 @@
 
 from generate_maps import get_output_dir as get_maps_dir
 from generate_maps import generate_maps
+from generate_swe_reports.src.utils import confirm_process
 from generate_tables import get_output_dir as get_tables_dir
 from generate_tables import generate_tables
 import argparse
@@ -11,9 +12,8 @@ from pathlib import Path
 from jinja2 import Template
 from datetime import datetime
 import subprocess
-import shutil
 
-def generate_ww_report(date: int) -> Path:
+def generate_ww_report(date: int, verbose=False, prompt_user=False) -> Path:
     # TODO: docs
 
     PROJECT_ROOT = Path(__file__).parent.parent
@@ -49,12 +49,18 @@ def generate_ww_report(date: int) -> Path:
         "table5_path": str(snm_tables_dir / f"{date}_SNM_Table05.tex").replace("\\", "/"),
     }
 
-    rendered_tex = template.render(**context)
     output_tex = Path(get_maps_dir(date, 'WW')).parent / "LaTeX" / f"0WW_SWE_Report_{date}.tex"
+
+    # Abort if user denies file overwriting
+    if prompt_user and output_tex.exists() and confirm_process(f"0WW_SWE_Report_{date}.tex already exists and will be overwritten!"):
+        pass
+
+    rendered_tex = template.render(**context)
+    output_tex.parent.mkdir(parents=True, exist_ok=True)
     with open(output_tex, "w", encoding="utf-8") as f:
         f.write(rendered_tex)
 
-    print(f"Report written to {output_tex}")
+    if verbose: print(f"Report written to {output_tex}")
     return output_tex
 
 def main():
@@ -69,13 +75,21 @@ def main():
     args = parser.parse_args()
 
     # Generate maps
-    # generate_maps("WW", args.date, args.figs, False, args.verbose, args.prompt_user)
+    figs_is_none = any(p.strip().lower() in {"none", ""} for p in args.figs.split(","))
+    if not figs_is_none:
+        generate_maps("WW", args.date, args.figs, False, args.verbose, args.prompt_user)
+    elif args.verbose:
+        print(f"No figures will be generated: --figs={args.figs}")
 
     # Generate tables
-    generate_tables("WW", args.date, args.tables, args.verbose)
+    tables_is_none = any(p.strip().lower() in {"none", ""} for p in args.tables.split(","))
+    if not tables_is_none:
+        generate_tables("WW", args.date, args.tables, args.verbose, args.prompt_user)
+    elif args.verbose:
+        print(f"No tables will be generated: --tables={args.tables}")
 
     # Generate report
-    output_path = generate_ww_report(args.date)
+    output_path = generate_ww_report(args.date, args.verbose, args.prompt_user)
 
     # Automatically compile LaTeX file (twice)
     report_dir = Path(get_maps_dir(args.date, 'WW')).parent
@@ -92,7 +106,7 @@ def main():
             cwd = report_dir,
             check=True
         )
-    # Move output PDF to Report dir
+    # Move output PDF from LaTeX/ to Report/
     src = report_dir / "LaTeX" / f"0WW_SWE_Report_{args.date}.pdf"
     dest = report_dir / f"0WW_SWE_Report_{args.date}.pdf"
     src.replace(dest)

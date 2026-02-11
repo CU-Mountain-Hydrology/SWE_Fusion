@@ -21,7 +21,7 @@ def confirm_process(message: str) -> bool:
     """
     print(f"{message} Continue? (y/N)")
     while True:
-        user_answer = input().strip().lower()
+        user_answer = input("> ").strip().lower()
         if user_answer in ["y", "yes"]:
             return True
         elif user_answer in ["", "n", "no"]:
@@ -109,6 +109,7 @@ def crop_whitespace(input_filepath: str, output_filepath: str = None) -> None:
 def merge_swe_csv(input_filepath_1: str, input_filepath_2: str, output_filepath: str) -> None:
     """
     # TODO: docs
+    This function is no longer necessary for WY 2026 onwards as INMT Table 4 is now always one file
     """
     with open(input_filepath_1, "r") as csv1, open(input_filepath_2, "r") as csv2:
         lines1 = csv1.readlines()
@@ -128,3 +129,7 @@ def merge_swe_csv(input_filepath_1: str, input_filepath_2: str, output_filepath:
         output.writelines(merged_lines)
 
     print(f"Merged SWE table saved to {output_filepath}")
+#
+# from generate_maps import get_fig_data
+# def results_to_report(results_dir: str, report_dir: str, report_type: str, date: int, verbose=True) -> None:
+#     fig_data = get_fig_data(report_type)

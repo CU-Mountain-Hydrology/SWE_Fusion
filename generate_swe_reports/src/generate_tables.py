@@ -57,7 +57,7 @@ def escape_latex(text):
         '%': r'\%',
         '$': r'\$',
         '#': r'\#',
-        '_': r'\_',
+        # '_': r'\_',
         '{': r'\{',
         '}': r'\}',
         '~': r'\textasciitilde{}',
@@ -121,7 +121,7 @@ def interpret_ids(ids: str, report_type: str) -> list[str]:
     return sorted(id_list)
 
 
-def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> None:
+def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt_user=False) -> None:
     # TODO: verbose
     """
     # TODO: docs
@@ -143,9 +143,6 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
 
     use_this_dir = glob.glob(os.path.join(report_dir, "*UseThis*"))[0]
     table_dir = os.path.join(use_this_dir, "Tables")
-    print(table_dir)
-    output_tables_dir = get_output_dir(date, report_type)
-    os.makedirs(output_tables_dir, exist_ok=True)
 
     # Determine which tables to generate
     id_list = interpret_ids(ids, report_type)
@@ -158,8 +155,41 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
     #     if not os.path.exists(table04_output):
     #         merge_swe_csv(table04a, table04b, table04_output)
 
+    # File overwrite choices
+    yes_to_all = False
+    no_to_all = False
+
     # Generate tables
     for table_id in id_list:
+        # Handle overwriting file
+        if no_to_all:
+            break
+        output_filename = f"{date}_{report_type}_Table{table_id}.tex"
+        output_filepath = Path(get_output_dir(date, report_type)) / output_filename
+        if prompt_user and os.path.exists(output_filepath) and not yes_to_all:
+            print(f"{output_filename} already exists and will be overwritten! Continue?")
+            print("Options: [y]es, [n]o, [ya] yes to all, [na] no to all (default: no)")
+            while True:
+                user_answer = input("> ").strip().lower()
+                if user_answer in ["y", "yes"]:
+                    break  # Generate table_id
+                elif user_answer in ["ya"]:
+                    yes_to_all = True
+                    break  # Generate all table_ids in id_list
+                elif user_answer in ["", "n", "no"]:
+                    print(f"Skipping table generation for Table{table_id}")
+                    table_id = None
+                    break  # Skip this table only
+                elif user_answer in ["na"]:
+                    print("Safely aborting table generation...")
+                    no_to_all = True
+                    table_id = None
+                    break  # Skip all table_ids in id_list
+                else:
+                    print("Invalid input. Please enter y or n.")
+        if table_id is None:
+            continue  # Skip to next table_id
+
         print(f"Generating table {table_id}...")
 
         matches = glob.glob(os.path.join(table_dir, f"*{table_id}_final.csv"))
@@ -254,9 +284,11 @@ def generate_tables(report_type: str, date: int, ids: str, verbose: bool) -> Non
                                       aso_corrected=aso_corrected,)
 
         # Write table to LaTeX file in the output directory
-        output_table = Path(output_tables_dir) / f"{date}_{report_type}_Table{table_id}.tex"
-        with open(output_table, "w") as f:
+        os.makedirs(get_output_dir(date, report_type), exist_ok=True)
+        if verbose: print(f"Writing table to {output_filepath}")
+        with open(output_filepath, "w") as f:
             f.write(latex_table)
+        if verbose: print(f"Finished generating Table{table_id}.")
 
 def main():
     # Parse input arguments and flags, see top of file for argument usage examples
@@ -265,10 +297,11 @@ def main():
     parser.add_argument("date", type=int, help="Date to process (YYYYMMDD)")
     parser.add_argument("--tables", default="all", type=str, help="Regex pattern(s) for table IDs to generate")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output messages")
+    parser.add_argument("-u", "--prompt_user", action="store_true", help="Prompt the user before overwriting or automatically selecting files")
     args = parser.parse_args()
 
     if args.report_type in ["WW","SNM"]:
-        generate_tables(args.report_type, args.date, args.tables, args.verbose)
+        generate_tables(args.report_type, args.date, args.tables, args.verbose, args.prompt_user)
     else:
         raise Exception(f"Unrecognized report type: {args.report_type}")
 

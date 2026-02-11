@@ -215,6 +215,7 @@ import shutil
 import arcpy
 import uuid
 from datetime import datetime
+from pathlib import Path
 
 def get_output_dir(date:int, report_type:str) -> str:
     # TODO: docs
@@ -387,7 +388,42 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
     working_aprx = os.path.join(temp_dir, "working_aprx.aprx")
     shutil.copyfile(template_aprx, working_aprx)
     aprx = arcpy.mp.ArcGISProject(working_aprx)  # Open the working aprx in ArcPy
+
+    # File overwrite choices
+    yes_to_all = False
+    no_to_all = False
+
+    # Generate maps
     for fig_id in fig_list:
+        # Handle overwriting file
+        if no_to_all:
+            break
+        output_filename = f"{date}_{report_type}_Fig{fig_id}.jpg"
+        output_filepath = Path(get_output_dir(date,report_type)) / output_filename
+        if prompt_user and os.path.exists(output_filepath) and not yes_to_all:
+            print(f"{output_filename} already exists and will be overwritten! Continue?")
+            print("Options: [y]es, [n]o, [ya] yes to all, [na] no to all (default: no)")
+            while True:
+                user_answer = input("> ").strip().lower()
+                if user_answer in ["y", "yes"]:
+                    break # Generate fig_id
+                elif user_answer in ["ya"]:
+                    yes_to_all = True
+                    break # Generate all fig_ids in fig_list
+                elif user_answer in ["", "n", "no"]:
+                    print(f"Skipping map generation for Fig{fig_id}")
+                    fig_id = None
+                    break # Skip this fig only
+                elif user_answer in ["na"]:
+                    print("Safely aborting map generation...")
+                    no_to_all = True
+                    fig_id = None
+                    break # Skip all fig_ids in fig_list
+                else:
+                    print("Invalid input. Please enter y or n.")
+        if fig_id is None:
+            continue # Skip to next fig_id
+
         print(f"Generating maps for fig {fig_id}...")
         fig_data = fig_data_dict.get(fig_id)
         if not fig_data:
@@ -612,10 +648,13 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                 formatted_date = f"{int(date_str[4:6])}/{int(date_str[6:8])}" # 20250331 => 3/31
                 element.text = element.text.replace("3/31", formatted_date)
 
-        output_dir = get_output_dir(date,report_type)
-        os.makedirs(output_dir, exist_ok=True)
-        layout.exportToJPEG(os.path.join(output_dir, layout.name + ".jpg"), resolution=300)
+        os.makedirs(get_output_dir(date,report_type), exist_ok=True)
+        layout.exportToJPEG(str(output_filepath), resolution=300)
         print(f"Finished generating maps for fig {fig_id}.")
+
+        # Crop jpg map
+        print(f"Cropping {str(output_filepath)} ...")
+        crop_whitespace(str(output_filepath))
 
     # Clean up
     del aprx
@@ -633,16 +672,6 @@ def main():
 
     # Generate each figure as specified by --figs
     generate_maps(args.report_type, args.date, args.figs, args.preview, args.verbose, args.prompt_user)
-
-    # Crop the whitespace of each generated map
-    output_dir = get_output_dir(args.date, args.report_type)
-    for fig_id in interpret_figs(args.figs, args.report_type):
-        matches = glob.glob(os.path.join(output_dir, f"*{fig_id}.jpg"))
-        if not matches:
-            raise FileNotFoundError(f"No file matching pattern '*{fig_id}' found in '{output_dir}'!")
-        jpeg_map = matches[0]
-        print(f"Cropping {jpeg_map} ...")
-        crop_whitespace(jpeg_map)
 
     # TODO: add support for preview flag
 

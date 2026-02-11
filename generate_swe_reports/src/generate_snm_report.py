@@ -4,6 +4,7 @@
 
 from generate_maps import get_output_dir as get_maps_dir
 from generate_maps import generate_maps
+from generate_swe_reports.src.utils import confirm_process
 from generate_tables import get_output_dir as get_tables_dir
 from generate_tables import generate_tables
 import argparse
@@ -12,7 +13,7 @@ from jinja2 import Template
 from datetime import datetime
 import subprocess
 
-def generate_snm_report(date: int) -> Path:
+def generate_snm_report(date: int, verbose=False, prompt_user=False) -> Path:
     # TODO: docs
 
     PROJECT_ROOT = Path(__file__).parent.parent
@@ -42,13 +43,18 @@ def generate_snm_report(date: int) -> Path:
         "table10_path": str(tables_dir / f"{date}_SNM_Table10.tex").replace("\\", "/"),
     }
 
+    output_tex = Path(get_maps_dir(date, 'SNM')).parent / "LaTeX" / f"{date}_RT_SWE_Report.tex"
+
+    # Abort if user denies file overwriting
+    if prompt_user and output_tex.exists() and confirm_process(f"{date}_RT_SWE_Report.tex already exists and will be overwritten!"):
+        pass
+
     rendered_tex = template.render(**context)
-    output_dir = Path(get_maps_dir(date, 'SNM')).parent
-    output_tex = output_dir / f"{date}_RT_SWE_Report.tex"
+    output_tex.parent.mkdir(parents=True, exist_ok=True)
     with open(output_tex, "w", encoding="utf-8") as f:
         f.write(rendered_tex)
 
-    print(f"Report written to {output_tex}")
+    if verbose: print(f"Report written to {output_tex}")
     return output_tex
 
 def main():
@@ -63,28 +69,42 @@ def main():
     args = parser.parse_args()
 
     # Generate maps
-    # generate_maps("WW", args.date, args.figs, False, args.verbose, args.prompt_user)
+    figs_is_none = any(p.strip().lower() in {"none", ""} for p in args.figs.split(","))
+    if not figs_is_none:
+        generate_maps("SNM", args.date, args.figs, False, args.verbose, args.prompt_user)
+    elif args.verbose:
+        print(f"No figures will be generated: --figs={args.figs}")
 
     # Generate tables
-    generate_tables("SNM", args.date, args.tables, args.verbose)
+    tables_is_none = any(p.strip().lower() in {"none", ""} for p in args.tables.split(","))
+    if not tables_is_none:
+        generate_tables("SNM", args.date, args.tables, args.verbose, args.prompt_user)
+    elif args.verbose:
+        print(f"No tables will be generated: --tables={args.tables}")
 
     # Generate report
-    output_path = generate_snm_report(args.date)
+    output_path = generate_snm_report(args.date, args.verbose, args.prompt_user)
 
     # Automatically compile LaTeX file (twice)
     # TODO: docs on how to set up pdflatex and get subprocess working
+    report_dir = Path(get_maps_dir(args.date, 'SNM')).parent
     for _ in range(2):
         print("Compiling LaTeX to PDF.")
         subprocess.run(
             ["pdflatex",
-            "-file-line-error",
-            "-synctex=1",
-            "-output-format=pdf",
-            "-interaction=nonstopmode",
-            output_path.name],
-            cwd = Path(get_maps_dir(args.date, 'SNM')).parent,
+             "-file-line-error",
+             "-synctex=1",
+             "-output-format=pdf",
+             "-interaction=nonstopmode",
+             f"-output-directory={report_dir / 'LaTeX'}",
+             output_path.name],
+            cwd=report_dir,
             check=True
         )
+    # Move output PDF from LaTeX/ to Report/
+    src = report_dir / "LaTeX" / f"{args.date}_RT_SWE_Report.pdf"
+    dest = report_dir / f"{args.date}_RT_SWE_Report.pdf"
+    src.replace(dest)
 
 if __name__ == "__main__":
     main()
