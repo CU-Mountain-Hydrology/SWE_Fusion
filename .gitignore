@@ -1,1 +1,5 @@
 .idea
+auxil
+out
+generate_swe_reports/output
+generate_swe_reports/src/__pycache__/
