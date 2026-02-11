@@ -11,6 +11,7 @@ from pathlib import Path
 from jinja2 import Template
 from datetime import datetime
 import subprocess
+import shutil
 
 def generate_ww_report(date: int) -> Path:
     # TODO: docs
@@ -21,10 +22,10 @@ def generate_ww_report(date: int) -> Path:
     with open(TEMPLATE_PATH, encoding="utf-8") as f:
         template = Template(f.read())
 
-    maps_dir = get_maps_dir(date, 'WW')
-    snm_maps_dir = get_maps_dir(date, 'SNM')
-    tables_dir = get_tables_dir(date, 'WW')
-    snm_tables_dir = get_tables_dir(date, 'SNM')
+    maps_dir = Path(get_maps_dir(date, 'WW'))
+    snm_maps_dir = Path(get_maps_dir(date, 'SNM'))
+    tables_dir = Path(get_tables_dir(date, 'WW'))
+    snm_tables_dir = Path(get_tables_dir(date, 'SNM'))
 
     context = {
         "instaar_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "INSTAAR_75_Logo.png").replace("\\", "/"),
@@ -45,11 +46,11 @@ def generate_ww_report(date: int) -> Path:
         "table2_path": str(tables_dir / f"{date}_WW_Table02.tex").replace("\\", "/"),
         "table3_path": str(tables_dir / f"{date}_WW_Table03.tex").replace("\\", "/"),
         "table4_path": str(tables_dir / f"{date}_WW_Table04.tex").replace("\\", "/"),
-        "table5_path": str(snm_tables_dir / f"{date}_SNM_Table5.tex").replace("\\", "/"),
+        "table5_path": str(snm_tables_dir / f"{date}_SNM_Table05.tex").replace("\\", "/"),
     }
 
     rendered_tex = template.render(**context)
-    output_tex = Path(get_maps_dir(date, 'WW')).parent / f"0WW_SWE_Report_{date}.tex"
+    output_tex = Path(get_maps_dir(date, 'WW')).parent / "LaTeX" / f"0WW_SWE_Report_{date}.tex"
     with open(output_tex, "w", encoding="utf-8") as f:
         f.write(rendered_tex)
 
@@ -77,6 +78,7 @@ def main():
     output_path = generate_ww_report(args.date)
 
     # Automatically compile LaTeX file (twice)
+    report_dir = Path(get_maps_dir(args.date, 'WW')).parent
     for _ in range(2):
         print("Compiling LaTeX to PDF.")
         subprocess.run(
@@ -85,10 +87,15 @@ def main():
             "-synctex=1",
             "-output-format=pdf",
             "-interaction=nonstopmode",
+            f"-output-directory={report_dir / 'LaTeX'}",
             output_path.name],
-            cwd = Path(get_maps_dir(args.date, 'WW')).parent,
+            cwd = report_dir,
             check=True
         )
+    # Move output PDF to Report dir
+    src = report_dir / "LaTeX" / f"0WW_SWE_Report_{args.date}.pdf"
+    dest = report_dir / f"0WW_SWE_Report_{args.date}.pdf"
+    src.replace(dest)
 
 if __name__ == "__main__":
     main()
