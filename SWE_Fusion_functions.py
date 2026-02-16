@@ -3315,6 +3315,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
             difference_cols = ['prev_SWE_IN', 'prev_sensors', 'prev_Avg']
             df_band_prev = pd.read_csv(
                 prev_tables_workspace + f"{abbrev}_{prev_rundate}_table{bandTableIndex[f'{abbrev}']}_raw.csv")
+            df_band_prev = df_band_prev[['Basin', 'Elevation Band', 'SWE_IN', 'sensors', 'Avg']]
             df_band_prev = df_band_prev.rename(
                 columns={"SWE_IN": "prev_SWE_IN", "sensors": "prev_sensors", "Avg": "prev_Avg"})
             df_band_prev = df_band_prev[['Basin', 'Elevation Band', 'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
@@ -3560,6 +3561,7 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
             difference_cols = ['prev_SWE_IN', 'prev_sensors', 'prev_Avg']
             df_wtshed_prev = pd.read_csv(
                 prev_tables_workspace + f"{abbrev}_{prev_rundate}_table{wtshTableIndex[f'{abbrev}']}_raw.csv")
+            df_wtshed_prev = df_wtshed_prev[['Basin', 'SWE_IN', 'sensors', 'Avg']]
             df_wtshed_prev = df_wtshed_prev.rename(
                 columns={"SWE_IN": "prev_SWE_IN", "sensors": "prev_sensors", "Avg": "prev_Avg"})
             df_wtshed_prev = df_wtshed_prev[['Basin', 'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
@@ -3793,6 +3795,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
         difference_cols = ['prev_SWE_IN', 'prev_sensors', 'prev_Avg']
         df_band_prev = pd.read_csv(
             prev_tables_workspace + f"SNM_{prev_rundate}_table10_raw.csv")
+        df_band_prev = df_band_prev[['Basin', 'Elevation Band', 'SWE_IN', 'sensors', 'Avg']]
         df_band_prev = df_band_prev.rename(
             columns={"SWE_IN": "prev_SWE_IN", "sensors": "prev_sensors", "Avg": "prev_Avg"})
         df_band_prev = df_band_prev[['Basin', 'Elevation Band', 'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
@@ -3967,6 +3970,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
         difference_cols = ['prev_SWE_IN', 'prev_sensors', 'prev_Avg']
         df_wtshed_prev = pd.read_csv(
             prev_tables_workspace + f"SNM_{prev_rundate}_table05_raw.csv")
+        df_wtshed_prev =  df_wtshed_prev[['Basin', 'SWE_IN', 'sensors', 'Avg']]
         df_wtshed_prev = df_wtshed_prev.rename(
             columns={"SWE_IN": "prev_SWE_IN", "sensors": "prev_sensors", "Avg": "prev_Avg"})
         df_wtshed_prev = df_wtshed_prev[['Basin', 'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
