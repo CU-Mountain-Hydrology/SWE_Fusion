@@ -3800,6 +3800,7 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
 
         # edit and export
         if not surveys_use:
+            print('\nTHIS ONE')
             df_band_tbl = merged_df[
                 ['Basin', 'Elevation Band', 'SWE_IN', "Percent", "AREA_MI2", 'VOL_AF', "sensors", "Avg", "SNODAS",
                  'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
@@ -3808,6 +3809,8 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
             df_band_export = merged_df[
                 ["Basin", 'Elevation Band', 'prev_Avg', "Avg", "prev_SWE_IN", "SWE_IN", "Percent", "VOL_AF",
                  "AREA_MI2", 'prev_sensors', "sensors", "SNODAS"]]
+            print(df_band_export.shape)
+            print(f"Columns: {df_band_export.columns}")
             df_band_export = df_band_export.rename(
                 columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
                          "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
@@ -3816,6 +3819,9 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
             top_header = ["", "", prev_formatted_date, formatted_date, prev_formatted_date, formatted_date,
                           formatted_date, formatted_date, formatted_date, prev_formatted_date, formatted_date,
                           formatted_date]
+            print(f"Top Header Length: {len(top_header)}")
+            print(df_band_export.shape)
+            print(f"Columns: {df_band_export.columns}")
             df_band_export.columns = pd.MultiIndex.from_arrays(
                 [top_header, df_band_export.columns]
             )
@@ -3844,6 +3850,9 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
             )
             df_band_export.to_csv(
                 tables_workspace + f"SNM_{rundate}_table10.csv")
+
+        df_band_tbl.to_csv(tables_workspace + f"SNM_{rundate}_table10_raw.csv",
+                           index=False)
 
     if difference == "N":
         # edit and export
