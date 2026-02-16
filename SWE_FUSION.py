@@ -29,11 +29,11 @@ arcpy.env.parallelProcessingFactor = "0"
 ## date info
 user = "Olaf"
 year = 2026
-rundate = "20260208"
+rundate = "20260215"
 survey_date = "20260208"
-pillow_date = "08Feb2026"
-mean_date = "0208"
-prev_rundate = "20260201"
+pillow_date = "15Feb2026"
+mean_date = "0215"
+prev_rundate = "20260208"
 
 # flags
 difference = "Y" # should be Y if you want to compare against a previous model run
@@ -47,10 +47,11 @@ model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
 model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens"
 modelRuns = [model_woCCR, model_wCCR]
 model_labels = ["woCCR", "wCCR"]
-prev_model_run = "RT_CanAdj_rcn_wCCR_nofscamskSens_UseThis"
+prev_model_run_WW = "RT_CanAdj_rcn_woCCR_nofscamskSens"
+prev_model_run_SNM = "ASO_BiasCorrect_RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis"
 aso_symbol = "§"
-SNM_prev_tables_workspace = rf"M:/SWE/Sierras/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run}/Tables/"
-WW_prev_tables_workspace = rf"M:/SWE/WestWide/documents/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run}/Tables/"
+SNM_prev_tables_workspace = rf"M:/SWE/Sierras/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM}/Tables/"
+WW_prev_tables_workspace = rf"M:/SWE/WestWide/documents/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW}/Tables/"
 ######################################
 # VETTING VARIABLES
 ######################################
@@ -224,7 +225,7 @@ Cellsize = "500"
 #                       glacierMask=glacierMask,
 #                       band_zones=WW_band_zones, watershed_zones=WW_watershed_zones, unzip_SNODAS="Y")
 
-# clear memory
+# # clear memory
 # sleep(30)
 # clear_arcpy_locks()
 #
@@ -319,7 +320,7 @@ for modelRun in modelRuns:
 
             # fsca variables
             fSCA_raster = f"{SNM_results_workspace}/{rundate}_results/{model_woCCR}/SNM_fSCA_{rundate}_albn83.tif"
-            prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run}/vetting_domains/"
+            prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM}/vetting_domains/"
             vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
             prev_raster = prev_vetting_WS + f"SNM_fSCA_{prev_rundate}_albn83.tif"
 
@@ -340,7 +341,7 @@ for modelRun in modelRuns:
             arcpy.env.cellSize = snapRaster_albn83
             raster = f"{WW_results_workspace}/{rundate}_results/{modelRun}/p8_{rundate}_noneg.tif"
             fSCA_raster = f"{WW_results_workspace}/{rundate}_results/{model_woCCR}/fSCA_{rundate}_albn83.tif"
-            prev_vetting_WS = f"W:/documents/2026_RT_Reports/{prev_rundate}_RT_report/{prev_model_run}/vetting_domains/"
+            prev_vetting_WS = f"W:/documents/2026_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW}/vetting_domains/"
             sensors_WW = WW_results_workspace + f"{rundate}_results/{rundate}_sensors_albn83.shp"
             surveys_WW = WW_results_workspace + f"{rundate}_results/{rundate}_surveys_albn83.shp"
             prev_fSCA_raster = prev_vetting_WS + f"fSCA_{prev_rundate}_{domain}_clp.tif"
@@ -413,7 +414,7 @@ if difference == "Y":
 
             if domain == "SNM":
                 print('analyzing Sierras')
-                prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run}/vetting_domains/"
+                prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM}/vetting_domains/"
                 vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
                 fSCA_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/"
                 raster = vetting_WS + f"p8_{rundate}_noneg.tif"
@@ -434,7 +435,7 @@ if difference == "Y":
 
             else:
                 print(f"analyzing {domain}")
-                prev_vetting_WS = f"W:/documents/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run}/vetting_domains/"
+                prev_vetting_WS = f"W:/documents/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW}/vetting_domains/"
                 vetting_WS = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
                 fSCA_vetting_WS = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/"
                 raster = vetting_WS + f"p8_{rundate}_noneg_{domain}_clp.tif"
@@ -743,7 +744,7 @@ if biasCorrection == "Y":
                       snapRaster_geon83=snapRaster_geon83,
                       snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM,
                       run_type="Bias", bias_model_run=f"/ASO_BiasCorrect_{ChosenModelRun_WW}/",
-                      prev_report_date=prev_rundate, prev_model_run=prev_model_run)
+                      prev_report_date=prev_rundate, prev_model_run=prev_model_run_WW)
 
     clear_arcpy_locks()
     sleep(30)
@@ -762,7 +763,7 @@ if biasCorrection == "Y":
                           case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
                           glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type='Bias',
                           snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
-                          Difference=difference, bias_model_run=f"ASO_BiasCorrect_{ChosenModelRun_SNM}/", prev_model_run=prev_model_run,
+                          Difference=difference, bias_model_run=f"ASO_BiasCorrect_{ChosenModelRun_SNM}/", prev_model_run=prev_model_run_SNM,
                           prev_report_date=prev_rundate)
 
     for domain in domainList:
@@ -790,7 +791,7 @@ if biasCorrection == "Y":
             arcpy.env.snapRaster = snapRaster_albn83
             arcpy.env.cellSize = snapRaster_albn83
             raster = f"{WW_results_workspace}/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_SNM}/p8_{rundate}_noneg.tif"
-            prev_vetting_WS = f"W:/documents/2026_RT_Reports/{prev_rundate}_RT_report/{prev_model_run}/vetting_domains/"
+            prev_vetting_WS = f"W:/documents/2026_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW}/vetting_domains/"
             sensors_WW = WW_results_workspace + f"{rundate}_results/{rundate}_sensors_albn83.shp"
             surveys_WW = WW_results_workspace + f"{rundate}_results/{rundate}_surveys_albn83.shp"
             prev_fSCA_raster = prev_vetting_WS + f"fSCA_{prev_rundate}_{domain}_clp.tif"

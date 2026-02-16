@@ -436,10 +436,26 @@ def raster_box_whisker_plot(rundate, prev_model_date, raster, prev_raster, domai
     arr2 = read_raster_values(raster)
 
     # Remove extreme outliers and invalid values
+    # def clean_array(arr):
+    #     """Remove NaN, inf, and extreme outliers"""
+    #     arr_clean = arr[~np.isnan(arr) & ~np.isinf(arr)]
+    #     arr_clean = arr_clean[arr_clean >= 0]  # Remove negative values
+    #
+    #     # Remove values beyond 99.9th percentile (extreme outliers)
+    #     p999 = np.percentile(arr_clean, 99.9)
+    #     arr_clean = arr_clean[arr_clean <= p999]
+    #
+    #     return arr_clean
+
     def clean_array(arr):
         """Remove NaN, inf, and extreme outliers"""
         arr_clean = arr[~np.isnan(arr) & ~np.isinf(arr)]
         arr_clean = arr_clean[arr_clean >= 0]  # Remove negative values
+
+        # Check if array is empty after filtering
+        if arr_clean.size == 0:
+            print("Warning: Array is empty after filtering")
+            return arr_clean  # Return empty array
 
         # Remove values beyond 99.9th percentile (extreme outliers)
         p999 = np.percentile(arr_clean, 99.9)
