@@ -408,9 +408,11 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
     if report_type == "WW":
         template_aprx = ww_aprx
         fig_data_dict = ww_fig_data
-    else:
+        rt_report_dir = os.path.join(ww_source_dir, str(date) + rt_report_pattern)
+    else: # SNM
         template_aprx = snm_aprx
         fig_data_dict = snm_fig_data
+        rt_report_dir = os.path.join(snm_source_dir, str(date) + rt_report_pattern)
 
     temp_dir = tempfile.mkdtemp()
     working_aprx = os.path.join(temp_dir, "working_aprx.aprx")
@@ -468,6 +470,21 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                 layer_id = layer_info["layer"]
                 file_type = layer_info["format"]
                 label = layer_info["label"]
+
+                # Special handling for SNM fig 7 CCR_sensors layer
+                if report_type == "SNM" and fig_id == "7" and layer_id == "CCR_sensors":
+                    # Check if "wCCR" is in the UseThis directory name
+                    use_this_dirs = glob.glob(os.path.join(rt_report_dir, "*UseThis*"))
+                    include_ccr = any("wCCR" in dir_name for dir_name in use_this_dirs)
+
+                    if not include_ccr:
+                        # Remove the layer from the map and skip to next layer
+                        ccr_layer = _map.listLayers(f"*{layer_id}*")
+                        if ccr_layer:
+                            _map.removeLayer(ccr_layer[0])
+                            if verbose:
+                                print(f"Removed CCR_sensors layer from SNM Fig 7 (model run is woCCR).")
+                        continue
 
                 # Find and remove undefined placeholder layers/tables
                 symbology = None
