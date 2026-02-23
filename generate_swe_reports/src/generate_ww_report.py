@@ -33,6 +33,7 @@ def generate_ww_report(date: int, verbose=False, prompt_user=False) -> Path:
         "cu_boulder_logo_path": str(PROJECT_ROOT / "report_templates" / "images" / "CU_Boulder_Logo.png").replace("\\", "/"),
         "date": date,
         "date_string": datetime.strptime(str(date), "%Y%m%d").strftime("%B %#d, %Y"),
+        "year": int(str(date)[0:4]),
         "fig1a_path" : str(maps_dir / f"{date}_WW_Fig1a.jpg").replace("\\", "/"),
         "fig1b_path": str(maps_dir / f"{date}_WW_Fig1b.jpg").replace("\\", "/"),
         "fig2a_path": str(maps_dir / f"{date}_WW_Fig2a.jpg").replace("\\", "/"),
