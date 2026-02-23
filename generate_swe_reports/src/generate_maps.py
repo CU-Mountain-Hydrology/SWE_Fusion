@@ -23,7 +23,9 @@ Automatically generates report maps in ArcPy using post-processed rasters.
 ww_aprx = "U:\EricG\MapTemplate\MapTemplate.aprx"       # Project containing template for each figure
 snm_aprx = "U:\EricG\MapTemplate\SNM_Template.aprx"
 ww_source_dir = r"W:\documents\2026_RT_Reports"         # Parent directory of the YYYYMMDD_RT_Report folders
+ww_results_dir = r"W:\Spatial_SWE\WW_regression\RT_report_data"
 snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports"
+snm_results_dir = r"J:\Spatial_SWE\SNM_regression\RT_report_data"
 rt_report_pattern = "_RT_report"
 
 # Figure configs
@@ -193,7 +195,7 @@ snm_fig_data = {
                 {"layer": "Zero_sensors", "format": "shp", "dir": "", "label": "None"},
                 {"layer": "SNM_*_sensors", "format": "shp", "dir": "", "label": "None"},
                 # {"layer": "Zero_CCR", "format": "shp", "dir": "", "label": "None"},
-                # {"layer": "CCR_sensors", "format": "shp", "dir": "", "label": "None"},
+                {"layer": "CCR_sensors", "format": "shp", "dir": "", "label": "None"},
             ],
             "banded_elev": []
         }
@@ -227,14 +229,9 @@ def get_output_dir(date:int, report_type:str) -> str:
             source_dir = snm_source_dir
         case _:
             raise Exception(f"Unrecognized report type: {report_type}")
-    output_dir=os.path.join(source_dir, str(date) + rt_report_pattern, "Report", f"{date}_{report_type}_JPEGmaps")
+    output_dir=os.path.join(source_dir, str(date) + rt_report_pattern, "Report", f"{date}_JPG_maps")
     return output_dir
 
-def get_fig_data(report_type:str) -> dict:
-    if report_type == "WW":
-        return ww_fig_data
-    else: # SNM
-        return snm_fig_data
 
 def interpret_figs(figs: str, report_type: str) -> list[str]:
     """
@@ -287,7 +284,34 @@ def interpret_figs(figs: str, report_type: str) -> list[str]:
     return sorted(fig_list)
 
 
-def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user = True, warn = True) -> str:
+def results_to_report(results_dir: str, report_dir: str, layer_id: str, dir_pattern: str, file_type: str, verbose=True) -> list[str]:
+    # TODO: docs
+    # Find the results directory
+    results_dir_pattern = os.path.join(results_dir, dir_pattern)
+    try:
+        results_layer_dir = glob.glob(results_dir_pattern)[0]
+    except IndexError:
+        raise FileNotFoundError(f"No file matching pattern '{layer_id}' found in '{report_dir}', "
+                                f"and no directory matching pattern '{dir_pattern}' found in '{results_dir}'!")
+
+    # Find the file within the results directory
+    results_files = glob.glob(os.path.join(results_layer_dir, f"*{layer_id}*.{file_type}"))
+    if not results_files:
+        raise FileNotFoundError(
+            f"No file matching pattern '{layer_id}' found in '{report_dir}' or '{results_layer_dir}'!")
+
+    # Copy the file to the rt_report directory
+    source_file = results_files[0]
+    destination_path = os.path.join(report_dir, os.path.basename(source_file))
+    shutil.copy2(source_file, destination_path)
+    if verbose:
+        print(f"Copied: {os.path.basename(source_file)} from results to report directory")
+
+    # Return path of the copied file
+    return [destination_path]
+
+
+def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user = True, warn = True, verbose = True) -> str:
     """
     Finds the specific layer file to use
 
@@ -296,6 +320,7 @@ def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user =
     :param layer_info: Dictionary containing the layer id, format, directory, and label type
     :param prompt_user: Enable prompting the user when selecting between multiple options. Default: True
     :param warn: Enable warning messages. Default: True
+    :param verbose: Enable verbose output messages. Default: True
     :return: Path to the layer file
     :rtype: str
     """
@@ -306,10 +331,11 @@ def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user =
     dir_pattern = layer_info["dir"]
 
     # Find RT_Report directory for this date
-    # TODO: copy files out of results dir to avoid corruption problems. Automate this process
     if report_type == "WW":
+        results_dir = os.path.join(ww_results_dir, f"{date}_results")
         rt_report_dir = os.path.join(ww_source_dir, str(date) + rt_report_pattern)
     else: # SNM
+        results_dir = os.path.join(snm_results_dir, f"{date}_results")
         rt_report_dir = os.path.join(snm_source_dir, str(date) + rt_report_pattern)
 
     # Find the directory containing the layer products to be used e.g. "...UseThis"
@@ -322,7 +348,9 @@ def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user =
     # Find the layer products that contains the layer_id e.g. "p8"
     layer_files = glob.glob(os.path.join(layer_dir, f"*{layer_id}*.{file_type}"))
     if not layer_files:
-        raise FileNotFoundError(f"No file matching pattern '{layer_id}' found in '{layer_dir}'!")
+        # Attempt to copy the file from the results directory to the rt_report directory
+        layer_files = results_to_report(results_dir, layer_dir, layer_id, dir_pattern, file_type, verbose=verbose)
+
     layer_file = layer_files[0]
 
     if len(layer_files) > 1:
@@ -330,11 +358,11 @@ def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user =
         for file in layer_files:
             if file_type == "tif" and file.endswith("nulled.tif"):
                 layer_file = file
-                if warn: print(f"find_layer_file warning: Multiple files matching pattern '{layer_id}' found! Using {layer_file}")
+                if warn: print(f"Multiple files matching pattern '{layer_id}' found! Using {layer_file}")
                 break
             elif layer_id == "anom_table_save" and file.endswith(f"{date}anom_table_save.dbf"):
                 layer_file = file
-                if warn: print(f"find_layer_file warning: Multiple files matching pattern '{layer_id}' found! Using {layer_file}")
+                if warn: print(f"Multiple files matching pattern '{layer_id}' found! Using {layer_file}")
                 break
         else: # If none of the layer files end with "nulled"
             if prompt_user:
@@ -354,7 +382,7 @@ def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user =
                 print(f"Using {layer_file}")
             elif warn:
                 # Use the first layer file found
-                print(f"find_layer_file warning: Multiple files matching pattern '{layer_id}' found in '{layer_dir}'. Using {layer_files[0]}")
+                print(f"Multiple files matching pattern '{layer_id}' found in '{layer_dir}'. Using {layer_files[0]}")
 
     return layer_file
 
@@ -461,7 +489,12 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                     _map.removeTable(undefined_table)
 
                 # Find the new layer source
-                new_layer_path = find_layer_file(report_type, date, layer_info, prompt_user=prompt_user)
+                try:
+                    new_layer_path = find_layer_file(report_type, date, layer_info, prompt_user=prompt_user, verbose=verbose)
+                except FileNotFoundError as e:
+                    print(f"Error: {e}")
+                    print(f"Skipping layer '{layer_id}' in map '{map_id}' for figure {fig_id}")
+                    continue # to next layer in this map
 
                 # Handle MODIS date
                 if "snapshot" in new_layer_path:

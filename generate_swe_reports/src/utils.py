@@ -129,7 +129,3 @@ def merge_swe_csv(input_filepath_1: str, input_filepath_2: str, output_filepath:
         output.writelines(merged_lines)
 
     print(f"Merged SWE table saved to {output_filepath}")
-#
-# from generate_maps import get_fig_data
-# def results_to_report(results_dir: str, report_dir: str, report_type: str, date: int, verbose=True) -> None:
-#     fig_data = get_fig_data(report_type)
