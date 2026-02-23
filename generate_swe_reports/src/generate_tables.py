@@ -264,7 +264,17 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
 
         # Check for ASO
         aso_corrected = df.iloc[:, 0].astype(str).str.contains("§").any()
-        print("ASO Corrected: ", aso_corrected)
+        if verbose:
+            print("ASO Corrected: ", aso_corrected)
+
+        # Check for table type
+        is_ww = (report_type == "WW")
+
+        # Check for animas text
+        # is_socn = df.iloc[:, 0].astype(str).str.contains("**").any()
+        is_socn = (is_ww and table_id == "03")
+        if verbose:
+            print("Is SOCN? ", is_socn)
 
         # Escape LaTeX special characters in basin names (first column)
         df.iloc[:, 0] = df.iloc[:, 0].astype(str).apply(escape_latex)
@@ -281,7 +291,9 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
                                       title=table_data[table_id],
                                       headers=headers,
                                       date=date_str,
-                                      aso_corrected=aso_corrected,)
+                                      aso_corrected=aso_corrected,
+                                      is_ww=is_ww,
+                                      is_socn=is_socn,)
 
         # Write table to LaTeX file in the output directory
         os.makedirs(get_output_dir(date, report_type), exist_ok=True)
