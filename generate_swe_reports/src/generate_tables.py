@@ -267,6 +267,11 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
         if verbose:
             print("ASO Corrected: ", aso_corrected)
 
+        # Check for fSCA issues
+        fsca_issue = df.iloc[:, 0].astype(str).str.contains("+", regex=False).any()
+        if verbose:
+            print("fSCA Issue: ", fsca_issue)
+
         # Check for table type
         is_ww = (report_type == "WW")
 
@@ -292,6 +297,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
                                       headers=headers,
                                       date=date_str,
                                       aso_corrected=aso_corrected,
+                                      fsca_issue=fsca_issue,
                                       is_ww=is_ww,
                                       is_socn=is_socn,)
 

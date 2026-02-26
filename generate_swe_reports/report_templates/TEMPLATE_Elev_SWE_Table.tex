@@ -139,7 +139,13 @@
     } \\[-4pt]
     {% if aso_corrected %}
         \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
-            \footnotesize \S{} Data in all ASO-collected basins have been bias-corrected using ASO data and therefore the SWE changes might not represent snowmelt/accumulation but rather an update to the SWE estimates based on airborne data.} \\
+            \footnotesize \S{} Data in all ASO-collected basins have been bias-corrected using ASO data and therefore the SWE changes might not represent snowmelt/accumulation but rather an update to the SWE estimates based on airborne data.
+            } \\[-4pt]
+    {% endif %}
+    {% if fsca_issue %}
+        \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
+            \footnotesize + Recent snowpack accumulation may be under-estimated due to issues with satellite-observed fSCA.
+        } \\
     {% endif %}
     \bottomrule
     \endfoot
@@ -201,6 +207,12 @@
     } \\[-4pt]
     {% if aso_corrected %}
         \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
-            \footnotesize \S{} Data in all ASO-collected basins have been bias-corrected using ASO data and therefore the SWE changes might not represent snowmelt/accumulation but rather an update to the SWE estimates based on airborne data.} \\
+            \footnotesize \S{} Data in all ASO-collected basins have been bias-corrected using ASO data and therefore the SWE changes might not represent snowmelt/accumulation but rather an update to the SWE estimates based on airborne data.
+        } \\[-4pt]
+    {% endif %}
+    {% if fsca_issue %}
+        \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
+            \footnotesize + Recent snowpack accumulation may be under-estimated due to issues with satellite-observed fSCA.
+        } \\
     {% endif %}
 \end{longtable}
