@@ -39,7 +39,7 @@ ww_fig_data = {                                         # Dictionary of metadata
     "1a": {
         "maps": {
             "1a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"}
+                {"layer": "p8*_noneg", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ]
         }
     },
@@ -68,14 +68,14 @@ ww_fig_data = {                                         # Dictionary of metadata
     "3": {
         "maps": {
             "3a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"}
+                {"layer": "p8*_noneg", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ],
             "3b": [
                 {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
             ],
             "3c": [
                 {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
-                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
+                {"layer": "[0-9]anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
             ],
             "3d": []
         }
@@ -83,14 +83,14 @@ ww_fig_data = {                                         # Dictionary of metadata
     "4": {
         "maps": {
             "4a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"},
+                {"layer": "p8*_noneg", "format": "tif", "dir": "*UseThis*", "label": "None"},
             ],
             "4b": [
                 {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"},
             ],
             "4c": [
                 {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
-                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
+                {"layer": "[0-9]anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
             ],
             "4d": []
         }
@@ -98,14 +98,14 @@ ww_fig_data = {                                         # Dictionary of metadata
     "5": {
         "maps": {
             "5a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"}
+                {"layer": "p8*_noneg", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ],
             "5b": [
                 {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
             ],
             "5c": [
                 {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
-                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
+                {"layer": "[0-9]anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
             ],
             "5d": []
         }
@@ -113,14 +113,14 @@ ww_fig_data = {                                         # Dictionary of metadata
     "6": {
         "maps": {
             "6a": [
-                {"layer": "p8", "format": "tif", "dir": "*UseThis*", "label": "None"}
+                {"layer": "p8*_noneg", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ],
             "6b": [
                 {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
             ],
             "6c": [
                 {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
-                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
+                {"layer": "[0-9]anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
             ],
             "6d": []
         }
@@ -141,7 +141,7 @@ snm_fig_data = {
     "1": {
         "maps": {
             "real_time_swe": [
-                {"layer": "p8*msk", "format": "tif", "dir": "*UseThis*", "label": "None"}
+                {"layer": "p8*_noneg_msk", "format": "tif", "dir": "*UseThis*", "label": "None"}
                 # {"layer": "p8*msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
             ],
             "anomaly": [
@@ -164,7 +164,7 @@ snm_fig_data = {
     "4": {
         "maps": {
             "real_time_swe_fires": [
-                {"layer": "p8*msk", "format": "tif", "dir": "*UseThis*", "label": "None"}
+                {"layer": "p8*_noneg_msk", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ]
         }
     },
@@ -184,7 +184,7 @@ snm_fig_data = {
                 {"layer": "SNODAS_Regress", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ],
             "SNODAS_swe_overlap": [
-                {"layer": "both", "format": "tif", "dir": "SNODAS", "label": "None"} # TODO: change to UseThis
+                {"layer": "both", "format": "tif", "dir": "*UseThis*", "label": "None"}
             ]
         }
     },
@@ -300,16 +300,37 @@ def results_to_report(results_dir: str, report_dir: str, layer_id: str, dir_patt
         raise FileNotFoundError(
             f"No file matching pattern '{layer_id}' found in '{report_dir}' or '{results_layer_dir}'!")
 
-    # Copy the file to the rt_report directory
+    # Copy the file(s) to the rt_report directory
     source_file = results_files[0]
-    destination_path = os.path.join(report_dir, os.path.basename(source_file))
-    shutil.copy2(source_file, destination_path)
-    if verbose:
-        print(f"Copied: {os.path.basename(source_file)} from results to report directory")
+    copied_files = []
 
-    # Return path of the copied file
-    return [destination_path]
+    if file_type == "shp":
+        # For shapefiles, copy all related files (.shp, .shx, .dbf, .prj, etc.)
+        base_path = Path(source_file).parent
+        base_name = Path(source_file).stem
+        related_files = glob.glob(os.path.join(base_path, f"{base_name}.*"))
 
+        for file_path in related_files:
+            # Skip .lock files
+            if file_path.endswith('.lock'):
+                continue
+
+            destination_path = os.path.join(report_dir, os.path.basename(file_path))
+            shutil.copy2(file_path, destination_path)
+            if verbose:
+                print(f"Copied: {os.path.basename(file_path)} from results to report directory")
+            if file_path == source_file:
+                copied_files.append(destination_path)
+    else:
+        # For other file types, only copy the single file
+        destination_path = os.path.join(report_dir, os.path.basename(source_file))
+        shutil.copy2(source_file, destination_path)
+        if verbose:
+            print(f"Copied: {os.path.basename(source_file)} from results to report directory")
+        copied_files.append(destination_path)
+
+    # Return path of the main copied file
+    return copied_files
 
 def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user = True, warn = True, verbose = True) -> str:
     """
@@ -471,6 +492,9 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                 file_type = layer_info["format"]
                 label = layer_info["label"]
 
+                # Get the clean layer_id for ArcGIS (without glob patterns)
+                arcgis_layer_id = layer_id.replace("[0-9]", "")
+
                 # Special handling for SNM fig 7 CCR_sensors layer
                 if report_type == "SNM" and fig_id == "7" and layer_id == "CCR_sensors":
                     # Check if "wCCR" is in the UseThis directory name
@@ -479,7 +503,7 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
 
                     if not include_ccr:
                         # Remove the layer from the map and skip to next layer
-                        ccr_layer = _map.listLayers(f"*{layer_id}*")
+                        ccr_layer = _map.listLayers(f"*{arcgis_layer_id}*")
                         if ccr_layer:
                             _map.removeLayer(ccr_layer[0])
                             if verbose:
@@ -491,7 +515,7 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                 ref_layer = None
 
                 if file_type in layer_formats:
-                    undefined_layer = _map.listLayers(f"*{layer_id}*")[0]
+                    undefined_layer = _map.listLayers(f"*{arcgis_layer_id}*")[0]
                     symbology = undefined_layer.symbology
 
                     # Save position information before removing
@@ -502,7 +526,7 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
 
                     _map.removeLayer(undefined_layer)
                 elif file_type in table_formats:
-                    undefined_table = _map.listTables(f"*{layer_id}*")[0]
+                    undefined_table = _map.listTables(f"*{arcgis_layer_id}*")[0]
                     _map.removeTable(undefined_table)
 
                 # Find the new layer source
@@ -529,9 +553,9 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                     if file_type in layer_formats:
                         # Create layer object
                         if file_type == "shp":
-                            new_layer = arcpy.management.MakeFeatureLayer(new_layer_path, f"temp_{layer_id}").getOutput(0)
+                            new_layer = arcpy.management.MakeFeatureLayer(new_layer_path, f"temp_{arcgis_layer_id}").getOutput(0)
                         else:  # raster (tif)
-                            new_layer = arcpy.management.MakeRasterLayer(new_layer_path, f"temp_{layer_id}").getOutput(0)
+                            new_layer = arcpy.management.MakeRasterLayer(new_layer_path, f"temp_{arcgis_layer_id}").getOutput(0)
 
                         # Insert at saved position
                         if ref_layer:
@@ -540,7 +564,7 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                             _map.addLayer(new_layer, "TOP")
 
                         # Update symbology
-                        layer = _map.listLayers(f"*{layer_id}*")[0]
+                        layer = _map.listLayers(f"*{arcgis_layer_id}*")[0]
                         if "snapshot" not in new_layer_path and symbology:
                             layer.symbology = symbology
                     else:  # table
@@ -585,8 +609,8 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
 
                     # Save label expression for later
                     original_label_expression = label_layer.listLabelClasses()[0].expression
-                    if verbose:
-                        print(f"Original label expression: {original_label_expression}")
+                    # if verbose: # DEBUG not verbose
+                    #     print(f"Original label expression: {original_label_expression}")
 
                     # Create a table view
                     table_view_name = f"temp_table_{uuid.uuid4().hex[:8]}"
@@ -594,19 +618,21 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
 
                     # Verify join field exists in both
                     if verbose:
-                        print(f"Label layer: {label_layer}")
-                        print(f"Label layer type: {type(label_layer)}")
-                        print(f"Label layer name: {label_layer.name}")
-                        print(f"Label layer dataSource: {label_layer.dataSource}")
+                    #     print(f"Label layer: {label_layer}")
+                    #     print(f"Label layer type: {type(label_layer)}")
+                    #     print(f"Label layer name: {label_layer.name}")
+                    #     print(f"Label layer dataSource: {label_layer.dataSource}")
 
+                    # TODO: all this within the verbose check???
                         label_data_source = label_layer.dataSource
                         if not os.path.exists(label_data_source):
                             label_data_source = label_data_source + '.shp'
                         label_fields = [f.name for f in arcpy.ListFields(label_data_source)]
                         table_fields = [f.name for f in arcpy.ListFields(table_view_name)]
-                        print(f"Feature layer fields: {label_fields}")
-                        print(f"Table fields: {table_fields}")
-                        print(f"Join field: {join_field}")
+                        # print(f"Feature layer fields: {label_fields}")
+                        # print(f"Table fields: {table_fields}")
+                        # print(f"Join field: {join_field}")
+
 
                         if join_field not in label_fields:
                             raise ValueError(f"Join field '{join_field}' not found in feature layer")
@@ -615,7 +641,7 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
 
                     # Perform the join directly on the map layer
                     if verbose: print(
-                        f"Attempting join: layer={label_layer.name}, field={join_field}, table={table_view_name}")
+                        f"Attempting join: layer={label_layer.name}, field={join_field}, table={table_view_name} aka {arcgis_layer_id}")
                     arcpy.management.AddJoin(
                         in_layer_or_view=label_layer,
                         in_field=join_field,
@@ -624,9 +650,9 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                         join_type="KEEP_ALL"
                     )
 
-                    if verbose:
-                        joined_fields = [f.name for f in arcpy.ListFields(label_layer)]
-                        print(f"Fields after join: {joined_fields}")
+                    # if verbose:
+                    #     joined_fields = [f.name for f in arcpy.ListFields(label_layer)]
+                    #     print(f"Fields after join: {joined_fields}")
 
                     # Find the actual table prefix used in the join (extract from filename)
                     table_path = os.path.basename(new_layer_path)
@@ -637,8 +663,8 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                         # Remove extension for other file types (like .dbf)
                         table_filename = os.path.splitext(table_path)[0]
 
-                    if verbose:
-                        print(f"Table filename (used as prefix): {table_filename}")
+                    # if verbose:
+                    #     print(f"Table filename (used as prefix): {table_filename}")
 
                     # Set the label expression to use the joined field
                     for lbl_class in label_layer.listLabelClasses():
@@ -655,16 +681,15 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                         new_expression = re.sub(r'\$feature\.(\w+)', replace_field_reference, original_label_expression)
 
                         lbl_class.expression = new_expression
-                        if verbose:
-                            print(f"Updated label expression: {new_expression}")
+                        # if verbose:
+                        #     print(f"Updated label expression: {new_expression}")
 
                     # Ensure layer is visible with labels
                     label_layer.visible = True
                     label_layer.showLabels = True
 
-                    if verbose:
-                        print(
-                            f"Layer '{label_layer.name}' visible: {label_layer.visible}, showLabels: {label_layer.showLabels}")
+                    # if verbose:
+                    #     print(f"Layer '{label_layer.name}' visible: {label_layer.visible}, showLabels: {label_layer.showLabels}")
 
                     # Save the project
                     aprx.save()
