@@ -29,11 +29,11 @@ arcpy.env.parallelProcessingFactor = "0"
 ## date info
 user = "Olaf"
 year = 2026
-rundate = "20260222"
+rundate = "20260225"
 survey_date = "20260215"
-pillow_date = "22Feb2026"
-mean_date = "0222"
-prev_rundate = "20260215"
+pillow_date = "25Feb2026"
+mean_date = "0225"
+prev_rundate = "20260222"
 
 # flags
 difference = "Y" # should be Y if you want to compare against a previous model run
@@ -46,11 +46,13 @@ model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
 model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens"
 modelRuns = [model_woCCR, model_wCCR]
 model_labels = ["woCCR", "wCCR"]
-prev_model_run_WW = "ASO_BiasCorrect_RT_CanAdj_rcn_wCCR_nofscamskSens_UseThis"
-prev_model_run_SNM = "ASO_BiasCorrect_RT_CanAdj_rcn_wCCR_nofscamskSens_UseThis"
+prev_model_run_WW = "RT_CanAdj_rcn_wCCR_nofscamskSens"
+prev_model_run_SNM = "RT_CanAdj_rcn_wCCR_nofscamskSens"
+prev_model_run_WW_tables = "ASO_BiasCorrect_RT_CanAdj_rcn_wCCR_nofscamskSens_UseThis"
+prev_model_run_SNM_tables = "ASO_BiasCorrect_RT_CanAdj_rcn_wCCR_nofscamskSens_UseThis"
 aso_symbol = "§"
-SNM_prev_tables_workspace = rf"M:/SWE/Sierras/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM}/Tables/"
-WW_prev_tables_workspace = rf"M:/SWE/WestWide/documents/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW}/Tables/"
+SNM_prev_tables_workspace = rf"M:/SWE/Sierras/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM_tables}/Tables/"
+WW_prev_tables_workspace = rf"M:/SWE/WestWide/documents/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW_tables}/Tables/"
 ######################################
 # VETTING VARIABLES
 ######################################
