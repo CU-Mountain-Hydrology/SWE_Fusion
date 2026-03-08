@@ -4,7 +4,11 @@
 
 % DEBUG: {{ headers }}
 
+{% if surveys and headers["% of Average"]|length == 2 %}
+\begin{longtable}{@{}p{3.7cm}{% for group, subcols in headers.items() %}{% for _ in subcols %}c{% endfor %}{% endfor %}}
+{% else %}
 \begin{longtable}{@{}p{5.1cm}{% for group, subcols in headers.items() %}{% for _ in subcols %}c{% endfor %}{% endfor %}}
+{% endif %}
     \toprule
     \multicolumn{ {{ 1 + df.shape[1]-1 }} }{c}{\large{ {{ title }} SWE Report for {{ date[4:6]|int }}/{{ date[6:8]|int }}/{{ date[0:4] }} }} \\
     \specialrule{0.3pt}{0pt}{0pt}
@@ -16,6 +20,7 @@
         \cmidrule(lr){4-5} % SWE (in)
         \cmidrule(lr){9-10} % Pillows
         \cmidrule(lr){11-11} %
+        \cmidrule(lr){12-12}
     {% else %}
         \cmidrule(lr){2-2} % % of Average
         \cmidrule(lr){3-3} % SWE (in)
@@ -43,6 +48,7 @@
         \cmidrule(lr){4-5} % SWE (in)
         \cmidrule(lr){9-10} % Pillows
         \cmidrule(lr){11-11} %
+        \cmidrule(lr){12-12}
     {% else %}
         \cmidrule(lr){2-2} % % of Average
         \cmidrule(lr){3-3} % SWE (in)
@@ -88,6 +94,11 @@
             \footnotesize + Recent snowpack accumulation may be under-estimated due to issues with satellite-observed fSCA.
         } \\[-6pt]
     {% endif %}
+    {% if high_pct_avg %}
+        \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.98\textwidth}}{
+            \footnotesize $\dagger$ Deep and recent snow in areas that typically are snow-free can report high percent of average for this date because the mean 2001-2025 regression-derived SWE for that area is low or 0.
+        } \\[-6pt]
+    {% endif %}
     \\[-14pt]
     \bottomrule
     \endfoot
@@ -97,14 +108,14 @@
 
     {% for row in df.iloc[1:].itertuples(index=False) %}
         {% set text = row[0] | replace('%', '\\%') | replace('_', '\\_') %}
-        {% if text|length > 30 %}
+        {% if text|length > 30 or (text|length > 23 and surveys and headers["% of Average"]|length == 2) %}
             {% set mid = (text|length // 2) %}
             {% set split_idx = (
                 (text.rfind('-', 0, mid) if text.rfind('-', 0, mid) != -1 else
-                 text.rfind('\\_', 0, mid) if text.rfind('\\_', 0, mid) != -1 else
+                 text.rfind(' ', 0, mid) if text.rfind(' ', 0, mid) != -1 else
                  mid)
             ) %}
-            \makecell[l]{ {{ text[:split_idx+1] }} \\ {{ text[split_idx+1:] }} \vspace*{0.5em} }
+            \makecell[l]{ {{ text[:split_idx+1] }} \\ {{ text[split_idx+1:] }} }
         {% else %}
             \makecell[l]{ {{ text }} }
         {% endif %}
@@ -141,6 +152,11 @@
     {% if fsca_issue %}
         \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.98\textwidth}}{
             \footnotesize + Recent snowpack accumulation may be under-estimated due to issues with satellite-observed fSCA.
+        } \\[-6pt]
+    {% endif %}
+    {% if high_pct_avg %}
+        \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.98\textwidth}}{
+            \footnotesize $\dagger$ Deep and recent snow in areas that typically are snow-free can report high percent of average for this date because the mean 2001-2025 regression-derived SWE for that area is low or 0.
         } \\[-6pt]
     {% endif %}
     \\[-14pt]

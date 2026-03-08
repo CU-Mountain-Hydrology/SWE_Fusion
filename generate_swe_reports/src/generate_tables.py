@@ -1,7 +1,6 @@
 """
 #TODO: docs
 """
-from duckdb.experimental.spark.sql.functions import printf
 
 #########################   These values should not need to be changed between runs, but may change depending on your
 #         CONFIG        #   operating system, filepaths, and preferred output location.
@@ -63,7 +62,8 @@ def escape_latex(text):
         '~': r'\textasciitilde{}',
         '^': r'\^{}',
         '\\': r'\textbackslash{}',
-        '§': r'\S{}',  # Section symbol
+        '§': r'\S{}',
+        '†': r'$\dagger$'
     }
     for char, replacement in replacements.items():
         text = text.replace(char, replacement)
@@ -195,12 +195,18 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
         matches = glob.glob(os.path.join(table_dir, f"*{table_id}_final.csv"))
         # TODO: error handling
         if len(matches) == 0:
-            print(f"No table {table_id} found!")
+            # Try again without the _final suffix
+            # TODO: WW_4a and WW_4b must be merged if _final doesn't exist
+            print(f"No table {table_id}_final found! Trying without the _final suffix.")
+            matches = glob.glob(os.path.join(table_dir, f"*{table_id}.csv"))
+            if len(matches) == 0:
+                print(f"No table {table_id} found!")
+                continue
         table = matches[0]
         print(table)
 
         # Read in the csv
-        df = pd.read_csv(table,encoding='latin-1')
+        df = pd.read_csv(table,encoding='cp1252')
 
         # Check if this is an elevation band table by looking for "Elevation Band" in header
         is_elevation_table = "Elevation Band" in df.iloc[0].astype(str).values
@@ -255,11 +261,11 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
         headers["Pillows"] = (
             [previous_date, current_date] if date_count > 1 else [current_date]
         )
-        if "Surveys" in df.iloc[0].astype(str).values:
+        surveys = "Surveys" in df.iloc[0].astype(str).values
+        if surveys:
             if verbose: print("Including surveys.")
-            headers["Surveys"] = (
-                [previous_date, current_date] if date_count > 1 else [current_date]
-            )
+            headers["Surveys"] = [current_date]
+
         headers["SNODAS* (in)"] = [current_date]
 
         # Check for ASO
@@ -272,6 +278,11 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
         if verbose:
             print("fSCA Issue: ", fsca_issue)
 
+        # Check for high percent of average
+        high_pct_avg = df.apply(lambda col: col.astype(str).str.contains("†", regex=False)).any().any()
+        if verbose:
+            print("High % Avg: ", high_pct_avg)
+
         # Check for table type
         is_ww = (report_type == "WW")
 
@@ -283,6 +294,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
 
         # Escape LaTeX special characters in basin names (first column)
         df.iloc[:, 0] = df.iloc[:, 0].astype(str).apply(escape_latex)
+        # df = df.apply(lambda col: col.astype(str).apply(escape_latex))
 
         # Load table template
         templates_dir = Path(__file__).parent.parent / "report_templates"
@@ -296,15 +308,20 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
                                       title=table_data[table_id],
                                       headers=headers,
                                       date=date_str,
+                                      surveys=surveys,
                                       aso_corrected=aso_corrected,
                                       fsca_issue=fsca_issue,
+                                      high_pct_avg=high_pct_avg,
                                       is_ww=is_ww,
                                       is_socn=is_socn,)
+
+        # Special handling for the dagger character
+        latex_table = latex_table.replace('†', r'$\dagger$')
 
         # Write table to LaTeX file in the output directory
         os.makedirs(get_output_dir(date, report_type), exist_ok=True)
         if verbose: print(f"Writing table to {output_filepath}")
-        with open(output_filepath, "w") as f:
+        with open(output_filepath, "w", encoding="utf-8") as f:
             f.write(latex_table)
         if verbose: print(f"Finished generating Table{table_id}.")
 

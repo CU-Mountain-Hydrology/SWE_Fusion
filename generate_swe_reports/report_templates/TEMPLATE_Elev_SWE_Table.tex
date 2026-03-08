@@ -3,7 +3,11 @@
 \setlength{\extrarowheight}{0pt}
 \setlength{\aboverulesep}{0pt}
 \setlength{\belowrulesep}{0pt}
+{% if surveys and headers["% of Average"]|length == 2 %}
+\fontsize{9}{11}\selectfont
+{% else %}
 \fontsize{10}{12}\selectfont
+{% endif %}
 
 {# These groups should have 2-row headers (group title on top, dates below) #}
 {% set date_groups = ["% of Average", "SWE (in)", "Pillows", "Surveys", "SNODAS* (in)"] %}
@@ -145,8 +149,14 @@
     {% if fsca_issue %}
         \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
             \footnotesize + Recent snowpack accumulation may be under-estimated due to issues with satellite-observed fSCA.
-        } \\
+        } \\[-4pt]
     {% endif %}
+    {% if high_pct_avg %}
+        \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.98\textwidth}}{
+            \footnotesize $\dagger$ Deep and recent snow in areas that typically are snow-free can report high percent of average for this date because the mean 2001-2025 regression-derived SWE for that area is low or 0.
+        } \\[-4pt]
+    {% endif %}
+    \\[-8pt]
     \bottomrule
     \endfoot
 
@@ -213,6 +223,12 @@
     {% if fsca_issue %}
         \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.95\textwidth}}{
             \footnotesize + Recent snowpack accumulation may be under-estimated due to issues with satellite-observed fSCA.
-        } \\
+        } \\[-4pt]
     {% endif %}
+    {% if high_pct_avg %}
+        \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.98\textwidth}}{
+            \footnotesize $\dagger$ Deep and recent snow in areas that typically are snow-free can report high percent of average for this date because the mean 2001-2025 regression-derived SWE for that area is low or 0.
+        } \\[-4pt]
+    {% endif %}
+    \\[-8pt]
 \end{longtable}
