@@ -20,8 +20,8 @@ Automatically generates report maps in ArcPy using post-processed rasters.
 #         CONFIG        #   operating system, filepaths, and preferred output location.
 #########################
 # Filepath configs
-ww_aprx = "W:\Spatial_SWE\Reporting_ArcProProjects\WW_Report_Template.aprx"       # Project containing template for each figure
-snm_aprx = "J:\Spatial_SWE\Reporting_ArcProProjects\SNM_Report_Template.aprx"
+ww_aprx = r"W:\Spatial_SWE\Reporting_ArcProProjects\WW_Report_Template.aprx"       # Project containing template for each figure
+snm_aprx = r"J:\Spatial_SWE\Reporting_ArcProProjects\SNM_Report_Template.aprx"
 ww_source_dir = r"W:\documents\2026_RT_Reports"         # Parent directory of the YYYYMMDD_RT_Report folders
 ww_results_dir = r"W:\Spatial_SWE\WW_regression\RT_report_data"
 snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports"
