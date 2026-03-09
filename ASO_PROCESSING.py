@@ -12,13 +12,13 @@ import os
 import shutil
 import ast
 from datetime import datetime
-from shapefile import NODATA
+# from shapefile import NODATA
 
 print("modules imported")
 
 ## model run variables
 year = '2026'
-rundate = "20260222"
+rundate = "20260301"
 SNM_modelRun = "RT_CanAdj_rcn_wCCR_nofscamskSens"
 WW_modelRun = "RT_CanAdj_rcn_wCCR_nofscamskSens"
 
@@ -56,7 +56,7 @@ for zip_file in zips_to_process:
         data_folder = fr"M:/SWE/WestWide/Spatial_SWE/ASO/{year}/data/"
         ## add something here that is only unzips if the file doesn't already exist
         extract_zip(zip_path=zip_file_path, ext=search_tag, output_folder=data_folder)
-        # print("file moved")
+        print("file moved")
 
 print(basinList)
 

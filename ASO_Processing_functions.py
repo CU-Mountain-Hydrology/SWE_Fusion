@@ -77,7 +77,7 @@ def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspa
         # Project
         arcpy.ProjectRaster_management(
             aso_raster, projected_aso, snapRaster,
-            "NEAREST", "50 50", "", "", projIn
+            "NEAREST", "500 500", "", "", projIn
         )
 
         # Create mask where ASO >= 0

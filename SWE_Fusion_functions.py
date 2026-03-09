@@ -3352,8 +3352,8 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
 
                 # for export
                 df_band_export = state_df[
-                    ["Basin", 'Elevation Band', 'prev_Avg', "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors",
-                     "surveys", "SNODAS"]]
+                    ["Basin", 'Elevation Band', 'prev_Avg', "Avg", "prev_SWE_IN", "SWE_IN", "Percent", "VOL_AF",
+                     "AREA_MI2", 'prev_sensors', "sensors", "surveys", "SNODAS"]]
                 df_band_export = df_band_export.rename(
                     columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
                              "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
@@ -3597,7 +3597,8 @@ def WW_tables_for_report(rundate, modelRunName, averageRunName, results_workspac
                      'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
                 # for export
                 df_wtshd_export = state_wtshd_df[
-                    ["Basin", 'prev_Avg', "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "surveys",
+                    ["Basin", 'prev_Avg', "Avg", 'prev_SWE_IN', "SWE_IN", "Percent", "VOL_AF", "AREA_MI2",
+                     "prev_sensors", "sensors", "surveys",
                      "SNODAS"]]
                 df_wtshd_export = df_wtshd_export.rename(
                     columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
@@ -3838,8 +3839,8 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
 
             # for export
             df_band_export = merged_df[
-                ["Basin", 'Elevation Band', 'prev_Avg', "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors",
-                 "surveys", "SNODAS"]]
+                ["Basin", 'Elevation Band', 'prev_Avg', "Avg", "prev_SWE_IN", "SWE_IN", "Percent", "VOL_AF",
+                 "AREA_MI2", 'prev_sensors', "sensors", "surveys", "SNODAS"]]
             df_band_export = df_band_export.rename(
                 columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
                          "prev_SWE_IN": "SWE (in)", "SWE_IN": "SWE (in)", "Percent": "%SCA",
@@ -4006,7 +4007,8 @@ def SNM_tables_for_report(rundate, modelRunName, averageRunName, results_workspa
                  'prev_SWE_IN', 'prev_sensors', 'prev_Avg']]
             # for export
             df_wtshd_export = merged_wtshd_df[
-                ["Basin", 'prev_Avg', "Avg", "SWE_IN", "Percent", "VOL_AF", "AREA_MI2", "sensors", "surveys",
+                ["Basin", 'prev_Avg', "Avg", 'prev_SWE_IN', "SWE_IN", "Percent", "VOL_AF", "AREA_MI2",
+                 "prev_sensors", "sensors", "surveys",
                  "SNODAS"]]
             df_wtshd_export = df_wtshd_export.rename(
                 columns={"prev_Avg": f"%{prev_date_abrev} Avg.", "Avg": f"%{date_abrev} Avg.",
