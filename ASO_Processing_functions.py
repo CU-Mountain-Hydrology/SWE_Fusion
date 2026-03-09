@@ -65,9 +65,10 @@ def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspa
     arcpy.CheckOutExtension("Spatial")
 
     basinName = file.split("_")[1]
+    basinDate = file.split("_")[2]
     output_dir = os.path.join(compareWS, f"{rundate}_{modelRun}")
     os.makedirs(output_dir, exist_ok=True)
-    if os.path.exists (os.path.join(output_dir, f"DIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}.tif")):
+    if os.path.exists (os.path.join(output_dir, f"DIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_{basinDate}.tif")):
         print(f'Difference file for {rundate}_{modelRun}_{basinName} is already created')
 
     else:
@@ -94,33 +95,33 @@ def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspa
             arcpy.Resample_management(p8_input, p8_resampled)
         # Apply mask
         masked_p8 = Raster(p8_resampled) * Raster(mask_path)
-        masked_p8_path = os.path.join(output_dir, f"p8_{rundate}_50m_{basinName}_msk.tif")
+        masked_p8_path = os.path.join(output_dir, f"p8_{rundate}_50m_{basinName}_{basinDate}_msk.tif")
         masked_p8.save(masked_p8_path)
 
         # Difference
         diff = Raster(masked_p8_path) - Raster(projected_aso)
-        diff_path = os.path.join(output_dir, f"DIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}.tif")
+        diff_path = os.path.join(output_dir, f"DIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_{basinDate}.tif")
         diff.save(diff_path)
 
         # Percent difference
         perc_diff = ((Raster(masked_p8_path) - Raster(projected_aso)) / Raster(projected_aso)) * 100
-        perc_diff_path = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}.tif")
+        perc_diff_path = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_{basinDate}.tif")
         perc_diff.save(perc_diff_path)
 
         # Zonal stats for % difference
-        zonal_table_perc = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_byBands.dbf")
-        ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", perc_diff_path, zonal_table_perc, "DATA","ALL")
-        arcpy.ExportTable_conversion(zonal_table_perc, zonal_table_perc.replace(".dbf", ".csv"))
+        # zonal_table_perc = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_{basinDate}_byBands.dbf")
+        # ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", perc_diff_path, zonal_table_perc, "DATA","ALL")
+        # arcpy.ExportTable_conversion(zonal_table_perc, zonal_table_perc.replace(".dbf", ".csv"))
 
-        # Zonal stats for ASO mask
-        zonal_table_aso = os.path.join(output_dir, f"{file[:-4]}_albn83_byBands.dbf")
-        ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", mask_path, zonal_table_aso, "", "ALL")
-        arcpy.ExportTable_conversion(zonal_table_aso, zonal_table_aso.replace(".dbf", ".csv"))
+        # # Zonal stats for ASO mask
+        # zonal_table_aso = os.path.join(output_dir, f"{file[:-4]}_albn83_byBands.dbf")
+        # ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", mask_path, zonal_table_aso, "", "ALL")
+        # arcpy.ExportTable_conversion(zonal_table_aso, zonal_table_aso.replace(".dbf", ".csv"))
 
-        # Zonal stats for masked P8
-        zonal_table_p8 = os.path.join(output_dir, f"p8_{rundate}_50m_msk_byBands_{basinName}.dbf")
-        ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", masked_p8_path, zonal_table_p8, "", "ALL")
-        arcpy.ExportTable_conversion(zonal_table_p8, zonal_table_p8.replace(".dbf", ".csv"))
+        # # Zonal stats for masked P8
+        # zonal_table_p8 = os.path.join(output_dir, f"p8_{rundate}_50m_msk_byBands_{basinName}_{basinDate}.dbf")
+        # ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", masked_p8_path, zonal_table_p8, "", "ALL")
+        # arcpy.ExportTable_conversion(zonal_table_p8, zonal_table_p8.replace(".dbf", ".csv"))
 
         print("All ASO comparison outputs created.")
 
