@@ -425,7 +425,7 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
     fig_list = interpret_figs(figs, report_type)
     print(f"Generating the following figures: {fig_list}")
 
-    # Clone the template aprx to a temporary directory
+    # Set report_type dependant variables
     if report_type == "WW":
         template_aprx = ww_aprx
         fig_data_dict = ww_fig_data
@@ -435,17 +435,18 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
         fig_data_dict = snm_fig_data
         rt_report_dir = os.path.join(snm_source_dir, str(date) + rt_report_pattern)
 
-    temp_dir = tempfile.mkdtemp()
-    working_aprx = os.path.join(temp_dir, "working_aprx.aprx")
-    shutil.copyfile(template_aprx, working_aprx)
-    aprx = arcpy.mp.ArcGISProject(working_aprx)  # Open the working aprx in ArcPy
-
     # File overwrite choices
     yes_to_all = False
     no_to_all = False
 
     # Generate maps
     for fig_id in fig_list:
+        # Clone the template aprx to a temporary directory
+        temp_dir = tempfile.mkdtemp()
+        working_aprx = os.path.join(temp_dir, "working_aprx.aprx")
+        shutil.copyfile(template_aprx, working_aprx)
+        aprx = arcpy.mp.ArcGISProject(working_aprx)  # Open the working aprx in ArcPy
+
         # Handle overwriting file
         if no_to_all:
             break
@@ -691,14 +692,14 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
                     # if verbose:
                     #     print(f"Layer '{label_layer.name}' visible: {label_layer.visible}, showLabels: {label_layer.showLabels}")
 
-                    # Save the project
-                    aprx.save()
-
                     # Clean up (non-critical)
                     try:
                         arcpy.management.Delete(table_view_name)
                     except:
                         pass
+
+        # Save the project
+        aprx.save()
 
         # Export the layout to JPEG
         layout = aprx.listLayouts(f"*{fig_id}*")[0]
@@ -731,8 +732,8 @@ def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose
         print(f"Cropping {str(output_filepath)} ...")
         crop_whitespace(str(output_filepath))
 
-    # Clean up
-    del aprx
+        # Clean up
+        del aprx
 
 def main():
     # Parse input arguments and flags, see top of file for argument usage examples
