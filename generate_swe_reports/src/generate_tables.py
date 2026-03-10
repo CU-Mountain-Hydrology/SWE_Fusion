@@ -256,7 +256,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
         if report_type == "WW":
             headers["  "] = ["Vol. (AF)"]
         else: # SNM
-            headers["  "] = ["Vol. (AF)$\ddagger$"]
+            headers["  "] = [r"Vol. (AF)$\ddagger$"]
         headers["    "] = ["Area (mi$^2$)"]
         headers["Pillows"] = (
             [previous_date, current_date] if date_count > 1 else [current_date]
