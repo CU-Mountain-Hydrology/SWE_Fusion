@@ -325,18 +325,232 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
             f.write(latex_table)
         if verbose: print(f"Finished generating Table{table_id}.")
 
+def generate_standalone_tables(report_type: str, date: int, ids: str, verbose=False, prompt_user=False) -> None:
+    """
+    Generates standalone LaTeX PDFs for each table using the standalone templates
+    (TEMPLATE_SWE_Table_Standalone.tex / TEMPLATE_Elev_SWE_Table_Standalone.tex).
+
+    Produces a self-contained .tex file (and compiles it to PDF via pdflatex) for
+    each requested table, saved alongside the regular .tex tables in the output
+    directory.  The compiled PDF is moved next to the .tex file on success.
+
+    :param report_type: Type of report. Acceptable values: "WW", "SNM"
+    :param date: Date of report in YYYYMMDD format
+    :param ids: Regex pattern(s) for table IDs to generate (same syntax as --tables)
+    :param verbose: Enable verbose output messages. Default: False
+    :param prompt_user: Prompt before overwriting existing files. Default: False
+    """
+    import subprocess
+
+    date_str = str(date)
+    report_dir = None
+    table_data = None
+    match report_type:
+        case "WW":
+            report_dir = os.path.join(ww_source_dir, str(date) + rt_report_pattern)
+            table_data = ww_table_data
+        case "SNM":
+            report_dir = os.path.join(snm_source_dir, str(date) + rt_report_pattern)
+            table_data = snm_table_data
+        case _:
+            raise Exception(f"Unrecognized report type: {report_type}")
+
+    use_this_dir = glob.glob(os.path.join(report_dir, "*UseThis*"))[0]
+    table_dir = os.path.join(use_this_dir, "Tables")
+
+    # Determine which tables to generate
+    id_list = interpret_ids(ids, report_type)
+
+    output_dir = get_output_dir(date, report_type)
+    os.makedirs(output_dir, exist_ok=True)
+
+    # File overwrite choices
+    yes_to_all = False
+    no_to_all = False
+
+    for table_id in id_list:
+        # Handle overwriting file
+        if no_to_all:
+            break
+        output_filename = f"{date}_{report_type}_Table{table_id}_standalone.tex"
+        output_filepath = Path(output_dir) / output_filename
+        if prompt_user and output_filepath.exists() and not yes_to_all:
+            print(f"{output_filename} already exists and will be overwritten! Continue?")
+            print("Options: [y]es, [n]o, [ya] yes to all, [na] no to all (default: no)")
+            while True:
+                user_answer = input("> ").strip().lower()
+                if user_answer in ["y", "yes"]:
+                    break
+                elif user_answer in ["ya"]:
+                    yes_to_all = True
+                    break
+                elif user_answer in ["", "n", "no"]:
+                    print(f"Skipping standalone table generation for Table{table_id}")
+                    table_id = None
+                    break
+                elif user_answer in ["na"]:
+                    print("Safely aborting standalone table generation...")
+                    no_to_all = True
+                    table_id = None
+                    break
+                else:
+                    print("Invalid input. Please enter y or n.")
+        if table_id is None:
+            continue
+
+        print(f"Generating standalone table {table_id}...")
+
+        matches = glob.glob(os.path.join(table_dir, f"*{table_id}_final.csv"))
+        if len(matches) == 0:
+            print(f"No table {table_id}_final found! Trying without the _final suffix.")
+            matches = glob.glob(os.path.join(table_dir, f"*{table_id}.csv"))
+            if len(matches) == 0:
+                print(f"No table {table_id} found!")
+                continue
+        table = matches[0]
+        if verbose: print(f"Reading: {table}")
+
+        # Read in the csv
+        df = pd.read_csv(table, encoding='cp1252')
+
+        # Check if this is an elevation band table
+        is_elevation_table = "Elevation Band" in df.iloc[0].astype(str).values
+        if verbose: print(f"Is elevation table: {is_elevation_table}")
+
+        # Format SNODAS dates to 1 decimal place
+        last_col = df.columns[-1]
+        df.loc[1:, last_col] = (
+            pd.to_numeric(df.loc[1:, last_col], errors="coerce")
+            .round(1)
+        )
+
+        # Check how many dates have data
+        row0 = df.iloc[0].astype(str)
+        date_count = row0.str.contains("Avg").sum()
+        if verbose: print(f"Date count: {date_count}")
+
+        # Determine column offset based on table type
+        col_offset = 2 if is_elevation_table else 1
+
+        # Get current date and previous date if it exists
+        if date_count > 1:
+            previous_date = df.iloc[0, col_offset].strip("%").replace(" Avg.", "")
+            current_date = df.iloc[0, col_offset + 1].strip("%").replace(" Avg.", "")
+        else:
+            current_date = df.iloc[0, col_offset].strip("%").replace(" Avg.", "")
+
+        # Build headers dict (same logic as generate_tables)
+        headers = {}
+        if is_elevation_table:
+            headers[""] = ["Elevation Band"]
+        headers["% of Average"] = (
+            [previous_date, current_date] if date_count > 1 else [current_date]
+        )
+        headers["SWE (in)"] = (
+            [previous_date, current_date] if date_count > 1 else [current_date]
+        )
+        headers[" "] = ["SCA"]
+        if report_type == "WW":
+            headers["  "] = ["Vol. (AF)"]
+        else:  # SNM
+            headers["  "] = [r"Vol. (AF)$\ddagger$"]
+        headers["    "] = ["Area (mi$^2$)"]
+        headers["Pillows"] = (
+            [previous_date, current_date] if date_count > 1 else [current_date]
+        )
+        surveys = "Surveys" in df.iloc[0].astype(str).values
+        if surveys:
+            if verbose: print("Including surveys.")
+            headers["Surveys"] = [current_date]
+        headers["SNODAS* (in)"] = [current_date]
+
+        # Check for special flags
+        aso_corrected = df.iloc[:, 0].astype(str).str.contains("§").any()
+        fsca_issue = df.iloc[:, 0].astype(str).str.contains("+", regex=False).any()
+        high_pct_avg = df.apply(lambda col: col.astype(str).str.contains("†", regex=False)).any().any()
+        is_ww = (report_type == "WW")
+        is_socn = (is_ww and table_id == "03")
+
+        if verbose:
+            print(f"ASO Corrected: {aso_corrected}, fSCA Issue: {fsca_issue}, "
+                  f"High % Avg: {high_pct_avg}, Is SOCN: {is_socn}")
+
+        # Escape LaTeX special characters in basin names
+        df.iloc[:, 0] = df.iloc[:, 0].astype(str).apply(escape_latex)
+
+        # Load the standalone template
+        templates_dir = Path(__file__).parent.parent / "report_templates"
+        env = Environment(loader=FileSystemLoader(str(templates_dir)))
+        template_name = (
+            "TEMPLATE_Elev_SWE_Table_Standalone.tex"
+            if is_elevation_table
+            else "TEMPLATE_SWE_Table_Standalone.tex"
+        )
+        template = env.get_template(template_name)
+
+        latex_table = template.render(
+            df=df,
+            title=table_data[table_id],
+            headers=headers,
+            date=date_str,
+            surveys=surveys,
+            aso_corrected=aso_corrected,
+            fsca_issue=fsca_issue,
+            high_pct_avg=high_pct_avg,
+            is_ww=is_ww,
+            is_socn=is_socn,
+        )
+
+        # Special handling for the dagger character
+        latex_table = latex_table.replace('†', r'$\dagger$')
+
+        # Write standalone .tex file
+        if verbose: print(f"Writing standalone table to {output_filepath}")
+        with open(output_filepath, "w", encoding="utf-8") as f:
+            f.write(latex_table)
+
+        # Compile to PDF with pdflatex
+        print(f"Compiling {output_filename} to PDF...")
+        try:
+            subprocess.run(
+                [
+                    "pdflatex",
+                    "-interaction=nonstopmode",
+                    f"-output-directory={output_dir}",
+                    str(output_filepath),
+                ],
+                cwd=output_dir,
+                check=True,
+                capture_output=not verbose,
+            )
+            pdf_path = output_filepath.with_suffix(".pdf")
+            if pdf_path.exists():
+                print(f"Standalone PDF saved to {pdf_path}")
+            else:
+                print(f"Warning: pdflatex ran but PDF not found at {pdf_path}")
+        except subprocess.CalledProcessError as e:
+            print(f"Error: pdflatex failed for Table{table_id}. Check the .tex file for issues.")
+            if verbose: print(e)
+
+        if verbose: print(f"Finished generating standalone Table{table_id}.")
+
+
 def main():
     # Parse input arguments and flags, see top of file for argument usage examples
     parser = argparse.ArgumentParser()
-    parser.add_argument("report_type", type=str, help="Acceptable report types: WW")
+    parser.add_argument("report_type", type=str, help="Acceptable report types: WW, SNM")
     parser.add_argument("date", type=int, help="Date to process (YYYYMMDD)")
     parser.add_argument("--tables", default="all", type=str, help="Regex pattern(s) for table IDs to generate")
+    parser.add_argument("-s", "--standalone", action="store_true", help="Generate standalone PDFs instead of embeddable .tex files")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output messages")
     parser.add_argument("-u", "--prompt_user", action="store_true", help="Prompt the user before overwriting or automatically selecting files")
     args = parser.parse_args()
 
-    if args.report_type in ["WW","SNM"]:
-        generate_tables(args.report_type, args.date, args.tables, args.verbose, args.prompt_user)
+    if args.report_type in ["WW", "SNM"]:
+        if args.standalone:
+            generate_standalone_tables(args.report_type, args.date, args.tables, args.verbose, args.prompt_user)
+        else:
+            generate_tables(args.report_type, args.date, args.tables, args.verbose, args.prompt_user)
     else:
         raise Exception(f"Unrecognized report type: {args.report_type}")
 

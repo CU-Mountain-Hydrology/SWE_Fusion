@@ -1,0 +1,109 @@
+\documentclass{standalone}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{anyfontsize}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{makecell}
+\usepackage{array}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage[T1]{fontenc}
+
+\begin{document}
+
+\setlength{\tabcolsep}{2pt}
+\renewcommand{\arraystretch}{1.5}
+\fontsize{8}{10}\selectfont
+
+{# These groups should have 2-row headers (group title on top, dates below) #}
+{% set date_groups = ["% of Average", "SWE (in)", "Pillows", "SNODAS* (in)"] %}
+
+{# Flatten header columns in order (everything after Basin) #}
+{% set flat_cols = [] %}
+{% for group, subcols in headers.items() %}
+  {% for sub in subcols %}
+    {% set _ = flat_cols.append({"group": group, "sub": sub}) %}
+  {% endfor %}
+{% endfor %}
+
+{% set total_cols = 1 + flat_cols|length %}
+
+\begin{tabular}{@{\hspace{10pt}}p{5.1cm}{% for _ in range(flat_cols|length) %}c{% endfor %}@{\hspace{10pt}}}
+    {# ===================== TITLE ===================== #}
+    \toprule
+    \multicolumn{ {{ total_cols }} }{c}{\large{ {{ title }} SWE Report for {{ date[4:6]|int }}/{{ date[6:8]|int }}/{{ date[0:4] }} }} \\
+    \specialrule{0.3pt}{0pt}{0pt}
+
+    {# ===================== HEADER ===================== #}
+    {% for group, subcols in headers.items() %}
+        {% set g_clean = (group|string).strip() %}
+        {% set span = subcols|length %}
+
+        & {% if g_clean in date_groups %}\multicolumn{ {{ span }} }{c}{ {{ g_clean | replace('%','\\%') }} }{% else %}{% if span == 1 %}~{% else %}\multicolumn{ {{ span }} }{c}{~}{% endif %}{% endif %}
+    {% endfor %}
+     \\
+
+    {% set curcol = namespace(c=2) %}
+    {% for group, subcols in headers.items() %}
+        {% set g_clean = (group|string).strip() %}
+        {% set span = subcols|length %}
+        {% if g_clean in date_groups %}
+        \cmidrule(lr){ {{- curcol.c -}}-{{- curcol.c + span - 1 -}} } {#- % {{ g_clean }} -#}
+        {% endif %}
+        {% set curcol.c = curcol.c + span %}
+    {% endfor %}
+
+    \makecell[l]{Basin}
+    {% for col in flat_cols %}
+
+            & {{ (col["sub"]|string) | replace('%','\\%') }}
+        {% endfor %}
+     \\
+    \midrule
+
+    {# ===================== DATA BODY ===================== #}
+    {% for row in df.iloc[1:].itertuples(index=False) %}
+        {% set basin_name = row[0] | replace('%', '\\%') | replace('_', '\\_') %}
+
+
+            \makecell[l]{ {{ basin_name }} }
+
+        {% for val in row[1:] %}
+            & {{ ("NA" if (val != val) else val) | replace('%', '\\%') }}
+        {% endfor %}
+         \\
+        \specialrule{0.1pt}{4pt}{4pt}
+    {% endfor %}
+    \bottomrule
+
+    {# ===================== FOOTER ===================== #}
+%     \multicolumn{ {{ total_cols }} }{l}{
+%         \footnotesize $\ddagger$ Basin boundaries were derived from a combination of NRCS and HUC8 boundaries.%
+%     } \\[-6pt]
+    \multicolumn{ {{ total_cols }} }{@{\hspace{10pt}}l}{
+        \footnotesize* This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.%
+    } \\[-6pt]
+%     \multicolumn{ {{ total_cols }} }{p{0.98\textwidth}}{
+%         \footnotesize** The Animas Basin is part of the San Juan Basin. The values present in the San Juan Basin include those of the Animas by either a summation or weighted average based on the area that is referenced in the table.%
+%     } \\[-6pt]
+    \multicolumn{ {{ total_cols }} }{@{\hspace{10pt}}p{0.98\textwidth}}{
+        \footnotesize $\ddagger$ For volume totals above Shasta Lake add Upper Sac, McCloud and Pit volumes. For volume totals above Bend Bridge add Upper Sac, McCloud, Pit and Sac at Bend Bridge volumes.%
+    } \\[-6pt]
+    {% if aso_corrected %}
+        \multicolumn{ {{ total_cols }} }{@{\hspace{10pt}}p{0.98\textwidth}}{
+            \footnotesize \S{} Data in all ASO-collected basins have been bias-corrected using ASO data and therefore the SWE changes might not represent snowmelt/accumulation but rather an update to the SWE estimates based on airborne data.}
+        \\[-6pt]
+    {% endif %}
+    {% if fsca_issue %}
+        \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.98\textwidth}}{
+            \footnotesize + Recent snowpack accumulation may be under-estimated due to issues with satellite-observed fSCA.
+        } \\
+    {% endif %}
+\end{tabular}
+
+\end{document}
