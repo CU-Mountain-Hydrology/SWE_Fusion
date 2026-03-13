@@ -18,8 +18,8 @@ ww_table_data = {
 }
 
 snm_table_data = {
-    "05" : "Sierra Nevada",
-    "10" : "Elevation Banded",
+    "05" : {"title": "Sierra Nevada",    "jpg_id": "1"},
+    "10" : {"title": "Elevation Banded", "jpg_id": "2"},
 }
 #########################
 #       END CONFIG      #
@@ -28,6 +28,8 @@ snm_table_data = {
 import re
 import glob
 import os
+import shutil
+import subprocess
 from pathlib import Path
 import pandas as pd
 from jinja2 import Template, Environment, FileSystemLoader
@@ -122,6 +124,103 @@ def interpret_ids(ids: str, report_type: str) -> list[str]:
     return sorted(id_list)
 
 
+def compile_standalone_table(tex_path: Path, verbose=False) -> Path | None:
+    """
+    Compiles a standalone .tex file to PDF using pdflatex.
+
+    Runs pdflatex with the output directory set to a temporary LaTeX/ folder
+    beside the TEXtables/ directory, then moves only the .pdf back into
+    TEXtables/ alongside the .tex source. All auxiliary files (.aux, .log,
+    .synctex.gz, etc.) remain in LaTeX/.
+
+    :param tex_path: Path to the standalone .tex file in TEXtables/
+    :param verbose: Enable verbose output messages. Default: False
+    :return: Path to the compiled .pdf in TEXtables/, or None on failure
+    :rtype: Path | None
+    """
+    latex_dir = tex_path.parent.parent / "LaTeX"
+    latex_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        subprocess.run(
+            [
+                "pdflatex",
+                "-interaction=nonstopmode",
+                f"-output-directory={latex_dir}",
+                str(tex_path),
+            ],
+            cwd=tex_path.parent,
+            check=True,
+            capture_output=not verbose,
+        )
+    except subprocess.CalledProcessError as e:
+        print(f"Error: pdflatex failed for {tex_path.name}. Check {latex_dir / tex_path.with_suffix('.log').name} for details.")
+        if verbose: print(e)
+        return None
+
+    # Move only the PDF back to TEXtables/ — leave all other aux files in LaTeX/
+    pdf_in_latex = latex_dir / tex_path.with_suffix(".pdf").name
+    pdf_in_textables = tex_path.with_suffix(".pdf")
+    shutil.move(str(pdf_in_latex), str(pdf_in_textables))
+
+    if verbose: print(f"Compiled PDF saved to {pdf_in_textables}")
+    return pdf_in_textables
+
+
+def convert_pdf_to_jpg(pdf_path: Path, output_dir: Path, verbose=False, jpg_stem: str = None, prompt_user=False) -> Path | None:
+    """
+    Converts the first page of a PDF to a JPG using PyMuPDF (fitz).
+
+    The JPG is saved directly to output_dir. If jpg_stem is provided it is used
+    as the output filename stem; otherwise the PDF's own stem is used.
+
+    :param pdf_path: Path to the PDF file to convert
+    :param output_dir: Directory to save the output .jpg (Report/)
+    :param verbose: Enable verbose output messages. Default: False
+    :param jpg_stem: Output filename stem (without extension). Default: pdf_path.stem
+    :param prompt_user: Prompt before overwriting an existing .jpg. Default: False
+    :return: Path to the saved .jpg, or None on failure
+    :rtype: Path | None
+    """
+    import fitz  # PyMuPDF
+
+    stem = jpg_stem if jpg_stem else pdf_path.stem
+    jpg_path = output_dir / f"{stem}.jpg"
+    if prompt_user and jpg_path.exists():
+        print(f"{jpg_path.name} already exists and will be overwritten! Continue? (y/N)")
+        while True:
+            user_answer = input("> ").strip().lower()
+            if user_answer in ["y", "yes"]:
+                break
+            elif user_answer in ["", "n", "no"]:
+                print(f"Skipping JPG conversion for {jpg_path.name}")
+                return None
+            else:
+                print("Invalid input. Please enter y or n.")
+    while True:
+        try:
+            doc = fitz.open(str(pdf_path))
+            page = doc[0]
+            # 300 DPI: default PDF unit is 72 DPI, so matrix scale = 300/72
+            mat = fitz.Matrix(300 / 72, 300 / 72)
+            pix = page.get_pixmap(matrix=mat, colorspace=fitz.csRGB)
+            pix.save(str(jpg_path))
+            doc.close()
+            break
+        except Exception as e:
+            if "Permission denied" in str(e) or isinstance(e, PermissionError):
+                print(f"Error: {jpg_path.name} is open in another program. Close it and press Enter to retry, or type 's' to skip.")
+                if input("> ").strip().lower() == "s":
+                    print(f"Skipping JPG conversion for {jpg_path.name}.")
+                    return None
+            else:
+                print(f"Error: failed to convert {pdf_path.name} to JPG: {e}")
+                return None
+
+    if verbose: print(f"JPG saved to {jpg_path}")
+    return jpg_path
+
+
 def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt_user=False, standalone=False) -> None:
     # TODO: verbose
     """
@@ -135,6 +234,9 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
         case "WW":
             report_dir = os.path.join(ww_source_dir, str(date) + rt_report_pattern)
             table_data = ww_table_data
+            if standalone:
+                standalone = False # No standalone table support for WW
+                if verbose: print(f"Standalone tables are not supported for WW. Ignoring --standalone flag.")
         case "SNM":
             report_dir = os.path.join(snm_source_dir, str(date) + rt_report_pattern)
             table_data = snm_table_data
@@ -296,7 +398,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
 
         latex_table = template.render(
             df=df,
-            title=table_data[table_id],
+            title=table_data[table_id]["title"] if isinstance(table_data[table_id], dict) else table_data[table_id],
             headers=headers,
             date=date_str,
             surveys=surveys,
@@ -329,10 +431,28 @@ def main():
     parser.add_argument("-u", "--prompt_user", action="store_true", help="Prompt the user before overwriting or automatically selecting files")
     args = parser.parse_args()
 
-    if args.report_type in ["WW", "SNM"]:
-        generate_tables(args.report_type, args.date, args.tables, args.verbose, args.prompt_user, args.standalone)
-    else:
+    # Check report type is valid
+    if args.report_type not in ["WW", "SNM"]:
         raise Exception(f"Unrecognized report type: {args.report_type}")
+
+    # TODO: check date format and range
+
+    # Generate tables
+    generate_tables(args.report_type, args.date, args.tables, args.verbose, args.prompt_user, args.standalone)
+
+    # Compile SNM standalone tables and convert to jpg
+    if args.standalone and args.report_type == "SNM":
+        report_dir = Path(get_output_dir(args.date, args.report_type)).parent  # TEXtables/ -> Report/
+        id_list = interpret_ids(args.tables, args.report_type)
+        for table_id in id_list:
+            tex_path = Path(get_output_dir(args.date, args.report_type)) / f"{args.date}_SNM_Table{table_id}_standalone.tex"
+            # .tex and .pdf are saved to TEXtables/; all other auxiliary files are saved to LaTeX/
+            pdf_path = compile_standalone_table(tex_path, args.verbose)
+            if pdf_path:
+                jpg_id = snm_table_data[table_id]["jpg_id"]
+                jpg_stem = f"{args.date}_SNM_Table{jpg_id}"
+                # Convert pdf to jpg with pymupdf; .jpg is saved to Report/
+                convert_pdf_to_jpg(pdf_path, report_dir, args.verbose, jpg_stem, args.prompt_user)
 
 if __name__ == "__main__":
     main()

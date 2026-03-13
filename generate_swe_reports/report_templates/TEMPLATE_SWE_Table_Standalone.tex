@@ -28,7 +28,7 @@
 {% endfor %}
 {% set total_cols = 1 + flat_cols|length %}
 
-\begin{tabular}{@{}p{5.1cm}{% for _ in range(flat_cols|length) %}c{% endfor %}@{\hspace{10pt}}}
+\begin{tabular}{@{}p{4.9cm}{% for _ in range(flat_cols|length) %}c{% endfor %}@{\hspace{10pt}}}
     % ====== TITLE ======
     \toprule
     \multicolumn{ {{ total_cols }} }{c}{\large{ {{ title }} SWE Report for {{ date[4:6]|int }}/{{ date[6:8]|int }}/{{ date[0:4] }} }} \\
