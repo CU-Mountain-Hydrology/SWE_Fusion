@@ -21,41 +21,35 @@
 \setlength{\extrarowheight}{0pt}
 \setlength{\aboverulesep}{0pt}
 \setlength{\belowrulesep}{0pt}
-\fontsize{10}{12}\selectfont
-
-{# These groups should have 2-row headers (group title on top, dates below) #}
+\fontsize{10}{12}\selectfont % First number is font size, second number is line height
 {% set date_groups = ["% of Average", "SWE (in)", "Pillows", "Surveys", "SNODAS* (in)"] %}
-
-{# Flatten header columns in order (everything after Basin) #}
 {% set flat_cols = [] %}
 {% for group, subcols in headers.items() %}
-  {% for sub in subcols %}
-    {% set _ = flat_cols.append({"group": group, "sub": sub}) %}
-  {% endfor %}
+    {% for sub in subcols %}
+        {% set _ = flat_cols.append({"group": group, "sub": sub}) %}
+    {% endfor %}
 {% endfor %}
-
 {% set total_cols = 1 + flat_cols|length %}
 
-\begin{tabular}{@{\hspace{10pt}}p{2.6cm}{% for _ in range(flat_cols|length) %}c{% endfor %}@{\hspace{10pt}}}
-    {# ===================== TITLE ===================== #}
+\begin{tabular}{@{\hspace{10pt}}p{2.8cm}{% for _ in range(flat_cols|length) %}c{% endfor %}@{\hspace{10pt}}}
+    % ====== TITLE ======
     \toprule
     \multicolumn{ {{ total_cols }} }{c}{\large{ {{ title }} SWE Report for {{ date[4:6]|int }}/{{ date[6:8]|int }}/{{ date[0:4] }} }} \\
-    \specialrule{0.3pt}{0pt}{0pt}
+    \specialrule{0.3pt}{2pt}{2pt}
 
-    {# ===================== HEADER ===================== #}
+    % ====== HEADER ======
+    % Upper Header Row
     ~
-
     {% set seen_groups = [] %}
     {% for group, subcols in headers.items() %}
         {% set g_clean = (group|string).strip() %}
         {% set span = subcols|length %}
-
-        &
-        {% if g_clean in date_groups %}
+    &
+        {%- if g_clean in date_groups -%}
             \multicolumn{ {{ span }} }{c}{ {{ g_clean | replace('%','\\%') }} }
         {% else %}
             {% if span == 1 %}
-                ~
+    ~
             {% else %}
                 \multicolumn{ {{ span }} }{c}{~}
             {% endif %}
@@ -63,45 +57,40 @@
     {% endfor %}
     \\
 
+    % Header Subcategory Lines
     {% set curcol = namespace(c=2) %}
-    {% for group, subcols in headers.items() %}
-        {% set g_clean = (group|string).strip() %}
-        {% set span = subcols|length %}
-
+    {%- for group, subcols in headers.items() -%}
+        {%- set g_clean = (group|string).strip() -%}
+        {%- set span = subcols|length -%}
         {% if g_clean in date_groups %}
-            \cmidrule(lr){ {{ curcol.c }}-{{ curcol.c + span - 1 }} }
+    \cmidrule(lr){ {{ curcol.c }}-{{ curcol.c + span - 1 }} }
         {% endif %}
+        {%- set curcol.c = curcol.c + span -%}
+    {%- endfor %}
 
-        {% set curcol.c = curcol.c + span %}
-    {% endfor %}
-
+    % Lower Header Row
     \makecell[l]{Basin}
     {% for col in flat_cols %}
         & {{ (col["sub"]|string) | replace('%','\\%') }}
     {% endfor %}
     \\
-    \midrule
+    \specialrule{0.5pt}{4pt}{4pt}
 
-    {# ===================== DATA BODY ===================== #}
+    % ====== DATA BODY ======
     {% set ns = namespace(current_basin="") %}
     {% for row in df.iloc[1:].itertuples(index=False) %}
         {% set basin_name = row[0] | replace('%', '\\%') | replace('_', '\\_') %}
-
         {% if basin_name != ns.current_basin %}
             {% if ns.current_basin != "" %}
-                \specialrule{0.3pt}{4pt}{4pt}
+
+    \specialrule{0.3pt}{4pt}{4pt}
             {% endif %}
             {% set ns.current_basin = basin_name %}
-
             {% set raw_name = basin_name %}
-            {% if raw_name|length > 18 and (" " in raw_name) %}
+            {% if raw_name|length > 17 and (" " in raw_name) %}
                 {% set mid = raw_name|length // 2 %}
-
-                {# find last space before mid #}
                 {% set left_space = raw_name.rfind(" ", 0, mid) %}
-                {# find first space after mid #}
                 {% set right_space = raw_name.find(" ", mid) %}
-
                 {% if left_space != -1 %}
                     {% set split_idx = left_space %}
                 {% elif right_space != -1 %}
@@ -109,41 +98,47 @@
                 {% else %}
                     {% set split_idx = -1 %}
                 {% endif %}
-
                 {% if split_idx != -1 %}
-                    \shortstack[l]{ {{ raw_name[:split_idx] }} \\ {{ raw_name[split_idx+1:] }} }
+    \shortstack[l]{ {{ raw_name[:split_idx] }} \\ {{ raw_name[split_idx+1:] }} }
                 {% else %}
-                    {{ raw_name }}
+    {{ raw_name }}
                 {% endif %}
             {% else %}
-                {{ raw_name }}
+    {{ raw_name }}
             {% endif %}
         {% else %}
-            \makecell[l]{}
+    \makecell[l]{}
         {% endif %}
-
-        {% for val in row[1:] %}
-            & {{ ("NA" if (val != val) else val) | replace('%', '\\%') }}
-        {% endfor %}
-        \\
+        {% for val in row[1:] %}    & {{ ("NA" if (val != val) else val) | replace('%', '\\%') }} {% endfor %} \\
     {% endfor %}
 
-    {# ===================== FOOTER ===================== #}
     \bottomrule
-    \multicolumn{ {{ total_cols }} }{@{\hspace{10pt}}l}{\footnotesize* This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.} \\[-4pt]
-    \multicolumn{ {{ total_cols }} }{@{\hspace{10pt}}p{0.98\textwidth}}{
+    % ====== FOOTER ======
+    {% set footer_width = 1.5 %}
+    \multicolumn{ {{ total_cols }} }{@{\hspace{10pt}}l}{
+        \footnotesize* This is a comparison to the SNODAS (SNOw Data Assimilation System) nationwide product from the National Weather Service.
+    } \\[-4pt]
+    \multicolumn{ {{ total_cols }} }{@{\hspace{10pt}}p{ {{ footer_width }} \textwidth}}{
         \footnotesize $\ddagger$ For volume totals above Shasta Lake add Upper Sac, McCloud and Pit volumes. For volume totals above Bend Bridge add Upper Sac, McCloud, Pit and Sac at Bend Bridge volumes.%
     } \\[-4pt]
     {% if aso_corrected %}
-        \multicolumn{ {{ total_cols }} }{@{\hspace{10pt}}p{0.98\textwidth}}{
-            \footnotesize \S{} Data in all ASO-collected basins have been bias-corrected using ASO data and therefore the SWE changes might not represent snowmelt/accumulation but rather an update to the SWE estimates based on airborne data.
-            } \\[-4pt]
+    \multicolumn{ {{ total_cols }} }{@{\hspace{10pt}}p{ {{ footer_width }} \textwidth}}{
+        \footnotesize \S{} Data in all ASO-collected basins have been bias-corrected using ASO data and therefore the SWE changes might not represent snowmelt/accumulation but rather an update to the SWE estimates based on airborne data.
+    } \\[-4pt]
     {% endif %}
     {% if fsca_issue %}
-        \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.98\textwidth}}{
-            \footnotesize + Recent snowpack accumulation may be under-estimated due to issues with satellite-observed fSCA.
-        } \\
+    \multicolumn{ {{ total_cols }} }{@{\hspace{10pt}}p{ {{ footer_width }} \textwidth}}{
+        \footnotesize + Recent snowpack accumulation may be under-estimated due to issues with satellite-observed fSCA.
+    } \\[-4pt]
     {% endif %}
+    {% if high_pct_avg %}
+    \multicolumn{ {{ total_cols }} }{@{\hspace{10pt}}p{ {{ footer_width }} \textwidth}}{
+        \footnotesize $\dagger$ Deep and recent snow in areas that typically are snow-free can report high percent of average for this date because the mean 2001-2025 regression-derived SWE for that area is low or 0.
+    } \\[-4pt]
+    {% endif %}
+
+    \\[-8pt]
+    \bottomrule
 \end{tabular}
 
 \end{document}
