@@ -1354,6 +1354,168 @@ def plot_rasters_side_by_side(
 #
 #     return aso_bias_corrected_basins
 
+# def aso_choice_and_mosaic(
+#     rundate, domain, aso_error_csv, error_metric, aso_region,
+#     bias_correction_workspace, snapRaster, control_raster
+# ):
+#
+#     # ---- ArcPy environment ----
+#     arcpy.env.snapRaster = snapRaster
+#     arcpy.env.extent = snapRaster
+#     arcpy.env.cellSize = snapRaster
+#
+#     aso_bias_corrected_basins = []
+#     aso_df = pd.read_csv(aso_error_csv)
+#
+#     # ---- Make mosaic workspace ----
+#     mosaics_WS = os.path.join(bias_correction_workspace, "final_mosaic")
+#     os.makedirs(mosaics_WS, exist_ok=True)
+#
+#     for old_file in os.listdir(mosaics_WS):
+#         if old_file.endswith(".tif"):
+#             os.remove(os.path.join(mosaics_WS, old_file))
+#             print(f"Removed old file: {old_file}")
+#
+#     # ---- Filter by domain ----
+#     aso_df = aso_df[aso_df["Domain"] == aso_region]
+#
+#     # ================================
+#     # NEW: basin-by-basin selection
+#     # ================================
+#     chosen_rows = []
+#
+#     print("\n=== ASO METHOD SELECTION ===")
+#
+#     for basin in sorted(aso_df["Basin"].unique()):
+#
+#         basin_df = (
+#             aso_df[aso_df["Basin"] == basin]
+#             .sort_values(by=error_metric)
+#             .reset_index(drop=True)
+#         )
+#
+#         print(f"\n--- Basin: {basin} ---")
+#         print(basin_df[['Method', error_metric]].to_string(index=False))
+#
+#         best_row = basin_df.iloc[0]
+#         best_method = best_row["Method"]
+#         best_error = best_row[error_metric]
+#
+#         # ---- Auto-select if CONTROL is NOT best ----
+#         if best_method != "CONTROL":
+#             print(f"Auto-selected: {best_method} ({best_error:.3f})")
+#             chosen_rows.append(best_row)
+#             continue
+#
+#         # ---- CONTROL is best → prompt ----
+#         print(f"\n⚠ CONTROL has lowest {error_metric}: {best_error:.3f}")
+#
+#         if len(basin_df) < 2:
+#             print("Only CONTROL available — selecting CONTROL.")
+#             chosen_rows.append(best_row)
+#             continue
+#
+#         second_row = basin_df.iloc[1]
+#         second_method = second_row["Method"]
+#         second_error = second_row[error_metric]
+#
+#         print(f"Second-best: {second_method} ({second_error:.3f})")
+#
+#         choice = input(
+#             "Choose method [Enter = CONTROL, 2 = second-best]: "
+#         ).strip()
+#
+#         if choice == "2":
+#             chosen_rows.append(second_row)
+#             print(f"Selected second-best: {second_method}")
+#         else:
+#             chosen_rows.append(best_row)
+#             print("Selected CONTROL")
+#
+#     # ---- Final chosen methods dataframe ----
+#     best_df = pd.DataFrame(chosen_rows)
+#
+#     # ================================
+#     # CSV output (unchanged)
+#     # ================================
+#     chosen_methods_csv = os.path.join(
+#         bias_correction_workspace,
+#         f"{aso_region}_best_methods_{rundate}.csv"
+#     )
+#
+#     best_df_to_save = best_df[['Basin', 'Method', error_metric]].copy()
+#     best_df_to_save = best_df_to_save.rename(
+#         columns={'Method': 'Chosen_Method'}
+#     )
+#     best_df_to_save.to_csv(chosen_methods_csv, index=False)
+#
+#     print(f"\nSaved chosen methods to: {chosen_methods_csv}")
+#
+#     # ================================
+#     # Raster copying (unchanged logic)
+#     # ================================
+#     for _, row in best_df.iterrows():
+#         basin = row["Basin"]
+#         method = row["Method"]
+#
+#         print(f"\nBasin: {basin}")
+#         print(f"Chosen Method: {method}")
+#
+#         if method == "CONTROL":
+#             continue
+#
+#         method_dir = bias_correction_workspace + f"{method}/"
+#
+#         for file in os.listdir(method_dir):
+#             if file.startswith(f"{rundate}_{basin}") and file.endswith("BC_fix_albn83.tif"):
+#                 print(f"Moving {file} to {mosaics_WS}")
+#                 arcpy.CopyRaster_management(
+#                     os.path.join(method_dir, file),
+#                     os.path.join(mosaics_WS, file)
+#                 )
+#                 aso_bias_corrected_basins.append(basin)
+#
+#     # ================================
+#     # Mosaic (unchanged)
+#     # ================================
+#     rasters = [
+#         os.path.join(mosaics_WS, r)
+#         for r in os.listdir(mosaics_WS)
+#         if r.endswith(".tif")
+#     ]
+#
+#     if not rasters:
+#         print("No mosaics available — Control only")
+#         return aso_bias_corrected_basins
+#
+#     arcpy.management.MosaicToNewRaster(
+#         input_rasters=rasters,
+#         output_location=mosaics_WS,
+#         raster_dataset_name_with_extension=f"{domain}_final_ASO_bias_correction.tif",
+#         pixel_type="32_BIT_FLOAT",
+#         number_of_bands=1,
+#         mosaic_method="LAST",
+#         mosaic_colormap_mode="FIRST"
+#     )
+#
+#     print(f'{control_raster}')
+#     print(f'MERGING {basin} error to main p8 layer')
+#     final_mos = Con(
+#         IsNull(Raster(os.path.join(mosaics_WS, f"{domain}_final_ASO_bias_correction.tif"))),
+#         Raster(control_raster),
+#         Raster(os.path.join(mosaics_WS, f"{domain}_final_ASO_bias_correction.tif"))
+#     )
+#
+#     final_mos.save(os.path.join(mosaics_WS, f"p8_{rundate}_noneg_bias.tif"))
+#
+#     if os.path.exists(bias_correction_workspace + f"p8_{rundate}_noneg.tif"):
+#         arcpy.Delete_management(bias_correction_workspace + f"p8_{rundate}_noneg.tif")
+#         print('DUPLICATE P8 Layer deleted!')
+#         arcpy.CopyRaster_management(mosaics_WS + f"/p8_{rundate}_noneg_bias.tif", bias_correction_workspace + f"p8_{rundate}_noneg.tif")
+#
+#     return aso_bias_corrected_basins
+
+# bias correction selection function
 def aso_choice_and_mosaic(
     rundate, domain, aso_error_csv, error_metric, aso_region,
     bias_correction_workspace, snapRaster, control_raster
@@ -1380,7 +1542,7 @@ def aso_choice_and_mosaic(
     aso_df = aso_df[aso_df["Domain"] == aso_region]
 
     # ================================
-    # NEW: basin-by-basin selection
+    # Basin-by-basin selection
     # ================================
     chosen_rows = []
 
@@ -1401,36 +1563,39 @@ def aso_choice_and_mosaic(
         best_method = best_row["Method"]
         best_error = best_row[error_metric]
 
-        # ---- Auto-select if CONTROL is NOT best ----
-        if best_method != "CONTROL":
-            print(f"Auto-selected: {best_method} ({best_error:.3f})")
-            chosen_rows.append(best_row)
-            continue
+        # ---- Always prompt the user for every basin ----
+        print(f"\nBest method: {best_method} ({error_metric}: {best_error:.3f})")
 
-        # ---- CONTROL is best → prompt ----
-        print(f"\n⚠ CONTROL has lowest {error_metric}: {best_error:.3f}")
-
-        if len(basin_df) < 2:
-            print("Only CONTROL available — selecting CONTROL.")
-            chosen_rows.append(best_row)
-            continue
-
-        second_row = basin_df.iloc[1]
-        second_method = second_row["Method"]
-        second_error = second_row[error_metric]
-
-        print(f"Second-best: {second_method} ({second_error:.3f})")
-
-        choice = input(
-            "Choose method [Enter = CONTROL, 2 = second-best]: "
-        ).strip()
-
-        if choice == "2":
-            chosen_rows.append(second_row)
-            print(f"Selected second-best: {second_method}")
+        if best_method == "CONTROL":
+            print(f"⚠ CONTROL has the lowest {error_metric}.")
         else:
-            chosen_rows.append(best_row)
-            print("Selected CONTROL")
+            print(f"⚠ Bias correction method '{best_method}' outperforms CONTROL.")
+
+        # Build a numbered menu of all available methods
+        print("\nAvailable methods:")
+        for i, row in basin_df.iterrows():
+            marker = " ← best" if i == 0 else ""
+            print(f"  {i + 1}: {row['Method']} ({error_metric}: {row[error_metric]:.3f}){marker}")
+
+        while True:
+            raw = input(
+                f"Select method [1–{len(basin_df)}] (Enter = keep best '{best_method}'): "
+            ).strip()
+
+            if raw == "":
+                chosen_row = best_row
+                print(f"Keeping best: {best_method}")
+                break
+
+            if raw.isdigit() and 1 <= int(raw) <= len(basin_df):
+                idx = int(raw) - 1
+                chosen_row = basin_df.iloc[idx]
+                print(f"Selected: {chosen_row['Method']} ({error_metric}: {chosen_row[error_metric]:.3f})")
+                break
+
+            print(f"  Invalid input — enter a number between 1 and {len(basin_df)}, or press Enter.")
+
+        chosen_rows.append(chosen_row)
 
     # ---- Final chosen methods dataframe ----
     best_df = pd.DataFrame(chosen_rows)
@@ -1514,7 +1679,6 @@ def aso_choice_and_mosaic(
         arcpy.CopyRaster_management(mosaics_WS + f"/p8_{rundate}_noneg_bias.tif", bias_correction_workspace + f"p8_{rundate}_noneg.tif")
 
     return aso_bias_corrected_basins
-
 
 from matplotlib.colors import TwoSlopeNorm
 def sensor_difference_map(rundate, prev_rundate, sensors, prev_sensors, domain, point_value, outfile,
@@ -1782,7 +1946,7 @@ def choosing_best_model_run_sensors(rundate, domain_list, WW_reports_workspace, 
         print("!" * 70)
 
         # reload SNM error table
-        sensor_error = f"{SNM_reports_workspace}/{rundate}_RT_report/{rundate}_surveys_error.csv"
+        sensor_error = f"{SNM_reports_workspace}/{rundate}_RT_report/{rundate}_sensors_error.csv"
         snm_df = pd.read_csv(sensor_error)
 
         # isolate SNM

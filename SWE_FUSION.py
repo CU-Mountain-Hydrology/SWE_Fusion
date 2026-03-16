@@ -29,11 +29,11 @@ arcpy.env.parallelProcessingFactor = "0"
 ## date info
 user = "Olaf"
 year = 2026
-rundate = "20260308"
+rundate = "20260315"
 survey_date = "20260301"
-pillow_date = "08Mar2026"
-mean_date = "0308"
-prev_rundate = "20260301"
+pillow_date = "15Mar2026"
+mean_date = "0315"
+prev_rundate = "20260308"
 
 # flags
 difference = "Y" # should be Y if you want to compare against a previous model run
@@ -46,10 +46,10 @@ model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
 model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens"
 modelRuns = [model_woCCR, model_wCCR]
 model_labels = ["woCCR", "wCCR"]
-prev_model_run_WW = "RT_CanAdj_rcn_wCCR_nofscamskSens"
-prev_model_run_SNM = "RT_CanAdj_rcn_wCCR_nofscamskSens"
-prev_model_run_WW_tables = "ASO_BiasCorrect_RT_CanAdj_rcn_wCCR_nofscamskSens_UseThis"
-prev_model_run_SNM_tables = "ASO_BiasCorrect_RT_CanAdj_rcn_wCCR_nofscamskSens_UseThis"
+prev_model_run_WW = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseAvg"
+prev_model_run_SNM = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseAvg"
+prev_model_run_WW_tables = "ASO_BiasCorrect_RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis"
+prev_model_run_SNM_tables = "ASO_BiasCorrect_RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis"
 aso_symbol = "§"
 SNM_prev_tables_workspace = rf"M:/SWE/Sierras/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM_tables}/Tables/"
 WW_prev_tables_workspace = rf"M:/SWE/WestWide/documents/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW_tables}/Tables/"
@@ -65,7 +65,7 @@ error_metric = "Avg.Abs.Perc.Error"
 methods = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
 grade = "negative"
 grade_range = False
-grade_amount = -7
+grade_amount = -15
 sensorTrend = "Mixed"
 SNOTEL = "Decreasing"
 output_csv = "Y"
@@ -173,7 +173,7 @@ Cellsize = "500"
 # Processing Starts Now
 ############################################################################################################
 
-# # make results and reports directory
+# make results and reports directory
 # os.makedirs(WW_results_workspace + f"/{rundate}_results", exist_ok=True)
 # print(WW_results_workspace + f"/{rundate}_results")
 # os.makedirs(SNM_results_workspace + f"/{rundate}_results", exist_ok=True)
@@ -244,7 +244,7 @@ Cellsize = "500"
 # # clear memory
 # sleep(30)
 # clear_arcpy_locks()
-#
+
 # # run tables and layers code for the wCCR model run for West Wide
 # print(f'\nRunning Tables and Layers Code for all domains for {model_wCCR}')
 # tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_wCCR, masking="N", watershed_zones=WW_watershed_zones,
@@ -258,7 +258,7 @@ Cellsize = "500"
 #                      sensors=WW_results_workspace + f"{rundate}_results/{rundate}_sensors_{domain}.shp", zero_sensors=True,
 #                      CCR=False, model_workspace_domain=model_workspace + f"{domain}/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
 #
-# # clear memory
+# # # clear memory
 # sleep(30)
 # clear_arcpy_locks()
 #
@@ -294,7 +294,7 @@ Cellsize = "500"
 # sleep(30)
 # clear_arcpy_locks()
 # print('pause 1')
-#
+
 # sleep(30)
 # clear_arcpy_locks()
 # print('pause 2')
@@ -313,88 +313,88 @@ Cellsize = "500"
 # zero_CCR_sensors(rundate=rundate, results_workspace=SNM_results_workspace, pillow_date=pillow_date, domain="SNM",
 #                      sensors=SNM_results_workspace + f"{rundate}_results/SNM_{rundate}_sensors_albn83.shp", zero_sensors=True,
 #                      CCR=True, model_workspace_domain=model_workspace + f"SNM/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
-
-############## START VETTING ######################
-# loop through domains
+#
+# ############# START VETTING ######################
+# # loop through domains
 # for modelRun in modelRuns:
-    # for domain in domainList:
-    #     if domain == "SNM":
-    #         raster = f"{SNM_results_workspace}/{rundate}_results/{modelRun}/p8_{rundate}_noneg.tif"
-    #         sensors_SNM = SNM_results_workspace + f"{rundate}_results/SNM_{rundate}_sensors_albn83.shp"
-    #         surveys_SNM = SNM_results_workspace + f"{rundate}_results/{rundate}_surveys_albn83.shp"
-    #
-    #         ## make vetting folder
-    #         outVettingWS_SNM = SNM_reports_workspace + f"{rundate}_RT_report/{modelRun}/vetting_domains/"
-    #         os.makedirs(outVettingWS_SNM, exist_ok=True)
-    #
-    #         # fsca variables
-    #         fSCA_raster = f"{SNM_results_workspace}/{rundate}_results/{model_woCCR}/SNM_fSCA_{rundate}_albn83.tif"
-    #         prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM}/vetting_domains/"
-    #         vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
-    #         prev_raster = prev_vetting_WS + f"SNM_fSCA_{prev_rundate}_albn83.tif"
-    #
-    #         # move p8 to vetting space
-    #         arcpy.CopyRaster_management(raster, outVettingWS_SNM + f"p8_{rundate}_noneg.tif")
-    #
-    #         # move fsca to vetting space
-    #         arcpy.CopyRaster_management(fSCA_raster, outVettingWS_SNM + f"SNM_fSCA_{rundate}_albn83.tif")
-    #
-    #         # add in snowTrax comparison
-    #         snowtrax_comparision(rundate=rundate, snowTrax_csv=snowTrax_csv, results_WS=SNM_results_workspace,
-    #                              output_csv = outVettingWS_SNM + f"{rundate}_snowTrax_comparison.csv", model_list=modelRuns,
-    #                              model_labels=model_labels, reference_col=reference_col, output_png= SNM_reports_workspace + f"{rundate}_RT_report/{rundate}_snowTrax_comparison.png")
-    #
-    #     else:
-    #         # extract by mask
-    #         arcpy.env.snapRaster = snapRaster_albn83
-    #         arcpy.env.cellSize = snapRaster_albn83
-    #         raster = f"{WW_results_workspace}/{rundate}_results/{modelRun}/p8_{rundate}_noneg.tif"
-    #         fSCA_raster = f"{WW_results_workspace}/{rundate}_results/{model_woCCR}/fSCA_{rundate}_albn83.tif"
-    #         prev_vetting_WS = f"W:/documents/2026_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW}/vetting_domains/"
-    #         sensors_WW = WW_results_workspace + f"{rundate}_results/{rundate}_sensors_albn83.shp"
-    #         surveys_WW = WW_results_workspace + f"{rundate}_results/{rundate}_surveys_albn83.shp"
-    #         prev_fSCA_raster = prev_vetting_WS + f"fSCA_{prev_rundate}_{domain}_clp.tif"
-    #
-    #         ## make vetting folder
-    #         outVettingWS_WW = f"{WW_reports_workspace}/{rundate}_RT_report/{modelRun}/vetting_domains/"
-    #         os.makedirs(outVettingWS_WW, exist_ok=True)
-    #         outMask = ExtractByMask(raster, clipbox_WS + f"WW_{domain}_Clipbox_albn83.shp")
-    #         outMask.save(outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif")
-    #         print(f"{domain} clipped and saved")
-    #
-    #         ## make vetting folder
-    #         outMask = ExtractByMask(fSCA_raster, clipbox_WS + f"WW_{domain}_Clipbox_albn83.shp")
-    #         outMask.save(outVettingWS_WW + f"fSCA_{rundate}_{domain}_clp.tif")
-    #         print(f"{domain} clipped and saved for FSCA")
-    #
-    # for domain in domainList:
-    #     if domain == "SNM":
-    #         print('domain is SNM')
-    #         raster = outVettingWS_SNM + f"p8_{rundate}_noneg.tif"
-    #         if surveys_use == "Y":
-    #
-    #
-    #             model_domain_vetting(raster=raster, point=surveys_SNM, swe_col=swe_col_surv, id_col=id_col_surv,
-    #                                  rundate=rundate, domain=domain, modelRun=modelRun,
-    #                                  out_csv=SNM_reports_workspace + f"{rundate}_RT_report/{rundate}_surveys_error.csv")
-    #
-    #         swe_col_sens = 'pillowswe'
-    #         id_col_sens = 'Site_ID'
-    #         model_domain_vetting(raster=raster, point=sensors_SNM, swe_col=swe_col_sens, id_col=id_col_sens,
-    #                              rundate=rundate, domain=domain,
-    #                              modelRun=modelRun, out_csv=SNM_reports_workspace + f"{rundate}_RT_report/{rundate}_sensors_error.csv")
-    #     else:
-    #         raster = outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif"
-    #         swe_col_sens = 'pillowswe'
-    #         id_col_sens = 'Site_ID'
-    #         if surveys_use == "Y":
-    #
-    #
-    #             model_domain_vetting(raster=raster, point=surveys_WW, swe_col=swe_col_surv, id_col=id_col_surv, rundate=rundate,
-    #                                  domain=domain, modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report/{rundate}_surveys_error.csv")
-    #
-    #         model_domain_vetting(raster=raster, point=sensors_WW, swe_col=swe_col_sens, id_col=id_col_sens, rundate=rundate, domain=domain,
-    #                              modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report/{rundate}_sensors_error.csv")
+#     for domain in domainList:
+#         if domain == "SNM":
+#             raster = f"{SNM_results_workspace}/{rundate}_results/{modelRun}/p8_{rundate}_noneg.tif"
+#             sensors_SNM = SNM_results_workspace + f"{rundate}_results/SNM_{rundate}_sensors_albn83.shp"
+#             surveys_SNM = SNM_results_workspace + f"{rundate}_results/{rundate}_surveys_albn83.shp"
+#
+#             ## make vetting folder
+#             outVettingWS_SNM = SNM_reports_workspace + f"{rundate}_RT_report/{modelRun}/vetting_domains/"
+#             os.makedirs(outVettingWS_SNM, exist_ok=True)
+#
+#             # fsca variables
+#             fSCA_raster = f"{SNM_results_workspace}/{rundate}_results/{model_woCCR}/SNM_fSCA_{rundate}_albn83.tif"
+#             prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM}/vetting_domains/"
+#             vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
+#             prev_raster = prev_vetting_WS + f"SNM_fSCA_{prev_rundate}_albn83.tif"
+#
+#             # move p8 to vetting space
+#             arcpy.CopyRaster_management(raster, outVettingWS_SNM + f"p8_{rundate}_noneg.tif")
+#
+#             # move fsca to vetting space
+#             arcpy.CopyRaster_management(fSCA_raster, outVettingWS_SNM + f"SNM_fSCA_{rundate}_albn83.tif")
+#
+#             # add in snowTrax comparison
+#             snowtrax_comparision(rundate=rundate, snowTrax_csv=snowTrax_csv, results_WS=SNM_results_workspace,
+#                                  output_csv = outVettingWS_SNM + f"{rundate}_snowTrax_comparison.csv", model_list=modelRuns,
+#                                  model_labels=model_labels, reference_col=reference_col, output_png= SNM_reports_workspace + f"{rundate}_RT_report/{rundate}_snowTrax_comparison.png")
+#
+#         else:
+#             # extract by mask
+#             arcpy.env.snapRaster = snapRaster_albn83
+#             arcpy.env.cellSize = snapRaster_albn83
+#             raster = f"{WW_results_workspace}/{rundate}_results/{modelRun}/p8_{rundate}_noneg.tif"
+#             fSCA_raster = f"{WW_results_workspace}/{rundate}_results/{model_woCCR}/fSCA_{rundate}_albn83.tif"
+#             prev_vetting_WS = f"W:/documents/2026_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW}/vetting_domains/"
+#             sensors_WW = WW_results_workspace + f"{rundate}_results/{rundate}_sensors_albn83.shp"
+#             surveys_WW = WW_results_workspace + f"{rundate}_results/{rundate}_surveys_albn83.shp"
+#             prev_fSCA_raster = prev_vetting_WS + f"fSCA_{prev_rundate}_{domain}_clp.tif"
+#
+#             ## make vetting folder
+#             outVettingWS_WW = f"{WW_reports_workspace}/{rundate}_RT_report/{modelRun}/vetting_domains/"
+#             os.makedirs(outVettingWS_WW, exist_ok=True)
+#             outMask = ExtractByMask(raster, clipbox_WS + f"WW_{domain}_Clipbox_albn83.shp")
+#             outMask.save(outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif")
+#             print(f"{domain} clipped and saved")
+#
+#             ## make vetting folder
+#             outMask = ExtractByMask(fSCA_raster, clipbox_WS + f"WW_{domain}_Clipbox_albn83.shp")
+#             outMask.save(outVettingWS_WW + f"fSCA_{rundate}_{domain}_clp.tif")
+#             print(f"{domain} clipped and saved for FSCA")
+#
+#     for domain in domainList:
+#         if domain == "SNM":
+#             print('domain is SNM')
+#             raster = outVettingWS_SNM + f"p8_{rundate}_noneg.tif"
+#             if surveys_use == "Y":
+#
+#
+#                 model_domain_vetting(raster=raster, point=surveys_SNM, swe_col=swe_col_surv, id_col=id_col_surv,
+#                                      rundate=rundate, domain=domain, modelRun=modelRun,
+#                                      out_csv=SNM_reports_workspace + f"{rundate}_RT_report/{rundate}_surveys_error.csv")
+#
+#             swe_col_sens = 'pillowswe'
+#             id_col_sens = 'Site_ID'
+#             model_domain_vetting(raster=raster, point=sensors_SNM, swe_col=swe_col_sens, id_col=id_col_sens,
+#                                  rundate=rundate, domain=domain,
+#                                  modelRun=modelRun, out_csv=SNM_reports_workspace + f"{rundate}_RT_report/{rundate}_sensors_error.csv")
+#         else:
+#             raster = outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif"
+#             swe_col_sens = 'pillowswe'
+#             id_col_sens = 'Site_ID'
+#             if surveys_use == "Y":
+#
+#
+#                 model_domain_vetting(raster=raster, point=surveys_WW, swe_col=swe_col_surv, id_col=id_col_surv, rundate=rundate,
+#                                      domain=domain, modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report/{rundate}_surveys_error.csv")
+#
+#             model_domain_vetting(raster=raster, point=sensors_WW, swe_col=swe_col_sens, id_col=id_col_sens, rundate=rundate, domain=domain,
+#                                  modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report/{rundate}_sensors_error.csv")
 
 #####
 
@@ -416,90 +416,90 @@ print("\n BEST MODEL RUNS FOR THE DOMAINS")
 print(f"West Wide = {ChosenModelRun_WW}")
 print(f"Sierras = {ChosenModelRun_SNM}")
 
-# if difference == "Y":
-#     print("Running Plots...")
-#     for modelRun in modelRuns:
-#         for domain in domainList:
-#
-#             if domain == "SNM":
-#                 print('analyzing Sierras')
-#                 prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM}/vetting_domains/"
-#                 vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
-#                 fSCA_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/"
-#                 raster = vetting_WS + f"p8_{rundate}_noneg.tif"
-#                 fSCA_raster = vetting_WS + f"SNM_fSCA_{rundate}_albn83.tif"
-#                 prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg.tif"
-#                 prev_fSCA_raster = prev_vetting_WS + f"SNM_fSCA_{prev_rundate}_albn83.tif"
-#                 point_dataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{rundate}_results\SNM_{rundate}_sensors_albn83.shp"
-#                 prev_pointDataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{prev_rundate}_results\SNM_{prev_rundate}_sensors_albn83.shp"
-#
-#                 sensor_difference_map(rundate=rundate, prev_rundate=prev_rundate,
-#                                       sensors=rf"{WW_results_workspace}/{rundate}_results/{rundate}_sensors_{domain}.shp",
-#                                       prev_sensors=rf"{WW_results_workspace}/{prev_rundate}_results/{prev_rundate}_sensors_{domain}.shp",
-#                                       domain=domain, point_value='pillowswe',
-#                                       outfile=SNM_reports_workspace + f"{rundate}_RT_report/{domain}_{rundate}_{prev_rundate}_sensor_diff.png",
-#                                       basemap_file_1=statelines_file, basemap_name_1="State Lines",
-#                                       basemap_file_2=SNM_watershed_shapefile, basemap_name_2="Watersheds")
-#
-#
-#             else:
-#                 print(f"analyzing {domain}")
-#                 prev_vetting_WS = f"W:/documents/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW}/vetting_domains/"
-#                 vetting_WS = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
-#                 fSCA_vetting_WS = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/"
-#                 raster = vetting_WS + f"p8_{rundate}_noneg_{domain}_clp.tif"
-#                 fSCA_raster = f"{WW_results_workspace}/{rundate}_results/{model_woCCR}/fSCA_{rundate}_albn83.tif"
-#                 prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg_{domain}_clp.tif"
-#                 prev_fSCA_raster = prev_vetting_WS + f"fSCA_{prev_rundate}_{domain}_clp.tif"
-#                 point_dataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{rundate}_results\{rundate}_sensors_albn83.shp"
-#                 prev_pointDataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{prev_rundate}_results\{prev_rundate}_sensors_albn83.shp"
-#
-#                 sensor_difference_map(rundate=rundate, prev_rundate=prev_rundate,
-#                                       sensors=rf"{WW_results_workspace}/{rundate}_results/{rundate}_sensors_{domain}.shp",
-#                                       prev_sensors=rf"{WW_results_workspace}/{prev_rundate}_results/{prev_rundate}_sensors_{domain}.shp",
-#                                       domain=domain, point_value='pillowswe',
-#                                       outfile=SNM_reports_workspace + f"{rundate}_RT_report/{domain}_{rundate}_{prev_rundate}_sensor_diff.png",
-#                                       basemap_file_1=statelines_file, basemap_name_1="State Lines",
-#                                       basemap_file_2=WW_watershed_shapefile, basemap_name_2="Watersheds")
-#
-#             ## engage plots
-#             print("Plotting pillow change comparison...")
-#             pillow_date_comparison(rundate=rundate, prev_model_date=prev_rundate, raster=raster,
-#                                    point_dataset=point_dataset,
-#                                    prev_pointDataset=prev_pointDataset, id_column="Site_ID", swe_col="pillowswe",
-#                                    elev_col="dem",
-#                                    output_png=vetting_WS + f"{domain}_sensor_difference.png", convert_meters_feet="Y")
-#
-#             print('Creating box and whiskers plot...')
-#             raster_box_whisker_plot(rundate=rundate, prev_model_date=prev_rundate, raster=raster, prev_raster=prev_raster,
-#                                     domain=domain, variable="SWE", unit="m", output_png=vetting_WS + f"{domain}_{rundate}_box_whisker.png")
-#
-#             print('Creating elevation step plot...')
-#             swe_elevation_step_plot(rundate=rundate, prev_model_date=prev_rundate, domain=domain, raster=raster, prev_raster=prev_raster,
-#                                     output_png=vetting_WS + f"{domain}_{rundate}_elevation_step.png",
-#                                     elevation_tif=elevation_tif,
-#                                     elev_bins=elev_bins, variable="SWE", unit="m")
-#
-#             print('Creating aspect compass...')
-#             create_aspect_comparison(aspect_path=aspect_path, raster=raster, prev_raster=prev_raster, label_1=rundate,
-#                                      label_2=prev_rundate, title="Difference of SWE", variable='SWE', unit="m",
-#                                      output_path=vetting_WS + f"{rundate}_{domain}_aspect_comparison.png", num_bins=16)
-#
-#
-#             print('Creating box and whiskers plot...')
-#             raster_box_whisker_plot(rundate=rundate, prev_model_date=prev_rundate, raster=fSCA_raster, prev_raster=prev_fSCA_raster,
-#                                     domain=domain, variable="fSCA", unit="%", output_png=fSCA_vetting_WS + f"{domain}_{rundate}_fSCA_box_whisker.png")
-#
-#             print('Creating elevation step plot...')
-#             swe_elevation_step_plot(rundate=rundate, prev_model_date=prev_rundate, domain=domain, raster=fSCA_raster, prev_raster=prev_fSCA_raster,
-#                                     output_png=fSCA_vetting_WS + f"{domain}_{rundate}_fSCA_elevation_step.png",
-#                                     elevation_tif=elevation_tif,
-#                                     elev_bins=elev_bins, variable="fSCA", unit="%")
-#
-#             print('Creating aspect compass...')
-#             create_aspect_comparison(aspect_path=aspect_path, raster=fSCA_raster, prev_raster=prev_fSCA_raster, label_1=rundate,
-#                                  label_2=prev_rundate, title="Difference of fSCA", variable='fSCA', unit="%",
-#                                      output_path=fSCA_vetting_WS + f"{rundate}_{domain}_fSCA_aspect_comparison.png", num_bins=16)
+if difference == "Y":
+    print("Running Plots...")
+    for modelRun in modelRuns:
+        for domain in domainList:
+
+            if domain == "SNM":
+                print('analyzing Sierras')
+                prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM}/vetting_domains/"
+                vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
+                fSCA_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/"
+                raster = vetting_WS + f"p8_{rundate}_noneg.tif"
+                fSCA_raster = vetting_WS + f"SNM_fSCA_{rundate}_albn83.tif"
+                prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg.tif"
+                prev_fSCA_raster = prev_vetting_WS + f"SNM_fSCA_{prev_rundate}_albn83.tif"
+                point_dataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{rundate}_results\SNM_{rundate}_sensors_albn83.shp"
+                prev_pointDataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{prev_rundate}_results\SNM_{prev_rundate}_sensors_albn83.shp"
+
+                sensor_difference_map(rundate=rundate, prev_rundate=prev_rundate,
+                                      sensors=rf"{WW_results_workspace}/{rundate}_results/{rundate}_sensors_{domain}.shp",
+                                      prev_sensors=rf"{WW_results_workspace}/{prev_rundate}_results/{prev_rundate}_sensors_{domain}.shp",
+                                      domain=domain, point_value='pillowswe',
+                                      outfile=SNM_reports_workspace + f"{rundate}_RT_report/{domain}_{rundate}_{prev_rundate}_sensor_diff.png",
+                                      basemap_file_1=statelines_file, basemap_name_1="State Lines",
+                                      basemap_file_2=SNM_watershed_shapefile, basemap_name_2="Watersheds")
+
+
+            else:
+                print(f"analyzing {domain}")
+                prev_vetting_WS = f"W:/documents/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW}/vetting_domains/"
+                vetting_WS = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
+                fSCA_vetting_WS = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/"
+                raster = vetting_WS + f"p8_{rundate}_noneg_{domain}_clp.tif"
+                fSCA_raster = f"{WW_results_workspace}/{rundate}_results/{model_woCCR}/fSCA_{rundate}_albn83.tif"
+                prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg_{domain}_clp.tif"
+                prev_fSCA_raster = prev_vetting_WS + f"fSCA_{prev_rundate}_{domain}_clp.tif"
+                point_dataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{rundate}_results\{rundate}_sensors_albn83.shp"
+                prev_pointDataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{prev_rundate}_results\{prev_rundate}_sensors_albn83.shp"
+
+                sensor_difference_map(rundate=rundate, prev_rundate=prev_rundate,
+                                      sensors=rf"{WW_results_workspace}/{rundate}_results/{rundate}_sensors_{domain}.shp",
+                                      prev_sensors=rf"{WW_results_workspace}/{prev_rundate}_results/{prev_rundate}_sensors_{domain}.shp",
+                                      domain=domain, point_value='pillowswe',
+                                      outfile=SNM_reports_workspace + f"{rundate}_RT_report/{domain}_{rundate}_{prev_rundate}_sensor_diff.png",
+                                      basemap_file_1=statelines_file, basemap_name_1="State Lines",
+                                      basemap_file_2=WW_watershed_shapefile, basemap_name_2="Watersheds")
+
+            ## engage plots
+            print("Plotting pillow change comparison...")
+            pillow_date_comparison(rundate=rundate, prev_model_date=prev_rundate, raster=raster,
+                                   point_dataset=point_dataset,
+                                   prev_pointDataset=prev_pointDataset, id_column="Site_ID", swe_col="pillowswe",
+                                   elev_col="dem",
+                                   output_png=vetting_WS + f"{domain}_sensor_difference.png", convert_meters_feet="Y")
+
+            print('Creating box and whiskers plot...')
+            raster_box_whisker_plot(rundate=rundate, prev_model_date=prev_rundate, raster=raster, prev_raster=prev_raster,
+                                    domain=domain, variable="SWE", unit="m", output_png=vetting_WS + f"{domain}_{rundate}_box_whisker.png")
+
+            print('Creating elevation step plot...')
+            swe_elevation_step_plot(rundate=rundate, prev_model_date=prev_rundate, domain=domain, raster=raster, prev_raster=prev_raster,
+                                    output_png=vetting_WS + f"{domain}_{rundate}_elevation_step.png",
+                                    elevation_tif=elevation_tif,
+                                    elev_bins=elev_bins, variable="SWE", unit="m")
+
+            print('Creating aspect compass...')
+            create_aspect_comparison(aspect_path=aspect_path, raster=raster, prev_raster=prev_raster, label_1=rundate,
+                                     label_2=prev_rundate, title="Difference of SWE", variable='SWE', unit="m",
+                                     output_path=vetting_WS + f"{rundate}_{domain}_aspect_comparison.png", num_bins=16)
+
+
+            print('Creating box and whiskers plot...')
+            raster_box_whisker_plot(rundate=rundate, prev_model_date=prev_rundate, raster=fSCA_raster, prev_raster=prev_fSCA_raster,
+                                    domain=domain, variable="fSCA", unit="%", output_png=fSCA_vetting_WS + f"{domain}_{rundate}_fSCA_box_whisker.png")
+
+            print('Creating elevation step plot...')
+            swe_elevation_step_plot(rundate=rundate, prev_model_date=prev_rundate, domain=domain, raster=fSCA_raster, prev_raster=prev_fSCA_raster,
+                                    output_png=fSCA_vetting_WS + f"{domain}_{rundate}_fSCA_elevation_step.png",
+                                    elevation_tif=elevation_tif,
+                                    elev_bins=elev_bins, variable="fSCA", unit="%")
+
+            print('Creating aspect compass...')
+            create_aspect_comparison(aspect_path=aspect_path, raster=fSCA_raster, prev_raster=prev_fSCA_raster, label_1=rundate,
+                                 label_2=prev_rundate, title="Difference of fSCA", variable='fSCA', unit="%",
+                                     output_path=fSCA_vetting_WS + f"{rundate}_{domain}_fSCA_aspect_comparison.png", num_bins=16)
 
 sensors_SNM = SNM_results_workspace + f"{rundate}_results/SNM_{rundate}_sensors_albn83.shp"
 sensors_WW = WW_results_workspace + f"{rundate}_results/{rundate}_sensors_albn83.shp"
