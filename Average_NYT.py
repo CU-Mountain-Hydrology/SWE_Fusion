@@ -29,10 +29,10 @@ arcpy.env.parallelProcessingFactor = "0"
 ## date info
 user = "Olaf"
 year = 2026
-rundate = "20260318"
+rundate = "20260320"
 survey_date = "20260301"
-pillow_date = "18Mar2026"
-mean_date = "0318"
+pillow_date = "20Mar2026"
+mean_date = "0320"
 prev_rundate = "20260308"
 
 # flags

@@ -29,11 +29,11 @@ arcpy.env.parallelProcessingFactor = "0"
 ## date info
 user = "Olaf"
 year = 2026
-rundate = "20260315"
+rundate = "20260322"
 survey_date = "20260301"
-pillow_date = "15Mar2026"
-mean_date = "0315"
-prev_rundate = "20260308"
+pillow_date = "22Mar2026"
+mean_date = "0322"
+prev_rundate = "20260315"
 
 # flags
 difference = "Y" # should be Y if you want to compare against a previous model run
@@ -43,13 +43,13 @@ surveys_use = "N"
 # model run information
 domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"]
 model_wCCR = "RT_CanAdj_rcn_wCCR_nofscamskSens"
-model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens"
+model_woCCR = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseAvg"
 modelRuns = [model_woCCR, model_wCCR]
 model_labels = ["woCCR", "wCCR"]
-prev_model_run_WW = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseAvg"
-prev_model_run_SNM = "RT_CanAdj_rcn_woCCR_nofscamskSens_UseAvg"
-prev_model_run_WW_tables = "ASO_BiasCorrect_RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis"
-prev_model_run_SNM_tables = "ASO_BiasCorrect_RT_CanAdj_rcn_woCCR_nofscamskSens_UseThis"
+prev_model_run_WW = "RT_CanAdj_rcn_wCCR_nofscamskSens"
+prev_model_run_SNM = "RT_CanAdj_rcn_wCCR_nofscamskSens"
+prev_model_run_WW_tables = "ASO_BiasCorrect_RT_CanAdj_rcn_wCCR_nofscamskSens_UseThis"
+prev_model_run_SNM_tables = "ASO_BiasCorrect_RT_CanAdj_rcn_wCCR_nofscamskSens_UseThis"
 aso_symbol = "§"
 SNM_prev_tables_workspace = rf"M:/SWE/Sierras/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM_tables}/Tables/"
 WW_prev_tables_workspace = rf"M:/SWE/WestWide/documents/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW_tables}/Tables/"
@@ -58,7 +58,7 @@ WW_prev_tables_workspace = rf"M:/SWE/WestWide/documents/{year}_RT_Reports/{prev_
 ######################################
 # bias correction
 aso_snotel_data = r"W:/Spatial_SWE/ASO/2026/data/ASO_SNOTEL_DifferenceStats.csv"
-currentYear = True
+currentYear = False
 error_metric = "Avg.Abs.Perc.Error"
 # current_year = datetime.now().year
 # year = 2026
@@ -66,7 +66,7 @@ methods = ["RECENT", "GRADE", "SENSOR_PATTERN", "GRADES_SPECF"]
 grade = "negative"
 grade_range = False
 grade_amount = -15
-sensorTrend = "Mixed"
+sensorTrend = "Decreasing"
 SNOTEL = "Decreasing"
 output_csv = "Y"
 csv_outFile = fr"W:/Spatial_SWE/ASO/{year}/data/FracError_data.csv"
@@ -173,7 +173,7 @@ Cellsize = "500"
 # Processing Starts Now
 ############################################################################################################
 
-# make results and reports directory
+# # make results and reports directory
 # os.makedirs(WW_results_workspace + f"/{rundate}_results", exist_ok=True)
 # print(WW_results_workspace + f"/{rundate}_results")
 # os.makedirs(SNM_results_workspace + f"/{rundate}_results", exist_ok=True)
@@ -220,7 +220,7 @@ Cellsize = "500"
 # # clear memory
 # sleep(30)
 # clear_arcpy_locks()
-#
+
 # # run SNODAS for West Wide
 # print("\nSNODAS for WW...")
 # SNODAS_Processing(report_date=rundate, domain = "WW", RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
@@ -244,7 +244,7 @@ Cellsize = "500"
 # # clear memory
 # sleep(30)
 # clear_arcpy_locks()
-
+#
 # # run tables and layers code for the wCCR model run for West Wide
 # print(f'\nRunning Tables and Layers Code for all domains for {model_wCCR}')
 # tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_wCCR, masking="N", watershed_zones=WW_watershed_zones,
@@ -281,7 +281,7 @@ Cellsize = "500"
 # # clear memory
 # sleep(10)
 # clear_arcpy_locks()
-#
+
 #
 # print(f'\nRunning Tables and Layers Code for Sierra {model_woCCR}...')
 # tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_woCCR, SNM_results_workspace=SNM_results_workspace,
@@ -294,7 +294,7 @@ Cellsize = "500"
 # sleep(30)
 # clear_arcpy_locks()
 # print('pause 1')
-
+#
 # sleep(30)
 # clear_arcpy_locks()
 # print('pause 2')
@@ -395,8 +395,8 @@ Cellsize = "500"
 #
 #             model_domain_vetting(raster=raster, point=sensors_WW, swe_col=swe_col_sens, id_col=id_col_sens, rundate=rundate, domain=domain,
 #                                  modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report/{rundate}_sensors_error.csv")
-
-#####
+#
+# #####
 
 #PROMPT TO PICK THE BEST ERROR FROM THE CSV
 ChosenModelRun_WW, ChosenModelRun_SNM = choosing_best_model_run_sensors(rundate=rundate, domain_list=domainList, WW_reports_workspace=WW_reports_workspace,
@@ -416,90 +416,90 @@ print("\n BEST MODEL RUNS FOR THE DOMAINS")
 print(f"West Wide = {ChosenModelRun_WW}")
 print(f"Sierras = {ChosenModelRun_SNM}")
 
-if difference == "Y":
-    print("Running Plots...")
-    for modelRun in modelRuns:
-        for domain in domainList:
-
-            if domain == "SNM":
-                print('analyzing Sierras')
-                prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM}/vetting_domains/"
-                vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
-                fSCA_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/"
-                raster = vetting_WS + f"p8_{rundate}_noneg.tif"
-                fSCA_raster = vetting_WS + f"SNM_fSCA_{rundate}_albn83.tif"
-                prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg.tif"
-                prev_fSCA_raster = prev_vetting_WS + f"SNM_fSCA_{prev_rundate}_albn83.tif"
-                point_dataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{rundate}_results\SNM_{rundate}_sensors_albn83.shp"
-                prev_pointDataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{prev_rundate}_results\SNM_{prev_rundate}_sensors_albn83.shp"
-
-                sensor_difference_map(rundate=rundate, prev_rundate=prev_rundate,
-                                      sensors=rf"{WW_results_workspace}/{rundate}_results/{rundate}_sensors_{domain}.shp",
-                                      prev_sensors=rf"{WW_results_workspace}/{prev_rundate}_results/{prev_rundate}_sensors_{domain}.shp",
-                                      domain=domain, point_value='pillowswe',
-                                      outfile=SNM_reports_workspace + f"{rundate}_RT_report/{domain}_{rundate}_{prev_rundate}_sensor_diff.png",
-                                      basemap_file_1=statelines_file, basemap_name_1="State Lines",
-                                      basemap_file_2=SNM_watershed_shapefile, basemap_name_2="Watersheds")
-
-
-            else:
-                print(f"analyzing {domain}")
-                prev_vetting_WS = f"W:/documents/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW}/vetting_domains/"
-                vetting_WS = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
-                fSCA_vetting_WS = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/"
-                raster = vetting_WS + f"p8_{rundate}_noneg_{domain}_clp.tif"
-                fSCA_raster = f"{WW_results_workspace}/{rundate}_results/{model_woCCR}/fSCA_{rundate}_albn83.tif"
-                prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg_{domain}_clp.tif"
-                prev_fSCA_raster = prev_vetting_WS + f"fSCA_{prev_rundate}_{domain}_clp.tif"
-                point_dataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{rundate}_results\{rundate}_sensors_albn83.shp"
-                prev_pointDataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{prev_rundate}_results\{prev_rundate}_sensors_albn83.shp"
-
-                sensor_difference_map(rundate=rundate, prev_rundate=prev_rundate,
-                                      sensors=rf"{WW_results_workspace}/{rundate}_results/{rundate}_sensors_{domain}.shp",
-                                      prev_sensors=rf"{WW_results_workspace}/{prev_rundate}_results/{prev_rundate}_sensors_{domain}.shp",
-                                      domain=domain, point_value='pillowswe',
-                                      outfile=SNM_reports_workspace + f"{rundate}_RT_report/{domain}_{rundate}_{prev_rundate}_sensor_diff.png",
-                                      basemap_file_1=statelines_file, basemap_name_1="State Lines",
-                                      basemap_file_2=WW_watershed_shapefile, basemap_name_2="Watersheds")
-
-            ## engage plots
-            print("Plotting pillow change comparison...")
-            pillow_date_comparison(rundate=rundate, prev_model_date=prev_rundate, raster=raster,
-                                   point_dataset=point_dataset,
-                                   prev_pointDataset=prev_pointDataset, id_column="Site_ID", swe_col="pillowswe",
-                                   elev_col="dem",
-                                   output_png=vetting_WS + f"{domain}_sensor_difference.png", convert_meters_feet="Y")
-
-            print('Creating box and whiskers plot...')
-            raster_box_whisker_plot(rundate=rundate, prev_model_date=prev_rundate, raster=raster, prev_raster=prev_raster,
-                                    domain=domain, variable="SWE", unit="m", output_png=vetting_WS + f"{domain}_{rundate}_box_whisker.png")
-
-            print('Creating elevation step plot...')
-            swe_elevation_step_plot(rundate=rundate, prev_model_date=prev_rundate, domain=domain, raster=raster, prev_raster=prev_raster,
-                                    output_png=vetting_WS + f"{domain}_{rundate}_elevation_step.png",
-                                    elevation_tif=elevation_tif,
-                                    elev_bins=elev_bins, variable="SWE", unit="m")
-
-            print('Creating aspect compass...')
-            create_aspect_comparison(aspect_path=aspect_path, raster=raster, prev_raster=prev_raster, label_1=rundate,
-                                     label_2=prev_rundate, title="Difference of SWE", variable='SWE', unit="m",
-                                     output_path=vetting_WS + f"{rundate}_{domain}_aspect_comparison.png", num_bins=16)
-
-
-            print('Creating box and whiskers plot...')
-            raster_box_whisker_plot(rundate=rundate, prev_model_date=prev_rundate, raster=fSCA_raster, prev_raster=prev_fSCA_raster,
-                                    domain=domain, variable="fSCA", unit="%", output_png=fSCA_vetting_WS + f"{domain}_{rundate}_fSCA_box_whisker.png")
-
-            print('Creating elevation step plot...')
-            swe_elevation_step_plot(rundate=rundate, prev_model_date=prev_rundate, domain=domain, raster=fSCA_raster, prev_raster=prev_fSCA_raster,
-                                    output_png=fSCA_vetting_WS + f"{domain}_{rundate}_fSCA_elevation_step.png",
-                                    elevation_tif=elevation_tif,
-                                    elev_bins=elev_bins, variable="fSCA", unit="%")
-
-            print('Creating aspect compass...')
-            create_aspect_comparison(aspect_path=aspect_path, raster=fSCA_raster, prev_raster=prev_fSCA_raster, label_1=rundate,
-                                 label_2=prev_rundate, title="Difference of fSCA", variable='fSCA', unit="%",
-                                     output_path=fSCA_vetting_WS + f"{rundate}_{domain}_fSCA_aspect_comparison.png", num_bins=16)
+# if difference == "Y":
+#     print("Running Plots...")
+#     for modelRun in modelRuns:
+#         for domain in domainList:
+#
+#             if domain == "SNM":
+#                 print('analyzing Sierras')
+#                 prev_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_SNM}/vetting_domains/"
+#                 vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
+#                 fSCA_vetting_WS = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{rundate}_RT_report/"
+#                 raster = vetting_WS + f"p8_{rundate}_noneg.tif"
+#                 fSCA_raster = vetting_WS + f"SNM_fSCA_{rundate}_albn83.tif"
+#                 prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg.tif"
+#                 prev_fSCA_raster = prev_vetting_WS + f"SNM_fSCA_{prev_rundate}_albn83.tif"
+#                 point_dataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{rundate}_results\SNM_{rundate}_sensors_albn83.shp"
+#                 prev_pointDataset = fr"M:\SWE\Sierras\Spatial_SWE\SNM_regression\RT_report_data\{prev_rundate}_results\SNM_{prev_rundate}_sensors_albn83.shp"
+#
+#                 sensor_difference_map(rundate=rundate, prev_rundate=prev_rundate,
+#                                       sensors=rf"{WW_results_workspace}/{rundate}_results/{rundate}_sensors_{domain}.shp",
+#                                       prev_sensors=rf"{WW_results_workspace}/{prev_rundate}_results/{prev_rundate}_sensors_{domain}.shp",
+#                                       domain=domain, point_value='pillowswe',
+#                                       outfile=SNM_reports_workspace + f"{rundate}_RT_report/{domain}_{rundate}_{prev_rundate}_sensor_diff.png",
+#                                       basemap_file_1=statelines_file, basemap_name_1="State Lines",
+#                                       basemap_file_2=SNM_watershed_shapefile, basemap_name_2="Watersheds")
+#
+#
+#             else:
+#                 print(f"analyzing {domain}")
+#                 prev_vetting_WS = f"W:/documents/{year}_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW}/vetting_domains/"
+#                 vetting_WS = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/{modelRun}/vetting_domains/"
+#                 fSCA_vetting_WS = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/"
+#                 raster = vetting_WS + f"p8_{rundate}_noneg_{domain}_clp.tif"
+#                 fSCA_raster = f"{WW_results_workspace}/{rundate}_results/{model_woCCR}/fSCA_{rundate}_albn83.tif"
+#                 prev_raster = prev_vetting_WS + f"p8_{prev_rundate}_noneg_{domain}_clp.tif"
+#                 prev_fSCA_raster = prev_vetting_WS + f"fSCA_{prev_rundate}_{domain}_clp.tif"
+#                 point_dataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{rundate}_results\{rundate}_sensors_albn83.shp"
+#                 prev_pointDataset = fr"M:\SWE\WestWide\Spatial_SWE\WW_regression\RT_report_data\{prev_rundate}_results\{prev_rundate}_sensors_albn83.shp"
+#
+#                 sensor_difference_map(rundate=rundate, prev_rundate=prev_rundate,
+#                                       sensors=rf"{WW_results_workspace}/{rundate}_results/{rundate}_sensors_{domain}.shp",
+#                                       prev_sensors=rf"{WW_results_workspace}/{prev_rundate}_results/{prev_rundate}_sensors_{domain}.shp",
+#                                       domain=domain, point_value='pillowswe',
+#                                       outfile=SNM_reports_workspace + f"{rundate}_RT_report/{domain}_{rundate}_{prev_rundate}_sensor_diff.png",
+#                                       basemap_file_1=statelines_file, basemap_name_1="State Lines",
+#                                       basemap_file_2=WW_watershed_shapefile, basemap_name_2="Watersheds")
+#
+#             ## engage plots
+#             print("Plotting pillow change comparison...")
+#             pillow_date_comparison(rundate=rundate, prev_model_date=prev_rundate, raster=raster,
+#                                    point_dataset=point_dataset,
+#                                    prev_pointDataset=prev_pointDataset, id_column="Site_ID", swe_col="pillowswe",
+#                                    elev_col="dem",
+#                                    output_png=vetting_WS + f"{domain}_sensor_difference.png", convert_meters_feet="Y")
+#
+#             print('Creating box and whiskers plot...')
+#             raster_box_whisker_plot(rundate=rundate, prev_model_date=prev_rundate, raster=raster, prev_raster=prev_raster,
+#                                     domain=domain, variable="SWE", unit="m", output_png=vetting_WS + f"{domain}_{rundate}_box_whisker.png")
+#
+#             print('Creating elevation step plot...')
+#             swe_elevation_step_plot(rundate=rundate, prev_model_date=prev_rundate, domain=domain, raster=raster, prev_raster=prev_raster,
+#                                     output_png=vetting_WS + f"{domain}_{rundate}_elevation_step.png",
+#                                     elevation_tif=elevation_tif,
+#                                     elev_bins=elev_bins, variable="SWE", unit="m")
+#
+#             print('Creating aspect compass...')
+#             create_aspect_comparison(aspect_path=aspect_path, raster=raster, prev_raster=prev_raster, label_1=rundate,
+#                                      label_2=prev_rundate, title="Difference of SWE", variable='SWE', unit="m",
+#                                      output_path=vetting_WS + f"{rundate}_{domain}_aspect_comparison.png", num_bins=16)
+#
+#
+#             print('Creating box and whiskers plot...')
+#             raster_box_whisker_plot(rundate=rundate, prev_model_date=prev_rundate, raster=fSCA_raster, prev_raster=prev_fSCA_raster,
+#                                     domain=domain, variable="fSCA", unit="%", output_png=fSCA_vetting_WS + f"{domain}_{rundate}_fSCA_box_whisker.png")
+#
+#             print('Creating elevation step plot...')
+#             swe_elevation_step_plot(rundate=rundate, prev_model_date=prev_rundate, domain=domain, raster=fSCA_raster, prev_raster=prev_fSCA_raster,
+#                                     output_png=fSCA_vetting_WS + f"{domain}_{rundate}_fSCA_elevation_step.png",
+#                                     elevation_tif=elevation_tif,
+#                                     elev_bins=elev_bins, variable="fSCA", unit="%")
+#
+#             print('Creating aspect compass...')
+#             create_aspect_comparison(aspect_path=aspect_path, raster=fSCA_raster, prev_raster=prev_fSCA_raster, label_1=rundate,
+#                                  label_2=prev_rundate, title="Difference of fSCA", variable='fSCA', unit="%",
+#                                      output_path=fSCA_vetting_WS + f"{rundate}_{domain}_fSCA_aspect_comparison.png", num_bins=16)
 
 sensors_SNM = SNM_results_workspace + f"{rundate}_results/SNM_{rundate}_sensors_albn83.shp"
 sensors_WW = WW_results_workspace + f"{rundate}_results/{rundate}_sensors_albn83.shp"
@@ -508,121 +508,120 @@ if biasCorrection == "Y":
     out_csv = rf"W:/Spatial_SWE/ASO/ASO_Metadata/{rundate}_ASO_biasCorrection_stats.csv"
     # list of methods
     results_df = bias_correction_selection(rundate=rundate, aso_snotel_data = aso_snotel_data, basin_List=basin_List, domainList=domain_textFile, method_list=methods,
-                                           fracErrorWorkspace=fracErrorWorkspace, output_csv=output_csv, csv_outFile=csv_outFile,
-                                           currentYear=True, year=year, grade_amount=grade_amount, sensorTrend=sensorTrend, SNOTEL=SNOTEL,
+                                           fracErrorWorkspace=fracErrorWorkspace, output_csv=output_csv, csv_outFile=csv_outFile,currentYear=False, year=year, grade_amount=grade_amount, sensorTrend=sensorTrend, SNOTEL=SNOTEL,
                                            grade=grade, grade_range=grade_range)
     results_df.to_csv(out_csv, index=False)
 
     #################################
     # BIAS CORRECTION CODE FOR WW
     #################################
-    for method in methods:
-        print(f"\nProcessing method:", method)
-        bias_correct(WW_results_workspace + f"{rundate}_results/", domain="WW", ModelRun=ChosenModelRun_WW, method=method, rundate=rundate, results_df=results_df, shapefile_workspace=WW_shapefile_workspace)
-
-    # got through methods to find the best version for vetting
-    prefix = rundate
-    unique_names = set()  # use a set to keep unique values
-    file_mapping = {}
-    for root, dirs, files in os.walk(rf"W:/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/"):
-        for file in files:
-            if file.startswith(prefix):
-
-                # Split by "_" and take the first two parts
-                parts = file.split("_")
-                if len(parts) >= 2:
-                    name = "_".join(parts[:2])
-                    unique_names.add(name)
-                    print(name)
-
-    # Convert to list if needed
-    unique_names = list(unique_names)
-    print(unique_names)
-
-    print("\nFull file names by prefix:")
-    for name, files in file_mapping.items():
-        print(f"{name}:")
-        for f in files:
-            print(f"  {f}")
-
-    control_raster_WW = rf"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/{ChosenModelRun_WW}/p8_{rundate}_noneg.tif"
-    os.makedirs(f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/ASO_BiasCorrect_{ChosenModelRun_WW}/", exist_ok=True)
-
-    WW_out_csv_vetting = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/ASO_BiasCorrect_{ChosenModelRun_WW}/{rundate}_ASO_bias_correction_stats.csv"
-    for method in methods:
-        print(f"\nMethod: {method}"'')
-        BC_path = rf"W:/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/{method}/"
-        control_out_folder = rf"W:/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/"
-
-        for name in unique_names:
-            print(f"Name: {name}")
-            raster = BC_path + f"{name}_{method}_BC_fix_albn83.tif"
-
-            if os.path.exists(raster):
-                bias_correction_vetting(raster=raster, point=sensors_WW, domain="WW", swe_col="pillowswe",
-                                        id_col="Site_ID", rundate=rundate,
-                                        name=name, method=method, out_csv=WW_out_csv_vetting, folder=BC_path,
-                                        control_out_folder=control_out_folder, control_raster=control_raster_WW)
-            else:
-                print(f'{raster} RASTER DOES NOT EXISTS')
-
-    # figures and vetting
-    df = pd.read_csv(WW_out_csv_vetting)
-    aso_df = df[df["Domain"] == "WW"]
-
-    # get a list of unique values
-    basins_bc = aso_df["Basin"].unique()
-
-    for basin in basins_bc:
-        print(basin)
-        file_paths = []
-        labels = []
-
-        # get control file
-        control_list = os.listdir(f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/")
-        for file in control_list:
-            if file.startswith(f"{rundate}_{basin}") and file.endswith("Control_clp.tif"):
-                file_paths.append(f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/" + file)
-                labels.append("Control")
-
-        # get bias corrected
-        for method in methods:
-            for bc_file in os.listdir(f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/" + f"{method}/"):
-                if bc_file.startswith(f"{rundate}_{basin}") and bc_file.endswith(f"{method}_BC_fix_albn83.tif"):
-                    file_paths.append(f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/" + f"{method}/{bc_file}")
-                    labels.append(method)
-
-        # get metadata
-        print(len(file_paths))
-
-        # get box and whiskers plot
-        if len(file_paths) < 2:
-            print("Skipping — not enough rasters")
-            continue
-
-        output_png = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/ASO_BiasCorrect_{ChosenModelRun_WW}/{rundate}_{basin}_SWE_boxplot.png"
-
-        raster_box_whisker_plot_multi(
-            rundate=rundate,
-            raster_paths=file_paths,
-            labels=labels,
-            domain=basin,
-            variable="SWE",
-            unit="m",
-            output_png=output_png
-        )
-        # plot rasters
-        titles = ["CONTROL"] + methods[:len(file_paths) - 1]
-
-        plot_rasters_side_by_side(
-            rundate=rundate,
-            basin=basin ,
-            raster_paths=file_paths,
-            titles=labels,
-            variable="SWE",
-            unit="m",
-            output_png=f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/ASO_BiasCorrect_{ChosenModelRun_WW}/{rundate}_{basin}_SWE_maps.png"
-        )
+    # for method in methods:
+    #     print(f"\nProcessing method:", method)
+    #     bias_correct(WW_results_workspace + f"{rundate}_results/", domain="WW", ModelRun=ChosenModelRun_WW, method=method, rundate=rundate, results_df=results_df, shapefile_workspace=WW_shapefile_workspace)
+    #
+    # # got through methods to find the best version for vetting
+    # prefix = rundate
+    # unique_names = set()  # use a set to keep unique values
+    # file_mapping = {}
+    # for root, dirs, files in os.walk(rf"W:/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/"):
+    #     for file in files:
+    #         if file.startswith(prefix):
+    #
+    #             # Split by "_" and take the first two parts
+    #             parts = file.split("_")
+    #             if len(parts) >= 2:
+    #                 name = "_".join(parts[:2])
+    #                 unique_names.add(name)
+    #                 print(name)
+    #
+    # # Convert to list if needed
+    # unique_names = list(unique_names)
+    # print(unique_names)
+    #
+    # print("\nFull file names by prefix:")
+    # for name, files in file_mapping.items():
+    #     print(f"{name}:")
+    #     for f in files:
+    #         print(f"  {f}")
+    #
+    # control_raster_WW = rf"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/{ChosenModelRun_WW}/p8_{rundate}_noneg.tif"
+    # os.makedirs(f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/ASO_BiasCorrect_{ChosenModelRun_WW}/", exist_ok=True)
+    #
+    # WW_out_csv_vetting = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/ASO_BiasCorrect_{ChosenModelRun_WW}/{rundate}_ASO_bias_correction_stats.csv"
+    # for method in methods:
+    #     print(f"\nMethod: {method}"'')
+    #     BC_path = rf"W:/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/{method}/"
+    #     control_out_folder = rf"W:/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/"
+    #
+    #     for name in unique_names:
+    #         print(f"Name: {name}")
+    #         raster = BC_path + f"{name}_{method}_BC_fix_albn83.tif"
+    #
+    #         if os.path.exists(raster):
+    #             bias_correction_vetting(raster=raster, point=sensors_WW, domain="WW", swe_col="pillowswe",
+    #                                     id_col="Site_ID", rundate=rundate,
+    #                                     name=name, method=method, out_csv=WW_out_csv_vetting, folder=BC_path,
+    #                                     control_out_folder=control_out_folder, control_raster=control_raster_WW)
+    #         else:
+    #             print(f'{raster} RASTER DOES NOT EXISTS')
+    #
+    # # figures and vetting
+    # df = pd.read_csv(WW_out_csv_vetting)
+    # aso_df = df[df["Domain"] == "WW"]
+    #
+    # # get a list of unique values
+    # basins_bc = aso_df["Basin"].unique()
+    #
+    # for basin in basins_bc:
+    #     print(basin)
+    #     file_paths = []
+    #     labels = []
+    #
+    #     # get control file
+    #     control_list = os.listdir(f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/")
+    #     for file in control_list:
+    #         if file.startswith(f"{rundate}_{basin}") and file.endswith("Control_clp.tif"):
+    #             file_paths.append(f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/" + file)
+    #             labels.append("Control")
+    #
+    #     # get bias corrected
+    #     for method in methods:
+    #         for bc_file in os.listdir(f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/" + f"{method}/"):
+    #             if bc_file.startswith(f"{rundate}_{basin}") and bc_file.endswith(f"{method}_BC_fix_albn83.tif"):
+    #                 file_paths.append(f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/" + f"{method}/{bc_file}")
+    #                 labels.append(method)
+    #
+    #     # get metadata
+    #     print(len(file_paths))
+    #
+    #     # get box and whiskers plot
+    #     if len(file_paths) < 2:
+    #         print("Skipping — not enough rasters")
+    #         continue
+    #
+    #     output_png = f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/ASO_BiasCorrect_{ChosenModelRun_WW}/{rundate}_{basin}_SWE_boxplot.png"
+    #
+    #     raster_box_whisker_plot_multi(
+    #         rundate=rundate,
+    #         raster_paths=file_paths,
+    #         labels=labels,
+    #         domain=basin,
+    #         variable="SWE",
+    #         unit="m",
+    #         output_png=output_png
+    #     )
+    #     # plot rasters
+    #     titles = ["CONTROL"] + methods[:len(file_paths) - 1]
+    #
+    #     plot_rasters_side_by_side(
+    #         rundate=rundate,
+    #         basin=basin ,
+    #         raster_paths=file_paths,
+    #         titles=labels,
+    #         variable="SWE",
+    #         unit="m",
+    #         output_png=f"W:/documents/{year}_RT_Reports/{rundate}_RT_report/ASO_BiasCorrect_{ChosenModelRun_WW}/{rundate}_{basin}_SWE_maps.png"
+    #     )
 
     #################################
     # BIAS CORRECTION CODE FOR SNM
@@ -737,26 +736,26 @@ if biasCorrection == "Y":
     sleep(30)
 
     ## pick the best file
-    print("\n Choosing and mosaic for WW...")
-    arcpy.env.snapRaster = snapRaster_albn83
-    arcpy.env.extent = snapRaster_albn83
-    arcpy.env.cellSize = snapRaster_albn83
-    WW_ASO_biasCorr_basins = aso_choice_and_mosaic(rundate=rundate, domain= "WW", aso_error_csv=WW_out_csv_vetting, error_metric=error_metric, aso_region="WW",
-                          bias_correction_workspace=f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/",
-                          snapRaster=snapRaster_albn83, control_raster=control_raster_WW)
-
-    tables_and_layers(user=user, year=year, report_date=rundate, mean_date=mean_date, meanWorkspace=meanWorkspace,
-                      model_run=f"ASO_BiasCorrect_{ChosenModelRun_WW}/", masking="N", watershed_zones=WW_watershed_zones,
-                      band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones,
-                      case_field_wtrshd=case_field_wtrshd,
-                      case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask,
-                      snapRaster_geon83=snapRaster_geon83,
-                      snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM,
-                      run_type="Bias", bias_model_run=f"/ASO_BiasCorrect_{ChosenModelRun_WW}/",
-                      prev_report_date=prev_rundate, prev_model_run=prev_model_run_WW)
-
-    clear_arcpy_locks()
-    sleep(30)
+    # print("\n Choosing and mosaic for WW...")
+    # arcpy.env.snapRaster = snapRaster_albn83
+    # arcpy.env.extent = snapRaster_albn83
+    # arcpy.env.cellSize = snapRaster_albn83
+    # WW_ASO_biasCorr_basins = aso_choice_and_mosaic(rundate=rundate, domain= "WW", aso_error_csv=WW_out_csv_vetting, error_metric=error_metric, aso_region="WW",
+    #                       bias_correction_workspace=f"M:/SWE/WestWide/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/",
+    #                       snapRaster=snapRaster_albn83, control_raster=control_raster_WW)
+    #
+    # tables_and_layers(user=user, year=year, report_date=rundate, mean_date=mean_date, meanWorkspace=meanWorkspace,
+    #                   model_run=f"ASO_BiasCorrect_{ChosenModelRun_WW}/", masking="N", watershed_zones=WW_watershed_zones,
+    #                   band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones,
+    #                   case_field_wtrshd=case_field_wtrshd,
+    #                   case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask,
+    #                   snapRaster_geon83=snapRaster_geon83,
+    #                   snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM,
+    #                   run_type="Bias", bias_model_run=f"/ASO_BiasCorrect_{ChosenModelRun_WW}/",
+    #                   prev_report_date=prev_rundate, prev_model_run=prev_model_run_WW)
+    #
+    # clear_arcpy_locks()
+    # sleep(30)
 
     print("\n Choosing and mosaic for SNM...")
     arcpy.env.snapRaster = SNM_snapRaster_albn83

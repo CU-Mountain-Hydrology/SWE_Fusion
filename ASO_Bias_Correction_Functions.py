@@ -102,6 +102,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                     aso_df = aso_df[aso_df["Year"] == year]
                 else:
                     print("Using all years of ASO data")
+                    aso_df = aso_df
 
                 # Store paths for this basin
                 basin_row = {
@@ -136,7 +137,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                             closest_row = df_filtered.loc[df_filtered["diff_days"].idxmin()]
                             # get fractional error path
                             fraErrorPath = (
-                                f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                                f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                 f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                             method_paths['RECENT'] = fraErrorPath
 
@@ -153,7 +154,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                                 if not df_filtered.empty:
                                     closest_row = df_filtered.loc[df_filtered["diff_days"].idxmin()]
                                     fraErrorPath = (
-                                        f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                                        f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                         f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                                     method_paths['GRADE'] = fraErrorPath
 
@@ -164,7 +165,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                                     closest_row = aso_df_grade.loc[
                                         (aso_df_grade["GradeDifference"] - grade_amount).abs().idxmin()]
                                     fraErrorPath = (
-                                        f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                                        f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                         f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                                     method_paths['GRADES_SPECF'] = fraErrorPath
                                 else:
@@ -186,7 +187,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                             if not aso_df_pattern.empty:
                                 closest_row = aso_df_pattern.loc[aso_df_pattern["diff_days"].idxmin()]
                                 fraErrorPath = (
-                                    f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                                    f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                     f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                                 method_paths['SENSOR_PATTERN'] = fraErrorPath
 
@@ -194,7 +195,7 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                         elif row_count == 1:
                             closest_row = aso_df_pattern.iloc[0]
                             fraErrorPath = (
-                                f"{fracErrorWorkspace}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                                f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                 f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                             method_paths['SENSOR_PATTERN'] = fraErrorPath
                             basin_row['PATTERN_TYPE'] = sensorTrend
@@ -554,6 +555,7 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
             validation_results.append(f"  ✓ {sub_basin}: valid path")
 
         # Print validation results
+        # print(f'HELP {fraErr_dir}')
         print(f"\nValidation results for method '{method}' in main group '{basin}':")
         for result in validation_results:
             print(result)
@@ -602,7 +604,13 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
 
             # Pattern: starts with basename, ends with swe_50m_fraErr.tif
             # This will match: ASO_BoulderCreek_2025Apr09*swe_50m_fraErr.tif
-            search_pattern = os.path.join(fraErr_dir, f"{fraErr_basename[:-15]}*swe_50m_fraErr.tif")
+            # search_pattern = os.path.join(fraErr_dir, f"{fraErr_basename[:-15]}*swe_50m_fraErr.tif")
+
+            fraErr_normalized = fraErr.replace('\\', '/').replace('//', '/')
+            fraErr_dir = os.path.dirname(fraErr_normalized)
+            fraErr_basename = os.path.basename(fraErr_normalized)
+            # search_pattern = f"{fraErr_dir}/{fraErr_basename[:-15]}*swe_50m_fraErr.tif"
+            search_pattern = f"{fraErr_dir}/{fraErr_basename[:-15]}*fraErr.tif"
 
             print(f"Basin: {basin} | Sub-Basin: {sub_basin} | Output Name: {output_basin_name} | Search pattern: {search_pattern}")
 
@@ -636,17 +644,25 @@ def bias_correct(results_workspace, domain, ModelRun, method, rundate, results_d
                 else:
                     basinSHP = f"{shapefile_workspace}ASO_{sub_basin}_albn83.shp"
 
+            # matching_files = glob.glob(search_pattern)
+            #
+            # if matching_files:
+            #     for fraErr_path in matching_files:
+            #         print(f"Found file: {fraErr_path}")
+            #
+            #         if os.path.exists(fraErr_path):
+            #             print("File exists!")
+            #             # Your processing code here
+            # else:
+            #     print(f"No files found matching pattern: {search_pattern}")
             matching_files = glob.glob(search_pattern)
 
-            if matching_files:
-                for fraErr_path in matching_files:
-                    print(f"Found file: {fraErr_path}")
+            if not matching_files:
+                print(f"No files found matching pattern: {search_pattern} — SKIPPING {sub_basin}")
+                continue  # ← skip to next basin, don't fall through with stale fraErr_path
 
-                    if os.path.exists(fraErr_path):
-                        print("File exists!")
-                        # Your processing code here
-            else:
-                print(f"No files found matching pattern: {search_pattern}")
+            fraErr_path = matching_files[0]  # explicitly assign here, not inside loop
+            print(f"Found file: {fraErr_path}")
 
             if os.path.exists(fraErr_path):
 
