@@ -32,6 +32,13 @@ print('modules imported')
 ## function for fix
 ## function for validation
 
+def seasonal_diff(date_series, target_date):
+    """Day-of-year difference ignoring year, with wrap-around handling."""
+    target_doy = target_date.timetuple().tm_yday
+    doy = date_series.dt.dayofyear
+    diff = (doy - target_doy).abs()
+    return diff.apply(lambda x: min(x, 365 - x))
+
 def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, method_list, fracErrorWorkspace,
                               output_csv, csv_outFile=None, currentYear=None, year=None, grade_amount=None,
                               sensorTrend=None, SNOTEL=None, grade=None, grade_range=None):
@@ -113,42 +120,161 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                     'RECENT': None,
                     'GRADE': None,
                     'SENSOR_PATTERN': None,
-                    'PATTERN_TYPE': None
+                    'PATTERN_TYPE': None,
+                    'MAX_INCREASE': None
                 }
 
                 # Track paths to detect duplicates
                 method_paths = {}
 
+                # for method in method_list:
+                #     # getting most recent data
+                #     if method == "RECENT":
+                #         # print(f"\nMETHOD: {method}")
+                #         aso_df_basin = aso_df[aso_df["Basin"] == item].copy()
+                #         target_date = datetime.strptime(rundate, "%Y%m%d")
+                #         aso_df_basin['cstm_dte'] = pd.to_datetime(aso_df_basin["Date"], format="%Y%b%d")
+                #         aso_df_basin["diff_days"] = (aso_df_basin["cstm_dte"] - target_date).abs().dt.days
+                #         df_filtered = aso_df_basin[aso_df_basin["diff_days"] > 4]
+                #         print(
+                #             aso_df_basin[["Basin", "Date", "diff_days"]]
+                #         )
+                #
+                #         # add to the df
+                #         if not df_filtered.empty:
+                #             closest_row = df_filtered.loc[df_filtered["diff_days"].idxmin()]
+                #             # get fractional error path
+                #             fraErrorPath = (
+                #                 f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                #                 f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
+                #             method_paths['RECENT'] = fraErrorPath
+                #
+                #     if method == "GRADE" or method == "GRADES_SPECF":
+                #         aso_df_basin = aso_df[aso_df["Basin"] == item].copy()
+                #         aso_df_grade = aso_df_basin[aso_df_basin["GradeDirection"] == grade].copy()
+                #         if len(aso_df_grade.columns) > 1:
+                #             if method == "GRADE":
+                #                 target_date = datetime.strptime(rundate, "%Y%m%d")
+                #                 aso_df_grade['cstm_dte'] = pd.to_datetime(aso_df_grade["Date"], format="%Y%b%d")
+                #                 aso_df_grade["diff_days"] = (aso_df_grade["cstm_dte"] - target_date).abs().dt.days
+                #                 df_filtered = aso_df_grade[aso_df_grade["diff_days"] > 4].copy()
+                #
+                #                 if not df_filtered.empty:
+                #                     closest_row = df_filtered.loc[df_filtered["diff_days"].idxmin()]
+                #                     fraErrorPath = (
+                #                         f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                #                         f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
+                #                     method_paths['GRADE'] = fraErrorPath
+                #
+                #             if method == "GRADES_SPECF":
+                #
+                #                 # Check if aso_df_grade has any rows before attempting to find closest match
+                #                 if not aso_df_grade.empty:
+                #                     closest_row = aso_df_grade.loc[
+                #                         (aso_df_grade["GradeDifference"] - grade_amount).abs().idxmin()]
+                #                     fraErrorPath = (
+                #                         f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                #                         f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
+                #                     method_paths['GRADES_SPECF'] = fraErrorPath
+                #                 else:
+                #                     method_paths['GRADES_SPECF'] = None
+                #
+                #     if method == "SENSOR_PATTERN":
+                #         # print(f"\nMETHOD: {method}")
+                #         aso_df_basin = aso_df[aso_df["Basin"] == item].copy()
+                #         aso_df_pattern = aso_df_basin[aso_df_basin["OverallTrend"] == sensorTrend].copy()
+                #         row_count = len(aso_df_pattern)
+                #
+                #         if row_count > 1:
+                #             # print("More than one sensor pattern found. Selecting the most recent one.")
+                #             target_date = datetime.strptime(rundate, "%Y%m%d")
+                #             aso_df_pattern['cstm_dte'] = pd.to_datetime(aso_df_pattern["Date"], format="%Y%b%d")
+                #             aso_df_pattern["diff_days"] = (aso_df_pattern["cstm_dte"] - target_date).abs().dt.days
+                #             aso_df_pattern = aso_df_pattern[aso_df_pattern["diff_days"] > 4].copy()
+                #
+                #             if not aso_df_pattern.empty:
+                #                 closest_row = aso_df_pattern.loc[aso_df_pattern["diff_days"].idxmin()]
+                #                 fraErrorPath = (
+                #                     f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                #                     f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
+                #                 method_paths['SENSOR_PATTERN'] = fraErrorPath
+                #
+                #
+                #         elif row_count == 1:
+                #             closest_row = aso_df_pattern.iloc[0]
+                #             fraErrorPath = (
+                #                 f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                #                 f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
+                #             method_paths['SENSOR_PATTERN'] = fraErrorPath
+                #             basin_row['PATTERN_TYPE'] = sensorTrend
+                #
+                #         else:
+                #             # print(f"No sensor pattern matches found for trend: {sensorTrend}")
+                #             method_paths['SENSOR_PATTERN'] = "NA"
+                #
+                #     if method == "MAX_INCREASE":
+                #         aso_df_basin = aso_df[aso_df["Basin"] == item].copy()
+                #
+                #         # Filter out inf and NaN values in GradeDifference
+                #         aso_df_basin = aso_df_basin[
+                #             np.isfinite(aso_df_basin["GradeDifference"])
+                #         ].copy()
+                #
+                #         # Also exclude flights too close to the rundate
+                #         target_date = datetime.strptime(rundate, "%Y%m%d")
+                #         aso_df_basin['cstm_dte'] = pd.to_datetime(aso_df_basin["Date"], format="%Y%b%d")
+                #         aso_df_basin["diff_days"] = (aso_df_basin["cstm_dte"] - target_date).abs().dt.days
+                #         aso_df_basin = aso_df_basin[aso_df_basin["diff_days"] > 4].copy()
+                #
+                #         if not aso_df_basin.empty:
+                #             # Select flight where SNOTEL was increasing most = ASO likely highest vs model
+                #             closest_row = aso_df_basin.loc[aso_df_basin["GradeDifference"].idxmax()]
+                #             fraErrorPath = (
+                #                 f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
+                #                 f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
+                #             method_paths['MAX_INCREASE'] = fraErrorPath
+                #             print(f"  MAX_INCREASE selected: {closest_row['Basin']} {closest_row['Date']} "
+                #                   f"(GradeDiff: {closest_row['GradeDifference']:.1f}%)")
+                #         else:
+                #             method_paths['MAX_INCREASE'] = None
+
                 for method in method_list:
-                    # getting most recent data
+
                     if method == "RECENT":
-                        # print(f"\nMETHOD: {method}")
+                        # Current year only — most recent flight before rundate
                         aso_df_basin = aso_df[aso_df["Basin"] == item].copy()
                         target_date = datetime.strptime(rundate, "%Y%m%d")
+                        current_year = target_date.year
+
                         aso_df_basin['cstm_dte'] = pd.to_datetime(aso_df_basin["Date"], format="%Y%b%d")
+                        aso_df_basin = aso_df_basin[aso_df_basin["Year"] == current_year].copy()
                         aso_df_basin["diff_days"] = (aso_df_basin["cstm_dte"] - target_date).abs().dt.days
                         df_filtered = aso_df_basin[aso_df_basin["diff_days"] > 4]
-                        print(
-                            aso_df_basin[["Basin", "Date", "diff_days"]]
-                        )
 
-                        # add to the df
+                        print(aso_df_basin[["Basin", "Date", "diff_days"]])
+
                         if not df_filtered.empty:
                             closest_row = df_filtered.loc[df_filtered["diff_days"].idxmin()]
-                            # get fractional error path
                             fraErrorPath = (
                                 f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                 f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                             method_paths['RECENT'] = fraErrorPath
+                        else:
+                            print(f"  No current year flights found for RECENT - {item}")
+                            method_paths['RECENT'] = None
 
                     if method == "GRADE" or method == "GRADES_SPECF":
+                        # Full catalogue — seasonal day-of-year matching
                         aso_df_basin = aso_df[aso_df["Basin"] == item].copy()
                         aso_df_grade = aso_df_basin[aso_df_basin["GradeDirection"] == grade].copy()
-                        if len(aso_df_grade.columns) > 1:
+
+                        if not aso_df_grade.empty:
+                            target_date = datetime.strptime(rundate, "%Y%m%d")
+                            aso_df_grade['cstm_dte'] = pd.to_datetime(aso_df_grade["Date"], format="%Y%b%d")
+
                             if method == "GRADE":
-                                target_date = datetime.strptime(rundate, "%Y%m%d")
-                                aso_df_grade['cstm_dte'] = pd.to_datetime(aso_df_grade["Date"], format="%Y%b%d")
-                                aso_df_grade["diff_days"] = (aso_df_grade["cstm_dte"] - target_date).abs().dt.days
+                                # Seasonally closest match across all years
+                                aso_df_grade["diff_days"] = seasonal_diff(aso_df_grade["cstm_dte"], target_date)
                                 df_filtered = aso_df_grade[aso_df_grade["diff_days"] > 4].copy()
 
                                 if not df_filtered.empty:
@@ -157,10 +283,12 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                                         f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                         f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                                     method_paths['GRADE'] = fraErrorPath
+                                else:
+                                    method_paths['GRADE'] = None
 
                             if method == "GRADES_SPECF":
-
-                                # Check if aso_df_grade has any rows before attempting to find closest match
+                                # Closest grade amount match across all years — filter inf first
+                                aso_df_grade = aso_df_grade[np.isfinite(aso_df_grade["GradeDifference"])].copy()
                                 if not aso_df_grade.empty:
                                     closest_row = aso_df_grade.loc[
                                         (aso_df_grade["GradeDifference"] - grade_amount).abs().idxmin()]
@@ -170,18 +298,18 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                                     method_paths['GRADES_SPECF'] = fraErrorPath
                                 else:
                                     method_paths['GRADES_SPECF'] = None
+                        else:
+                            method_paths[method] = None
 
                     if method == "SENSOR_PATTERN":
-                        # print(f"\nMETHOD: {method}")
+                        # Full catalogue — seasonal day-of-year matching
                         aso_df_basin = aso_df[aso_df["Basin"] == item].copy()
                         aso_df_pattern = aso_df_basin[aso_df_basin["OverallTrend"] == sensorTrend].copy()
-                        row_count = len(aso_df_pattern)
+                        target_date = datetime.strptime(rundate, "%Y%m%d")
 
-                        if row_count > 1:
-                            # print("More than one sensor pattern found. Selecting the most recent one.")
-                            target_date = datetime.strptime(rundate, "%Y%m%d")
+                        if not aso_df_pattern.empty:
                             aso_df_pattern['cstm_dte'] = pd.to_datetime(aso_df_pattern["Date"], format="%Y%b%d")
-                            aso_df_pattern["diff_days"] = (aso_df_pattern["cstm_dte"] - target_date).abs().dt.days
+                            aso_df_pattern["diff_days"] = seasonal_diff(aso_df_pattern["cstm_dte"], target_date)
                             aso_df_pattern = aso_df_pattern[aso_df_pattern["diff_days"] > 4].copy()
 
                             if not aso_df_pattern.empty:
@@ -190,19 +318,32 @@ def bias_correction_selection(rundate, aso_snotel_data, basin_List, domainList, 
                                     f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                     f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
                                 method_paths['SENSOR_PATTERN'] = fraErrorPath
+                                basin_row['PATTERN_TYPE'] = sensorTrend
+                            else:
+                                method_paths['SENSOR_PATTERN'] = "NA"
+                        else:
+                            method_paths['SENSOR_PATTERN'] = "NA"
 
+                    if method == "MAX_INCREASE":
+                        # Full catalogue — pick flight with highest GradeDifference
+                        aso_df_basin = aso_df[aso_df["Basin"] == item].copy()
+                        aso_df_basin = aso_df_basin[np.isfinite(aso_df_basin["GradeDifference"])].copy()
 
-                        elif row_count == 1:
-                            closest_row = aso_df_pattern.iloc[0]
+                        target_date = datetime.strptime(rundate, "%Y%m%d")
+                        aso_df_basin['cstm_dte'] = pd.to_datetime(aso_df_basin["Date"], format="%Y%b%d")
+                        aso_df_basin["diff_days"] = (aso_df_basin["cstm_dte"] - target_date).abs().dt.days
+                        aso_df_basin = aso_df_basin[aso_df_basin["diff_days"] > 4].copy()
+
+                        if not aso_df_basin.empty:
+                            closest_row = aso_df_basin.loc[aso_df_basin["GradeDifference"].idxmax()]
                             fraErrorPath = (
                                 f"{fracErrorWorkspace.rstrip('/')}/{closest_row['Domain']}_comparison/{closest_row['RunDate']}_{closest_row['modelRun']}/"
                                 f"ASO_{closest_row['Basin']}_{closest_row['Date']}_swe_50m_fraErr")
-                            method_paths['SENSOR_PATTERN'] = fraErrorPath
-                            basin_row['PATTERN_TYPE'] = sensorTrend
-
+                            method_paths['MAX_INCREASE'] = fraErrorPath
+                            print(f"  MAX_INCREASE selected: {closest_row['Basin']} {closest_row['Date']} "
+                                  f"(GradeDiff: {closest_row['GradeDifference']:.1f}%)")
                         else:
-                            # print(f"No sensor pattern matches found for trend: {sensorTrend}")
-                            method_paths['SENSOR_PATTERN'] = "NA"
+                            method_paths['MAX_INCREASE'] = None
 
                 # Detect duplicates and update basin_row
                 # Process methods in order to determine which one gets the actual path
