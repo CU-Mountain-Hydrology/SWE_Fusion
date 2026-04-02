@@ -6,6 +6,7 @@ import shutil
 from arcpy.sa import *
 from arcpy import *
 from datetime import datetime
+import numpy as np
 # from Vetting_functions import *
 print('modules imported')
 

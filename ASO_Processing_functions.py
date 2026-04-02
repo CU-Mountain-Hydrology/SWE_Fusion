@@ -3,6 +3,7 @@ import zipfile
 import os
 import re
 import shutil
+import numpy as np
 
 from sympy.codegen.ast import continue_
 

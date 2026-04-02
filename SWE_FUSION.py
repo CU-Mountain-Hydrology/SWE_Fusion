@@ -3,6 +3,7 @@ from time import sleep
 
 # import modules
 # import modules
+import numpy as np
 import arcpy
 import arcpy
 from arcpy import env
