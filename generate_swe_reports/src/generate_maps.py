@@ -219,6 +219,23 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
+def _resolve_dir(parent: str, dir_pattern: str) -> str | None:
+    # Try the given pattern first, then fall back based on UseAvg/UseThis semantics
+    matches = glob.glob(os.path.join(parent, dir_pattern))
+    if matches:
+        return matches[0]
+    if "*UseAvg" in dir_pattern:
+        fallback_matches = [d for d in glob.glob(os.path.join(parent, "*woCCR*"))
+                            if "ASO" not in os.path.basename(d)]
+        if fallback_matches:
+            return fallback_matches[0]
+    elif "*UseThis*" in dir_pattern:
+        fallback_matches = glob.glob(os.path.join(parent, "ASO*"))
+        if fallback_matches:
+            return fallback_matches[0]
+    return None
+
+
 def get_output_dir(date:int, report_type:str) -> str:
     # TODO: docs
     source_dir = None
@@ -287,10 +304,8 @@ def interpret_figs(figs: str, report_type: str) -> list[str]:
 def results_to_report(results_dir: str, report_dir: str, layer_id: str, dir_pattern: str, file_type: str, verbose=True) -> list[str]:
     # TODO: docs
     # Find the results directory
-    results_dir_pattern = os.path.join(results_dir, dir_pattern)
-    try:
-        results_layer_dir = glob.glob(results_dir_pattern)[0]
-    except IndexError:
+    results_layer_dir = _resolve_dir(results_dir, dir_pattern)
+    if not results_layer_dir:
         raise FileNotFoundError(f"No file matching pattern '{layer_id}' found in '{report_dir}', "
                                 f"and no directory matching pattern '{dir_pattern}' found in '{results_dir}'!")
 
@@ -360,9 +375,8 @@ def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user =
         rt_report_dir = os.path.join(snm_source_dir, str(date) + rt_report_pattern)
 
     # Find the directory containing the layer products to be used e.g. "...UseThis"
-    try:
-        layer_dir = glob.glob(os.path.join(rt_report_dir, dir_pattern))[0]
-    except IndexError:
+    layer_dir = _resolve_dir(rt_report_dir, dir_pattern)
+    if not layer_dir:
         raise FileNotFoundError(f"No directory matching pattern '{dir_pattern}' found in '{rt_report_dir}'! "
                                 f"Confirm config values are set correctly.")
 
