@@ -4,6 +4,7 @@ from ASO_Processing_functions import *
 from SWE_Fusion_functions import *
 import arcpy
 import csv
+import re
 import rasterio
 import matplotlib.pyplot as plt
 from arcpy.sa import *
@@ -42,24 +43,23 @@ with open(basin_textFile, 'r') as f:
         basin_state_map[basin] = state
         # print(state)
 
-try:
-    zips_to_process = os.listdir(toProcessFolder)
-    for zip_file in zips_to_process:
-        if zip_file.endswith(".zip"):
-            zip_file_path = os.path.join(toProcessFolder, zip_file)
-            print(zip_file_path)
-            name = zip_file.split("_")[1]
-            basinList.append(name)
-            print(name)
-            basin_state = basin_state_map.get(name, None)
+
+zips_to_process = os.listdir(toProcessFolder)
+for zip_file in zips_to_process:
+    if zip_file.endswith(".zip"):
+        zip_file_path = os.path.join(toProcessFolder, zip_file)
+        print(zip_file_path)
+        name = zip_file.split("_")[1]
+        basinList.append(name)
+        print(name)
+        basin_state = basin_state_map.get(name, None)
 
 
-            data_folder = fr"M:/SWE/WestWide/Spatial_SWE/ASO/{year}/data/"
-            ## add something here that is only unzips if the file doesn't already exist
-            extract_zip(zip_path=zip_file_path, ext=search_tag, output_folder=data_folder)
-            print("file moved")
-except Exception as e:
-    print(e)
+        data_folder = fr"M:/SWE/WestWide/Spatial_SWE/ASO/{year}/data/"
+        ## add something here that is only unzips if the file doesn't already exist
+        extract_zip(zip_path=zip_file_path, ext=search_tag, output_folder=data_folder)
+        print("file moved")
+
 
 print(basinList)
 

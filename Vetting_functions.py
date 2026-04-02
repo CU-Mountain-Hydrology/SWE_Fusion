@@ -144,12 +144,12 @@ def bias_correction_vetting(raster, point, domain, swe_col, id_col, rundate, nam
     max_val = float(arcpy.management.GetRasterProperties(raster, "MAXIMUM").getOutput(0))
 
     # Compute SWE volume
-    mean_swe = float(arcpy.management.GetRasterProperties(raster, "MEAN").getOutput(0))
-    rows = int(arcpy.management.GetRasterProperties(raster, "ROWCOUNT").getOutput(0))
-    cols = int(arcpy.management.GetRasterProperties(raster, "COLUMNCOUNT").getOutput(0))
-    total_area = rows * cols * (500 ** 2)  # m²
-    total_swe_m3 = mean_swe * total_area
-    total_swe_af = total_swe_m3 * 0.000810714  # acre-feet
+    # mean_swe = float(arcpy.management.GetRasterProperties(raster, "MEAN").getOutput(0))
+    # rows = int(arcpy.management.GetRasterProperties(raster, "ROWCOUNT").getOutput(0))
+    # cols = int(arcpy.management.GetRasterProperties(raster, "COLUMNCOUNT").getOutput(0))
+    # total_area = rows * cols * (500 ** 2)  # m²
+    # total_swe_m3 = mean_swe * total_area
+    # total_swe_af = total_swe_m3 * 0.000810714  # acre-feet
 
     # print(f"\nRaster: {os.path.basename(raster)}")
     # print(f"Average Percent Error: {avg_percent_error}")
@@ -158,6 +158,18 @@ def bias_correction_vetting(raster, point, domain, swe_col, id_col, rundate, nam
     # print(f"Mean Absolute Error (MAE): {mae}")
     # print(f"SWE_AF: {total_swe_af}")
     # print(f"Max Value: {max_val}")
+    mean_swe = float(arcpy.management.GetRasterProperties(raster, "MEAN").getOutput(0))
+
+    # Use valid pixel count, not full extent rows*cols
+    valid_pixel_count = int(arcpy.management.GetRasterProperties(raster, "VALUECOUNTNODATA").getOutput(0))
+
+    # Also don't hardcode 500 — read the actual cell size from the raster
+    desc = arcpy.Describe(raster)
+    cell_size = desc.meanCellWidth  # in map units (meters for albn83)
+
+    total_area = valid_pixel_count * (cell_size ** 2)
+    total_swe_m3 = mean_swe * total_area
+    total_swe_af = total_swe_m3 * 0.000810714
 
     # Create error frame
     error_frame = {

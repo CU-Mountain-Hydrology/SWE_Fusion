@@ -1,6 +1,7 @@
 # function for getting files out of a zip file
 import zipfile
 import os
+import re
 import shutil
 
 from sympy.codegen.ast import continue_
