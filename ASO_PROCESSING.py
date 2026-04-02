@@ -18,7 +18,7 @@ print("modules imported")
 
 ## model run variables
 year = '2026'
-rundate = "20260315"
+rundate = "20260322"
 SNM_modelRun = "RT_CanAdj_rcn_wCCR_nofscamskSens"
 WW_modelRun = "RT_CanAdj_rcn_wCCR_nofscamskSens"
 
@@ -42,21 +42,24 @@ with open(basin_textFile, 'r') as f:
         basin_state_map[basin] = state
         # print(state)
 
-zips_to_process = os.listdir(toProcessFolder)
-for zip_file in zips_to_process:
-    if zip_file.endswith(".zip"):
-        zip_file_path = os.path.join(toProcessFolder, zip_file)
-        print(zip_file_path)
-        name = zip_file.split("_")[1]
-        basinList.append(name)
-        print(name)
-        basin_state = basin_state_map.get(name, None)
+try:
+    zips_to_process = os.listdir(toProcessFolder)
+    for zip_file in zips_to_process:
+        if zip_file.endswith(".zip"):
+            zip_file_path = os.path.join(toProcessFolder, zip_file)
+            print(zip_file_path)
+            name = zip_file.split("_")[1]
+            basinList.append(name)
+            print(name)
+            basin_state = basin_state_map.get(name, None)
 
 
-        data_folder = fr"M:/SWE/WestWide/Spatial_SWE/ASO/{year}/data/"
-        ## add something here that is only unzips if the file doesn't already exist
-        extract_zip(zip_path=zip_file_path, ext=search_tag, output_folder=data_folder)
-        print("file moved")
+            data_folder = fr"M:/SWE/WestWide/Spatial_SWE/ASO/{year}/data/"
+            ## add something here that is only unzips if the file doesn't already exist
+            extract_zip(zip_path=zip_file_path, ext=search_tag, output_folder=data_folder)
+            print("file moved")
+except Exception as e:
+    print(e)
 
 print(basinList)
 
@@ -262,13 +265,22 @@ for file in asoSWE:
                 print("completed thanks")
 
 
+# if all_stats:
+#     stats_df = pd.DataFrame(all_stats)
+#     if os.path.exists(modelStatsCSV):
+#         stats_df.to_csv(modelStatsCSV, mode='a', header=False, index=False)
+#     else:
+#         stats_df.to_csv(modelStatsCSV, index=False)
+# df = pd.DataFrame(all_stats)
 if all_stats:
     stats_df = pd.DataFrame(all_stats)
     if os.path.exists(modelStatsCSV):
-        stats_df.to_csv(modelStatsCSV, mode='a', header=False, index=False)
+        existing_df = pd.read_csv(modelStatsCSV)
+        combined = pd.concat([existing_df, stats_df], ignore_index=True)
+        combined = combined.drop_duplicates(subset=['Basin', 'Date'], keep='last')
+        combined.to_csv(modelStatsCSV, index=False)
     else:
         stats_df.to_csv(modelStatsCSV, index=False)
 df = pd.DataFrame(all_stats)
-
 
 

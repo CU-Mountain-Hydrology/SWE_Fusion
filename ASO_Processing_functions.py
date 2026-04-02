@@ -18,27 +18,25 @@ def extract_zip(zip_path, ext, output_folder):
     # Create the destination folder if it doesn't exist
     os.makedirs(output_folder, exist_ok=True)
 
-    # Create a temporary extraction folder
-    temp_extract_path = os.path.join(os.path.dirname(zip_path), "temp_extract")
-    os.makedirs(temp_extract_path, exist_ok=True)
-
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        # Extract all to temporary location
-        zip_ref.extractall(temp_extract_path)
+        for member in zip_ref.namelist():
+            # Sanitize: strip newlines and other invalid Windows characters
+            clean_name = re.sub(r'[\n\r\t]', '', member)
+            clean_name = os.path.basename(clean_name)  # drop any subdirectory structure
 
-        # Iterate through extracted files
-        for root, _, files in os.walk(temp_extract_path):
-            for file in files:
-                if ext in file:
-                    src_file = os.path.join(root, file)
-                    dst_file = os.path.join(output_folder, file)
+            # Only process files matching the extension tag
+            if ext not in clean_name:
+                continue
 
-                    # Move file to destination
-                    shutil.move(src_file, dst_file)
-                    print(f"Moved: {src_file} → {dst_file}")
+            dst_file = os.path.join(output_folder, clean_name)
+
+            # Extract directly to destination without temp folder
+            with zip_ref.open(member) as src, open(dst_file, 'wb') as dst:
+                dst.write(src.read())
+                print(f"Extracted: {clean_name} → {dst_file}")
 
     # Clean up temp folder
-    shutil.rmtree(temp_extract_path)
+    # shutil.rmtree(temp_extract_path)
 
 
 import os
