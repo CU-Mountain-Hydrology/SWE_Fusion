@@ -1883,149 +1883,249 @@ def sensor_difference_map(rundate, prev_rundate, sensors, prev_sensors, domain, 
 #     print(f"Sierras: {ChosenModelRun_SNM}")
 #
 #     return ChosenModelRun_WW, ChosenModelRun_SNM
-
+#
 import pandas as pd
 from collections import Counter
 
 def choosing_best_model_run_sensors(rundate, domain_list, WW_reports_workspace, SNM_reports_workspace, error_metric):
-    domain_best_models = []
-    all_errors = {}  # Store all error data for tie-breaking
+
+    def get_error_df(domain):
+        workspace = SNM_reports_workspace if domain == "SNM" else WW_reports_workspace
+        path = f"{workspace}/{rundate}_RT_report/{rundate}_sensors_error.csv"
+        df = pd.read_csv(path)
+        return df[df["Domain"] == domain]
+
+    def prompt_choice(options, label="option"):
+        for i, opt in enumerate(options, 1):
+            print(f"  [{i}] {opt}")
+        while True:
+            choice = input(f"Enter 1-{len(options)}: ").strip()
+            try:
+                idx = int(choice) - 1
+                if 0 <= idx < len(options):
+                    return options[idx]
+            except ValueError:
+                pass
+            print(f"Invalid input. Please enter a number between 1 and {len(options)}.")
+
+    # --- Find best model per domain ---
+    domain_best_models = {}
+    all_errors = {}
 
     for domain in domain_list:
-        if domain == "SNM":
-            sensor_error = f"{SNM_reports_workspace}/{rundate}_RT_report/{rundate}_sensors_error.csv"
-        else:
-            sensor_error = f"{WW_reports_workspace}/{rundate}_RT_report/{rundate}_sensors_error.csv"
+        df = get_error_df(domain)
+        best_idx = df[error_metric].idxmin()
+        domain_best_models[domain] = df.loc[best_idx, "ModelRun"]
+        all_errors[domain] = df.set_index("ModelRun")[error_metric].to_dict()
 
-        # get error stats
-        error_df = pd.read_csv(sensor_error)
-
-        # isolate based on domain
-        error_df = error_df[error_df["Domain"] == domain]
-
-        # get unique values for the domain
-        idx = error_df.groupby("Domain")[error_metric].idxmin()
-        best_df = error_df.loc[idx]
-        best_model = best_df['ModelRun'].iloc[0]
-        domain_best_models.append((domain, best_model))
-
-        # Store all error data for this domain
-        all_errors[domain] = error_df[['ModelRun', error_metric]].set_index('ModelRun')[error_metric].to_dict()
-
-    # Count occurrences of each model
-    values = [best for _, best in domain_best_models]
-    counter = Counter(values)
+    # --- Determine WW model (exclude SNM) ---
+    ww_domains = [d for d in domain_list if d != "SNM"]
+    ww_best = [domain_best_models[d] for d in ww_domains]
+    counter = Counter(ww_best)
     most_common = counter.most_common()
 
-    # Check for ties
-    if len(most_common) > 1 and most_common[0][1] == most_common[1][1]:
-        print("\n" + "=" * 70)
+    print("\n" + "=" * 70)
+
+    max_count = most_common[0][1]
+    tied_models = [m for m, c in most_common if c == max_count]
+
+    if len(tied_models) > 1:
         print("TIE DETECTED: Multiple models have the same number of domains")
         print("=" * 70)
+        print(f"\nError scores ({error_metric}) for tied models:\n")
 
-        # Get the tied models
-        max_count = most_common[0][1]
-        tied_models = [model for model, count in most_common if count == max_count]
-
-        # Print error scores for each tied model across all domains
-        print(f"\nError scores ({error_metric}) for each model:\n")
         for model in tied_models:
+            total = 0
             print(f"Model: {model}")
-            total_error = 0
-            for domain, best in domain_best_models:
-                if domain != "SNM":  # Only WW domains for this comparison
-                    error_val = all_errors[domain].get(model, float('inf'))
-                    marker = " <- BEST" if best == model else ""
-                    print(f"  {domain:15s}: {error_val:8.4f}{marker}")
-                    if error_val != float('inf'):
-                        total_error += error_val
-            print(f"  {'Total Error':15s}: {total_error:8.4f}")
+            for domain in ww_domains:
+                err = all_errors[domain].get(model, float("inf"))
+                marker = " <- BEST" if domain_best_models[domain] == model else ""
+                print(f"  {domain:15s}: {err:8.4f}{marker}")
+                if err != float("inf"):
+                    total += err
+            print(f"  {'Total Error':15s}: {total:8.4f}")
             print(f"  Domains choosing this: {counter[model]}\n")
 
-        # Prompt user to choose
         print("Choose which model to use for West Wide (WW):")
-        for i, model in enumerate(tied_models, 1):
-            print(f"  [{i}] {model}")
-
-        while True:
-            choice = input(f"Enter 1-{len(tied_models)}: ").strip()
-            try:
-                choice_idx = int(choice) - 1
-                if 0 <= choice_idx < len(tied_models):
-                    ChosenModelRun_WW = tied_models[choice_idx]
-                    break
-                else:
-                    print(f"Invalid input. Please enter a number between 1 and {len(tied_models)}.")
-            except ValueError:
-                print(f"Invalid input. Please enter a number between 1 and {len(tied_models)}.")
+        ChosenModelRun_WW = prompt_choice(tied_models)
     else:
-        # No tie - use most common
-        most_common_value, count = most_common[0]
-        ChosenModelRun_WW = most_common_value
-        print(f"\nMost common value: {most_common_value} ({count} domains)")
+        ChosenModelRun_WW = most_common[0][0]
+        print(f"Most common WW model: {ChosenModelRun_WW} ({max_count} domains)")
 
-    # Handle SNM domain
-    snm_model = next(best for domain, best in domain_best_models if domain == "SNM")
+    # --- Determine SNM model ---
+    snm_best = domain_best_models.get("SNM")
 
-    if snm_model != ChosenModelRun_WW:
+    if snm_best is None or snm_best == ChosenModelRun_WW:
+        ChosenModelRun_SNM = ChosenModelRun_WW
+        print("\nSierra (SNM) uses the chosen WW model.")
+    else:
         print("\n" + "!" * 70)
-        print("SNM model differs from chosen WW model")
+        print("SNM best model differs from chosen WW model.")
         print("!" * 70)
 
-        # reload SNM error table
-        sensor_error = f"{SNM_reports_workspace}/{rundate}_RT_report/{rundate}_sensors_error.csv"
-        snm_df = pd.read_csv(sensor_error)
+        snm_err_best = all_errors["SNM"].get(snm_best, float("inf"))
+        snm_err_ww   = all_errors["SNM"].get(ChosenModelRun_WW, float("inf"))
+        diff = snm_err_best - snm_err_ww
 
-        # isolate SNM
-        snm_df = snm_df[snm_df["Domain"] == "SNM"]
-
-        # get error for SNM-selected model
-        snm_err = snm_df.loc[
-            snm_df["ModelRun"] == snm_model, error_metric
-        ].iloc[0]
-
-        # get error for WW-chosen model
-        common_err = snm_df.loc[
-            snm_df["ModelRun"] == ChosenModelRun_WW, error_metric
-        ].iloc[0]
-
-        diff = snm_err - common_err
-
-        print(f"\nSNM model: {snm_model}")
-        print(f"  {error_metric}: {snm_err:.4f}")
-
-        print(f"WW chosen model: {ChosenModelRun_WW}")
-        print(f"  {error_metric}: {common_err:.4f}")
-
-        print(f"Difference (SNM - WW): {diff:.4f}")
+        print(f"\nSNM best model : {snm_best}  ({error_metric}: {snm_err_best:.4f})")
+        print(f"WW chosen model: {ChosenModelRun_WW}  ({error_metric}: {snm_err_ww:.4f})")
+        print(f"Difference (SNM best - WW): {diff:.4f}")
 
         print("\nChoose which model to use for SNM:")
-        print(f"  [1] Use WW chosen model: {ChosenModelRun_WW}")
-        print(f"  [2] Use SNM-specific best model: {snm_model}")
+        choice = prompt_choice(
+            [f"WW chosen model: {ChosenModelRun_WW}", f"SNM-specific best: {snm_best}"]
+        )
+        ChosenModelRun_SNM = ChosenModelRun_WW if "WW" in choice else snm_best
 
-        while True:
-            choice = input("Enter 1 or 2: ").strip()
-
-            if choice == "1":
-                ChosenModelRun_SNM = ChosenModelRun_WW
-                break
-            elif choice == "2":
-                ChosenModelRun_WW = snm_model
-                break
-            else:
-                print("Invalid input. Please enter 1 or 2.")
-    else:
-        print("\nSierra (SNM) uses the chosen WW model")
-        ChosenModelRun_SNM = ChosenModelRun_WW
-
+    # --- Summary ---
     print("\n" + "=" * 70)
     print("CHOSEN MODEL RUN FOR SURVEYS")
     print("=" * 70)
-    print(f"West Wide: {ChosenModelRun_WW}")
-    print(f"Sierras: {ChosenModelRun_SNM}")
+    print(f"West Wide : {ChosenModelRun_WW}")
+    print(f"Sierras   : {ChosenModelRun_SNM}")
     print("=" * 70)
 
     return ChosenModelRun_WW, ChosenModelRun_SNM
+#
+# def choosing_best_model_run_sensors(rundate, domain_list, WW_reports_workspace, SNM_reports_workspace, error_metric):
+#     domain_best_models = []
+#     all_errors = {}  # Store all error data for tie-breaking
+#
+#     for domain in domain_list:
+#         if domain == "SNM":
+#             sensor_error = f"{SNM_reports_workspace}/{rundate}_RT_report/{rundate}_sensors_error.csv"
+#         else:
+#             sensor_error = f"{WW_reports_workspace}/{rundate}_RT_report/{rundate}_sensors_error.csv"
+#
+#         # get error stats
+#         error_df = pd.read_csv(sensor_error)
+#
+#         # isolate based on domain
+#         error_df = error_df[error_df["Domain"] == domain]
+#
+#         # get unique values for the domain
+#         idx = error_df.groupby("Domain")[error_metric].idxmin()
+#         best_df = error_df.loc[idx]
+#         best_model = best_df['ModelRun'].iloc[0]
+#         domain_best_models.append((domain, best_model))
+#
+#         # Store all error data for this domain
+#         all_errors[domain] = error_df[['ModelRun', error_metric]].set_index('ModelRun')[error_metric].to_dict()
+#
+#     # Count occurrences of each model
+#     values = [best for _, best in domain_best_models]
+#     counter = Counter(values)
+#     most_common = counter.most_common()
+#
+#     # Check for ties
+#     if len(most_common) > 1 and most_common[0][1] == most_common[1][1]:
+#         print("\n" + "=" * 70)
+#         print("TIE DETECTED: Multiple models have the same number of domains")
+#         print("=" * 70)
+#
+#         # Get the tied models
+#         max_count = most_common[0][1]
+#         tied_models = [model for model, count in most_common if count == max_count]
+#
+#         # Print error scores for each tied model across all domains
+#         print(f"\nError scores ({error_metric}) for each model:\n")
+#         for model in tied_models:
+#             print(f"Model: {model}")
+#             total_error = 0
+#             for domain, best in domain_best_models:
+#                 if domain != "SNM":  # Only WW domains for this comparison
+#                     error_val = all_errors[domain].get(model, float('inf'))
+#                     marker = " <- BEST" if best == model else ""
+#                     print(f"  {domain:15s}: {error_val:8.4f}{marker}")
+#                     if error_val != float('inf'):
+#                         total_error += error_val
+#             print(f"  {'Total Error':15s}: {total_error:8.4f}")
+#             print(f"  Domains choosing this: {counter[model]}\n")
+#
+#         # Prompt user to choose
+#         print("Choose which model to use for West Wide (WW):")
+#         for i, model in enumerate(tied_models, 1):
+#             print(f"  [{i}] {model}")
+#
+#         while True:
+#             choice = input(f"Enter 1-{len(tied_models)}: ").strip()
+#             try:
+#                 choice_idx = int(choice) - 1
+#                 if 0 <= choice_idx < len(tied_models):
+#                     ChosenModelRun_WW = tied_models[choice_idx]
+#                     break
+#                 else:
+#                     print(f"Invalid input. Please enter a number between 1 and {len(tied_models)}.")
+#             except ValueError:
+#                 print(f"Invalid input. Please enter a number between 1 and {len(tied_models)}.")
+#     else:
+#         # No tie - use most common
+#         most_common_value, count = most_common[0]
+#         ChosenModelRun_WW = most_common_value
+#         print(f"\nMost common value: {most_common_value} ({count} domains)")
+#
+#     # Handle SNM domain
+#     snm_model = next(best for domain, best in domain_best_models if domain == "SNM")
+#
+#     if snm_model != ChosenModelRun_WW:
+#         print("\n" + "!" * 70)
+#         print("SNM model differs from chosen WW model")
+#         print("!" * 70)
+#
+#         # reload SNM error table
+#         sensor_error = f"{SNM_reports_workspace}/{rundate}_RT_report/{rundate}_sensors_error.csv"
+#         snm_df = pd.read_csv(sensor_error)
+#
+#         # isolate SNM
+#         snm_df = snm_df[snm_df["Domain"] == "SNM"]
+#
+#         # get error for SNM-selected model
+#         snm_err = snm_df.loc[
+#             snm_df["ModelRun"] == snm_model, error_metric
+#         ].iloc[0]
+#
+#         # get error for WW-chosen model
+#         common_err = snm_df.loc[
+#             snm_df["ModelRun"] == ChosenModelRun_WW, error_metric
+#         ].iloc[0]
+#
+#         diff = snm_err - common_err
+#
+#         print(f"\nSNM model: {snm_model}")
+#         print(f"  {error_metric}: {snm_err:.4f}")
+#
+#         print(f"WW chosen model: {ChosenModelRun_WW}")
+#         print(f"  {error_metric}: {common_err:.4f}")
+#
+#         print(f"Difference (SNM - WW): {diff:.4f}")
+#
+#         print("\nChoose which model to use for SNM:")
+#         print(f"  [1] Use WW chosen model: {ChosenModelRun_WW}")
+#         print(f"  [2] Use SNM-specific best model: {snm_model}")
+#
+#         while True:
+#             choice = input("Enter 1 or 2: ").strip()
+#
+#             if choice == "1":
+#                 ChosenModelRun_SNM = ChosenModelRun_WW
+#                 break
+#             elif choice == "2":
+#                 ChosenModelRun_WW = snm_model
+#                 break
+#             else:
+#                 print("Invalid input. Please enter 1 or 2.")
+#     else:
+#         print("\nSierra (SNM) uses the chosen WW model")
+#         ChosenModelRun_SNM = ChosenModelRun_WW
+#
+#     print("\n" + "=" * 70)
+#     print("CHOSEN MODEL RUN FOR SURVEYS")
+#     print("=" * 70)
+#     print(f"West Wide: {ChosenModelRun_WW}")
+#     print(f"Sierras: {ChosenModelRun_SNM}")
+#     print("=" * 70)
+#
+#     return ChosenModelRun_WW, ChosenModelRun_SNM
 
 def choosing_best_model_run_surveys(rundate, domain_list, WW_reports_workspace, SNM_reports_workspace, error_metric):
     domain_best_models = []

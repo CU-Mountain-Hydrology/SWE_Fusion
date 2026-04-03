@@ -6,14 +6,15 @@ import pandas as pd
 print('modules import')
 
 # report information
-rundate = 'test_20260308'
-model_run = ''
+rundate = '20260401'
+model_run = 'ASO_BiasCorrect_RT_CanAdj_rcn_woCCR_nofscamskSens_noMdlFsca_UseThis'
 avg_model_run = ''
+year = '2026'
 
-raster = r"U:\Emma\basin_spec_data\p8_20260308_noneg.tif"
-fsca_raster = r"U:\Emma\basin_spec_data\fSCA_20260308_albn83.tif"
-avg_raster = ''
-workspace = fr"U:/Emma/basin_spec_data/report/{rundate}/Tables_PacNW/"
+raster = fr"W:/Spatial_SWE/WW_regression/RT_report_data/{rundate}_results/{model_run}/p8_{rundate}_noneg.tif"
+# fsca_raster = r"U:\Emma\basin_spec_data\fSCA_20260308_albn83.tif"
+# avg_raster = ''
+workspace = fr"W:/documents/{year}_RT_Reports/{rundate}_RT_report/{model_run}/Tables/Tables_PacNW/"
 os.makedirs(workspace, exist_ok=True)
 
 # paths
@@ -41,11 +42,11 @@ elevationBands = {
 print('Processing for elevation bands')
 ZonalStatisticsAsTable(zone_raster, band_caseField, raster, workspace + f"{rundate}_SWEbands_PacNW.dbf",
                                   "", "ALL")
-ZonalStatisticsAsTable(zone_raster, band_caseField, fsca_raster, workspace + f"{rundate}_SCAbands_PacNW.dbf",
-                                  "", "ALL")
+# ZonalStatisticsAsTable(zone_raster, band_caseField, fsca_raster, workspace + f"{rundate}_SCAbands_PacNW.dbf",
+#                                   "", "ALL")
 # table to table
 arcpy.TableToTable_conversion(workspace + f"{rundate}_SWEbands_PacNW.dbf", workspace, f"{rundate}_SWEbands_PacNW.csv")
-arcpy.TableToTable_conversion(workspace + f"{rundate}_SCAbands_PacNW.dbf", workspace, f"{rundate}_SCAbands_PacNW.csv")
+# arcpy.TableToTable_conversion(workspace + f"{rundate}_SCAbands_PacNW.dbf", workspace, f"{rundate}_SCAbands_PacNW.csv")
 
 # editing tables
 df_swe = pd.read_csv(workspace + f"{rundate}_SWEbands_PacNW.csv")
@@ -69,7 +70,7 @@ df_swe_final['ElevationCode'] = df_swe_final[band_caseField].str.split("_").str[
 df_swe_final['ElevationBand'] = df_swe_final['ElevationCode'].map(elevationBands)
 df_swe_final = df_swe_final[['Num', 'BasinCode', 'ElevationBand', 'Area_mi2', 'SWE_in', 'VOL_AF']]
 df_swe_final = df_swe_final.rename(columns={'Num':'No.', 'BasinCode':'Basin Code', 'ElevationBand':'Elevation Band', 'SWE_in': 'SWE (in.)', 'Area_mi2': 'Area (mi2)', 'VOL_AF': 'Vol (AF)'})
-df_swe_final.to_csv(workspace + f"{rundate}_SWEbands_PacNW_final.csv")
+df_swe_final.to_csv(workspace + f"{rundate}_SWE_ElevationBands_PacNW.csv", index=False)
 
 ####
 print('Processing for watershed')
@@ -107,4 +108,4 @@ df_swe_wtshd_final['Basin Code'] = df_swe_wtshd_final['Basin Code'].replace({
 })
 
 
-df_swe_wtshd_final.to_csv(workspace + f"{rundate}_SWEWtshd_PacNW_final.csv")
+df_swe_wtshd_final.to_csv(workspace + f"{rundate}_SWE_Watershed_PacNW.csv", index=False)
