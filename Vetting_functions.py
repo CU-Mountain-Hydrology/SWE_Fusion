@@ -1949,8 +1949,12 @@ def choosing_best_model_run_sensors(rundate, domain_list, WW_reports_workspace, 
         print("Choose which model to use for West Wide (WW):")
         ChosenModelRun_WW = prompt_choice(tied_models)
     else:
-        ChosenModelRun_WW = most_common[0][0]
-        print(f"Most common WW model: {ChosenModelRun_WW} ({max_count} domains)")
+        ## add prompt
+        WW_choice = prompt_choice(
+            [f"WW model: {ChosenModelRun_WW}", f"SNM-specific best: {snm_best}"]
+        )
+        ChosenModelRun_WW = WW_choice
+        print(f"Pick your model run: {ChosenModelRun_WW} ({max_count} domains)")
 
     # --- Determine SNM model ---
     snm_best = domain_best_models.get("SNM")
