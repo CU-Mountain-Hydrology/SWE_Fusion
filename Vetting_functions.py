@@ -1948,13 +1948,23 @@ def choosing_best_model_run_sensors(rundate, domain_list, WW_reports_workspace, 
 
         print("Choose which model to use for West Wide (WW):")
         ChosenModelRun_WW = prompt_choice(tied_models)
+    # else:
+    #     ## add prompt
+    #     WW_choice = prompt_choice(
+    #         [f"WW model: {ChosenModelRun_WW}", f"SNM-specific best: {snm_best}"]
+    #     )
+    #     ChosenModelRun_WW = WW_choice
+    #     print(f"Pick your model run: {ChosenModelRun_WW} ({max_count} domains)")
+
     else:
-        ## add prompt
+        ChosenModelRun_WW = most_common[0][0]  # assign it first
+        print(f"Best WW model: {ChosenModelRun_WW} ({max_count} domains)")
         WW_choice = prompt_choice(
-            [f"WW model: {ChosenModelRun_WW}", f"SNM-specific best: {snm_best}"]
+            [f"Keep recommended: {ChosenModelRun_WW}", "Choose manually"]
         )
-        ChosenModelRun_WW = WW_choice
-        print(f"Pick your model run: {ChosenModelRun_WW} ({max_count} domains)")
+        if WW_choice == "Choose manually":
+            all_models = list(counter.keys())
+            ChosenModelRun_WW = prompt_choice(all_models)
 
     # --- Determine SNM model ---
     snm_best = domain_best_models.get("SNM")
