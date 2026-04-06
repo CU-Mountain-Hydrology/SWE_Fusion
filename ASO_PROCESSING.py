@@ -19,9 +19,9 @@ print("modules imported")
 
 ## model run variables
 year = '2026'
-rundate = "20260322"
-SNM_modelRun = "RT_CanAdj_rcn_wCCR_nofscamskSens"
-WW_modelRun = "RT_CanAdj_rcn_wCCR_nofscamskSens"
+rundate = "20260401"
+SNM_modelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens_noMdlFsca"
+WW_modelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens_noMdlFsca"
 
 # set parameters for zip extraction
 toProcessFolder = fr"M:/SWE/WestWide/Spatial_SWE/ASO/{year}/toProcess/"
