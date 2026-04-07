@@ -64,7 +64,7 @@ def escape_latex(text):
         '~': r'\textasciitilde{}',
         '^': r'\^{}',
         '\\': r'\textbackslash{}',
-        '§': r'\S{}',
+        # '§': r'\S{}',
         '†': r'$\dagger$'
     }
     for char, replacement in replacements.items():
@@ -311,7 +311,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
         if verbose: print(f"Reading: {table}")
 
         # Read in the csv
-        df = pd.read_csv(table, encoding='cp1252')
+        df = pd.read_csv(table, encoding='utf-8-sig')
 
         # Check if this is an elevation band table by looking for "Elevation Band" in header
         is_elevation_table = "Elevation Band" in df.iloc[0].astype(str).values
