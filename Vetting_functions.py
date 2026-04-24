@@ -1911,14 +1911,17 @@ def choosing_best_model_run_sensors(rundate, domain_list, WW_reports_workspace, 
     # --- Find best model per domain ---
     domain_best_models = {}
     all_errors = {}
+    all_model_runs = set()
 
     for domain in domain_list:
         df = get_error_df(domain)
+        all_model_runs.update(df['ModelRun'].tolist())
         best_idx = df[error_metric].idxmin()
         domain_best_models[domain] = df.loc[best_idx, "ModelRun"]
         all_errors[domain] = df.set_index("ModelRun")[error_metric].to_dict()
 
     # --- Determine WW model (exclude SNM) ---
+    all_model_runs = sorted(all_model_runs)
     ww_domains = [d for d in domain_list if d != "SNM"]
     ww_best = [domain_best_models[d] for d in ww_domains]
     counter = Counter(ww_best)
@@ -1959,12 +1962,16 @@ def choosing_best_model_run_sensors(rundate, domain_list, WW_reports_workspace, 
     else:
         ChosenModelRun_WW = most_common[0][0]  # assign it first
         print(f"Best WW model: {ChosenModelRun_WW} ({max_count} domains)")
-        WW_choice = prompt_choice(
-            [f"Keep recommended: {ChosenModelRun_WW}", "Choose manually"]
-        )
-        if WW_choice == "Choose manually":
-            all_models = list(counter.keys())
-            ChosenModelRun_WW = prompt_choice(all_models)
+        print("\n Choose which model to use for West Wide (WW):")
+
+        other_models = [m for m in all_model_runs if m!=ChosenModelRun_WW]
+        ordered_options = [f"{ChosenModelRun_WW} (recommended)"] + other_models
+        WW_choice = prompt_choice(ordered_options)
+        ChosenModelRun_WW = WW_choice.replace(" (recommended)", "")
+
+        # if WW_choice == "Choose manually":
+        #     # all_models = list(counter.keys())
+        #     ChosenModelRun_WW = prompt_choice(all_model_runs)
 
     # --- Determine SNM model ---
     snm_best = domain_best_models.get("SNM")

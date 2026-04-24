@@ -30,11 +30,11 @@ arcpy.env.parallelProcessingFactor = "0"
 ## date info
 user = "Olaf"
 year = 2026
-rundate = "20260405"
+rundate = "20260419"
 survey_date = "20260401"
-pillow_date = "05Apr2026"
-mean_date = "0405"
-prev_rundate = "20260401"
+pillow_date = "19Apr2026"
+mean_date = "0419"
+prev_rundate = "20260412"
 
 # flags
 difference = "Y" # should be Y if you want to compare against a previous model run
@@ -186,161 +186,161 @@ Cellsize = "500"
 # os.makedirs(SNM_reports_workspace + f"/{rundate}_RT_report/SNODAS/", exist_ok=True)
 # os.makedirs(SNM_reports_workspace + f"/{rundate}_RT_report/MODIS/", exist_ok=True)
 # os.makedirs(WW_reports_workspace + f"/{rundate}_RT_report/SNODAS/", exist_ok=True)
-# print("\nReports directories made")
+# # print("\nReports directories made")
 #
 # # download surveys if requested
-# if surveys_use == "Y":
-#     print("\nGetting SNM Surveys")
-#     download_cdec_snow_surveys(report_date=rundate, survey_date=survey_date, survey_workspace=survey_workspace,
-#                                SNM_results_workspace=SNM_results_workspace,
-#                                cdec_shapefile=cdec_shapefile, basin_list=basin_list)
-#
-#     print("\nGetting WW Surveys")
-#     download_snow_surveys(report_date=rundate, survey_date=survey_date, survey_workspace=survey_workspace, results_workspace=WW_results_workspace,
-#                           WW_url_file=WW_url_file, NRCS_shp=NRCS_shp, WW_state_list=WW_state_list)
-#
-# # clear memory
-# sleep(30)
-# clear_arcpy_locks()
-#
-# # get geopackage converted to shapefile
-# print("\nProcessing GeoPackage")
-# geopackage_to_shapefile(report_date=rundate, pillow_date=pillow_date, model_run=model_woCCR,
-#                         user=user, domainList=domainList, model_workspace=model_workspace,
-#                         results_workspace=WW_results_workspace + f"/{rundate}_results/")
-# # clear memory
-# sleep(30)
-# clear_arcpy_locks()
-#
-# # organize and reprocess the sensors for West Wide
-# print('\nProcessing and sorting the sensors for West Wide ... ')
-# merge_sort_sensors_surveys(report_date=rundate, results_workspace=WW_results_workspace + f"/{rundate}_results/", surveys=surveys_use, difference=difference,
-#                            watershed_shapefile=WW_watershed_shapefile, case_field_wtrshd=case_field_wtrshd,
-#                            case_field_band=case_field_band, band_shapefile=WW_band_shapefile, projOut=projALB, merge="Y",
-#                            domainList=domainList, prev_report_date=prev_rundate, prev_results_workspace=WW_results_workspace + f"/{prev_rundate}_results/")
-#
-# # clear memory
-# sleep(30)
-# clear_arcpy_locks()
-#
-# # run SNODAS for West Wide
-# print("\nSNODAS for WW...")
-# SNODAS_Processing(report_date=rundate, domain = "WW", RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
-#                       results_workspace=WW_results_workspace,
-#                       projin=projGEO, projout=projALB, Cellsize=500, snapRaster=snapRaster_albn83, watermask=watermask,
-#                       glacierMask=glacierMask,
-#                       band_zones=WW_band_zones, watershed_zones=WW_watershed_zones, unzip_SNODAS="Y")
+# # if surveys_use == "Y":
+# #     print("\nGetting SNM Surveys")
+# #     download_cdec_snow_surveys(report_date=rundate, survey_date=survey_date, survey_workspace=survey_workspace,
+# #                                SNM_results_workspace=SNM_results_workspace,
+# #                                cdec_shapefile=cdec_shapefile, basin_list=basin_list)
+# #
+# #     print("\nGetting WW Surveys")
+# #     download_snow_surveys(report_date=rundate, survey_date=survey_date, survey_workspace=survey_workspace, results_workspace=WW_results_workspace,
+# #                           WW_url_file=WW_url_file, NRCS_shp=NRCS_shp, WW_state_list=WW_state_list)
+# #
+# # # clear memory
+# # sleep(30)
+# # clear_arcpy_locks()
+# #
+# # # get geopackage converted to shapefile
+# # print("\nProcessing GeoPackage")
+# # geopackage_to_shapefile(report_date=rundate, pillow_date=pillow_date, model_run=model_woCCR,
+# #                         user=user, domainList=domainList, model_workspace=model_workspace,
+# #                         results_workspace=WW_results_workspace + f"/{rundate}_results/")
+# # # clear memory
+# # sleep(30)
+# # clear_arcpy_locks()
+# #
+# # # organize and reprocess the sensors for West Wide
+# # print('\nProcessing and sorting the sensors for West Wide ... ')
+# # merge_sort_sensors_surveys(report_date=rundate, results_workspace=WW_results_workspace + f"/{rundate}_results/", surveys=surveys_use, difference=difference,
+# #                            watershed_shapefile=WW_watershed_shapefile, case_field_wtrshd=case_field_wtrshd,
+# #                            case_field_band=case_field_band, band_shapefile=WW_band_shapefile, projOut=projALB, merge="Y",
+# #                            domainList=domainList, prev_report_date=prev_rundate, prev_results_workspace=WW_results_workspace + f"/{prev_rundate}_results/")
 #
 # # clear memory
 # sleep(30)
 # clear_arcpy_locks()
 #
-# # run tables and layers code for the woCCR model run for West Wide
-# print(f'\nRunning Tables and Layers Code for all domains for {model_woCCR_avg}')
-# tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_woCCR_avg,
-#                   masking="N", watershed_zones=WW_watershed_zones, band_zones=WW_band_zones, HUC6_zones=HUC6_zones,
-#                   region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,case_field_band=case_field_band,
-#                   watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83, snapRaster_albn83=snapRaster_albn83,
-#                   projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, run_type="Normal")
-#
-# # clear memory
-# sleep(30)
-# clear_arcpy_locks()
-#
-# # run tables and layers code for the woCCR model run for West Wide
-# print(f'\nRunning Tables and Layers Code for all domains for {model_woCCR}')
-# tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_woCCR,
-#                   masking="N", watershed_zones=WW_watershed_zones, band_zones=WW_band_zones, HUC6_zones=HUC6_zones,
-#                   region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,case_field_band=case_field_band,
-#                   watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83, snapRaster_albn83=snapRaster_albn83,
-#                   projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, run_type="Normal")
-#
-# # clear memory
-# sleep(30)
-# clear_arcpy_locks()
-#
-# # run tables and layers code for the wCCR model run for West Wide
-# print(f'\nRunning Tables and Layers Code for all domains for {model_wCCR}')
-# tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_wCCR, masking="N", watershed_zones=WW_watershed_zones,
-#                   band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,
-#                   case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83,
-#                   snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, run_type="Normal")
-#
-# # get zero sensors for all domains
-# for domain in domainList:
-#     zero_CCR_sensors(rundate=rundate, results_workspace=WW_results_workspace, pillow_date=pillow_date, domain=domain,
-#                      sensors=WW_results_workspace + f"{rundate}_results/{rundate}_sensors_{domain}.shp", zero_sensors=True,
-#                      CCR=False, model_workspace_domain=model_workspace + f"{domain}/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
+# # # run SNODAS for West Wide
+# # print("\nSNODAS for WW...")
+# # SNODAS_Processing(report_date=rundate, domain = "WW", RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
+# #                       results_workspace=WW_results_workspace,
+# #                       projin=projGEO, projout=projALB, Cellsize=500, snapRaster=snapRaster_albn83, watermask=watermask,
+# #                       glacierMask=glacierMask,
+# #                       band_zones=WW_band_zones, watershed_zones=WW_watershed_zones, unzip_SNODAS="Y")
 #
 # # # clear memory
-# sleep(30)
-# clear_arcpy_locks()
+# # sleep(30)
+# # clear_arcpy_locks()
 #
-# # organize and reprocess the sensors for Sierras
-# print('\nProcessing and sorting the sensors for the Sierra... ')
-# merge_sort_sensors_surveys(report_date=rundate, results_workspace=SNM_results_workspace + f"/{rundate}_results/", surveys=surveys_use, difference=difference,
-#                            watershed_shapefile=SNM_watershed_shapefile, case_field_wtrshd=case_field_wtrshd, band_shapefile=SNM_band_shapefile,
-#                            case_field_band=case_field_band, projOut=projALB, projIn=projGEO, domain = "SNM",
-#                             merge="N", domain_shapefile=SNM_sensors, prev_report_date=prev_rundate,
-#                            prev_results_workspace=SNM_results_workspace + f"/{prev_rundate}_results/")
-#
-# # Run SNODAS for SNM
-# print("\nSNODAS for SNM...")
-# SNODAS_Processing(report_date=rundate, domain="SNM", RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
-#                   results_workspace=SNM_results_workspace,
-#                   projin=projGEO, projout=projALB, Cellsize=500, snapRaster=SNM_snapRaster_albn83,
-#                   watermask=watermask, glacierMask=glacierMask,
-#                   band_zones=SNM_band_zones, watershed_zones=SNM_watershed_zones, unzip_SNODAS="N", dwr_mask=SNM_domain_msk)
-#
-# # clear memory
-# sleep(10)
-# clear_arcpy_locks()
-#
-#
-# print(f'\nRunning Tables and Layers Code for Sierra {model_woCCR_avg}...')
-# tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_woCCR_avg, SNM_results_workspace=SNM_results_workspace,
-#                       watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
-#                       case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
-#                       glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
-#                       snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
-#                       Difference=difference, prev_report_date=prev_rundate, prev_model_run=prev_model_run_SNM)
-#
-# # clear memory
-# sleep(10)
-# clear_arcpy_locks()
-#
-#
-# print(f'\nRunning Tables and Layers Code for Sierra {model_woCCR}...')
-# tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_woCCR, SNM_results_workspace=SNM_results_workspace,
-#                       watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
-#                       case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
-#                       glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
-#                       snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
-#                       Difference=difference, prev_report_date=prev_rundate, prev_model_run=prev_model_run_SNM)
-# # clear memory
-# sleep(30)
-# clear_arcpy_locks()
-# print('pause 1')
-#
-# sleep(30)
-# clear_arcpy_locks()
-# print('pause 2')
-#
-# print(f'\nRunning Tables and Layers Code for Sierra {model_wCCR}...')
-# tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_wCCR, SNM_results_workspace=SNM_results_workspace,
-#                       watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
-#                       case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
-#                       glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
-#                       snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
-#                       Difference=difference, prev_report_date=prev_rundate, prev_model_run=prev_model_run_SNM)
-# # clear memory
-# clear_arcpy_locks()
-# sleep(30)
-#
-# zero_CCR_sensors(rundate=rundate, results_workspace=SNM_results_workspace, pillow_date=pillow_date, domain="SNM",
-#                      sensors=SNM_results_workspace + f"{rundate}_results/SNM_{rundate}_sensors_albn83.shp", zero_sensors=True,
-#                      CCR=True, model_workspace_domain=model_workspace + f"SNM/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
+# # # run tables and layers code for the woCCR model run for West Wide
+# # print(f'\nRunning Tables and Layers Code for all domains for {model_woCCR_avg}')
+# # tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_woCCR_avg,
+# #                   masking="N", watershed_zones=WW_watershed_zones, band_zones=WW_band_zones, HUC6_zones=HUC6_zones,
+# #                   region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,case_field_band=case_field_band,
+# #                   watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83, snapRaster_albn83=snapRaster_albn83,
+# #                   projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, run_type="Normal")
 # #
+# # # clear memory
+# # sleep(30)
+# # clear_arcpy_locks()
+#
+# # run tables and layers code for the woCCR model run for West Wide
+# # print(f'\nRunning Tables and Layers Code for all domains for {model_woCCR}')
+# # tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_woCCR,
+# #                   masking="N", watershed_zones=WW_watershed_zones, band_zones=WW_band_zones, HUC6_zones=HUC6_zones,
+# #                   region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,case_field_band=case_field_band,
+# #                   watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83, snapRaster_albn83=snapRaster_albn83,
+# #                   projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, run_type="Normal")
+#
+# # # # clear memory
+# # # sleep(30)
+# # # clear_arcpy_locks()
+# # #
+# # # # run tables and layers code for the wCCR model run for West Wide
+# # # print(f'\nRunning Tables and Layers Code for all domains for {model_wCCR}')
+# # # tables_and_layers(user=user, year=year, report_date=rundate, mean_date = mean_date, meanWorkspace = meanWorkspace, model_run=model_wCCR, masking="N", watershed_zones=WW_watershed_zones,
+# # #                   band_zones=WW_band_zones, HUC6_zones=HUC6_zones, region_zones=region_zones, case_field_wtrshd=case_field_wtrshd,
+# # #                   case_field_band=case_field_band, watermask=watermask, glacierMask=glacierMask, snapRaster_geon83=snapRaster_geon83,
+# # #                   snapRaster_albn83=snapRaster_albn83, projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM, run_type="Normal")
+# #
+# # # get zero sensors for all domains
+# # for domain in domainList:
+# #     zero_CCR_sensors(rundate=rundate, results_workspace=WW_results_workspace, pillow_date=pillow_date, domain=domain,
+# #                      sensors=WW_results_workspace + f"{rundate}_results/{rundate}_sensors_{domain}.shp", zero_sensors=True,
+# #                      CCR=False, model_workspace_domain=model_workspace + f"{domain}/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
+#
+# # # clear memory
+# # sleep(30)
+# # clear_arcpy_locks()
+#
+# # # organize and reprocess the sensors for Sierras
+# # print('\nProcessing and sorting the sensors for the Sierra... ')
+# # merge_sort_sensors_surveys(report_date=rundate, results_workspace=SNM_results_workspace + f"/{rundate}_results/", surveys=surveys_use, difference=difference,
+# #                            watershed_shapefile=SNM_watershed_shapefile, case_field_wtrshd=case_field_wtrshd, band_shapefile=SNM_band_shapefile,
+# #                            case_field_band=case_field_band, projOut=projALB, projIn=projGEO, domain = "SNM",
+# #                             merge="N", domain_shapefile=SNM_sensors, prev_report_date=prev_rundate,
+# #                            prev_results_workspace=SNM_results_workspace + f"/{prev_rundate}_results/")
+# #
+# # # Run SNODAS for SNM
+# # print("\nSNODAS for SNM...")
+# # SNODAS_Processing(report_date=rundate, domain="SNM", RunName=model_woCCR, NOHRSC_workspace=WW_NOHRSC_workspace,
+# #                   results_workspace=SNM_results_workspace,
+# #                   projin=projGEO, projout=projALB, Cellsize=500, snapRaster=SNM_snapRaster_albn83,
+# #                   watermask=watermask, glacierMask=glacierMask,
+# #                   band_zones=SNM_band_zones, watershed_zones=SNM_watershed_zones, unzip_SNODAS="N", dwr_mask=SNM_domain_msk)
+# #
+# # # clear memory
+# # sleep(10)
+# # clear_arcpy_locks()
+#
+#
+# # print(f'\nRunning Tables and Layers Code for Sierra {model_woCCR_avg}...')
+# # tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_woCCR_avg, SNM_results_workspace=SNM_results_workspace,
+# #                       watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
+# #                       case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
+# #                       glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
+# #                       snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
+# #                       Difference=difference, prev_report_date=prev_rundate, prev_model_run=prev_model_run_SNM)
+# #
+# # # clear memory
+# # sleep(10)
+# # clear_arcpy_locks()
+#
+#
+# # print(f'\nRunning Tables and Layers Code for Sierra {model_woCCR}...')
+# # tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_woCCR, SNM_results_workspace=SNM_results_workspace,
+# #                       watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
+# #                       case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
+# #                       glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
+# #                       snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
+# #                       Difference=difference, prev_report_date=prev_rundate, prev_model_run=prev_model_run_SNM)
+# # # clear memory
+# # sleep(30)
+# # clear_arcpy_locks()
+# # print('pause 1')
+# #
+# # sleep(30)
+# # clear_arcpy_locks()
+# # print('pause 2')
+# # #
+# # print(f'\nRunning Tables and Layers Code for Sierra {model_wCCR}...')
+# # tables_and_layers_SNM(year=year, rundate=rundate, mean_date=mean_date, WW_model_run=model_wCCR, SNM_results_workspace=SNM_results_workspace,
+# #                       watershed_zones=SNM_watershed_zones, band_zones=SNM_band_zones, region_zones=SNM_regions,
+# #                       case_field_wtrshd=case_field_wtrshd, case_field_band=case_field_band, watermask=watermask,
+# #                       glacier_mask=glacierMask, domain_mask=SNM_domain_msk, run_type="Normal",
+# #                       snap_raster=SNM_snapRaster_albn83, WW_results_workspace=WW_results_workspace,
+# #                       Difference=difference, prev_report_date=prev_rundate, prev_model_run=prev_model_run_SNM)
+# # # clear memory
+# # clear_arcpy_locks()
+# # sleep(30)
+#
+# # zero_CCR_sensors(rundate=rundate, results_workspace=SNM_results_workspace, pillow_date=pillow_date, domain="SNM",
+# #                      sensors=SNM_results_workspace + f"{rundate}_results/SNM_{rundate}_sensors_albn83.shp", zero_sensors=True,
+# #                      CCR=True, model_workspace_domain=model_workspace + f"SNM/{user}/StationSWERegressionV2/data/outputs/{model_wCCR}/")
+#
 # # ############# START VETTING ######################
 # # loop through domains
 # for modelRun in modelRuns:
@@ -422,8 +422,8 @@ Cellsize = "500"
 #
 #             model_domain_vetting(raster=raster, point=sensors_WW, swe_col=swe_col_sens, id_col=id_col_sens, rundate=rundate, domain=domain,
 #                                  modelRun=modelRun, out_csv=f"{WW_reports_workspace}/{rundate}_RT_report/{rundate}_sensors_error.csv")
-#
-# #####
+
+#####
 
 #PROMPT TO PICK THE BEST ERROR FROM THE CSV
 ChosenModelRun_WW, ChosenModelRun_SNM = choosing_best_model_run_sensors(rundate=rundate, domain_list=domainList, WW_reports_workspace=WW_reports_workspace,
@@ -541,7 +541,7 @@ if biasCorrection == "Y":
 
     #################################
     # BIAS CORRECTION CODE FOR WW
-    #################################
+    ################################
     for method in methods:
         print(f"\nProcessing method:", method)
         bias_correct(WW_results_workspace + f"{rundate}_results/", domain="WW", ModelRun=ChosenModelRun_WW, method=method, rundate=rundate, results_df=results_df, shapefile_workspace=WW_shapefile_workspace)
@@ -761,7 +761,7 @@ if biasCorrection == "Y":
         )
     clear_arcpy_locks()
     sleep(30)
-    #
+
     # pick the best file
     print("\n Choosing and mosaic for WW...")
     arcpy.env.snapRaster = snapRaster_albn83
@@ -783,7 +783,7 @@ if biasCorrection == "Y":
 
     clear_arcpy_locks()
     sleep(30)
-    #
+
     print("\n Choosing and mosaic for SNM...")
     arcpy.env.snapRaster = SNM_snapRaster_albn83
     arcpy.env.extent = SNM_snapRaster_albn83
@@ -823,17 +823,18 @@ if biasCorrection == "Y":
                                  model_labels=model_labels, reference_col=reference_col, output_png= SNM_reports_workspace + f"{rundate}_RT_report/{rundate}_snowTrax_comparison_ASO.png")
 
         else:
+            print('WW')
             # extract by mask
             arcpy.env.snapRaster = snapRaster_albn83
             arcpy.env.cellSize = snapRaster_albn83
-            raster = f"{WW_results_workspace}/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_SNM}/p8_{rundate}_noneg.tif"
+            raster = f"{WW_results_workspace}/{rundate}_results/ASO_BiasCorrect_{ChosenModelRun_WW}/p8_{rundate}_noneg.tif"
             prev_vetting_WS = f"W:/documents/2026_RT_Reports/{prev_rundate}_RT_report/{prev_model_run_WW}/vetting_domains/"
             sensors_WW = WW_results_workspace + f"{rundate}_results/{rundate}_sensors_albn83.shp"
             surveys_WW = WW_results_workspace + f"{rundate}_results/{rundate}_surveys_albn83.shp"
             prev_fSCA_raster = prev_vetting_WS + f"fSCA_{prev_rundate}_{domain}_clp.tif"
 
             ## make vetting folder
-            outVettingWS_WW = f"{WW_reports_workspace}/{rundate}_RT_report/ASO_BiasCorrect_{ChosenModelRun_SNM}/vetting_domains/"
+            outVettingWS_WW = f"{WW_reports_workspace}/{rundate}_RT_report/ASO_BiasCorrect_{ChosenModelRun_WW}/vetting_domains/"
             os.makedirs(outVettingWS_WW, exist_ok=True)
             outMask = ExtractByMask(raster, clipbox_WS + f"WW_{domain}_Clipbox_albn83.shp")
             outMask.save(outVettingWS_WW + f"p8_{rundate}_noneg_{domain}_clp.tif")
