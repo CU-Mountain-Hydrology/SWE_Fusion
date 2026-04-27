@@ -20,8 +20,8 @@ print("modules imported")
 # Set the compression environment to NONE.
 # arcpy.env.compression = "NONE"
 
-startDate = datetime(2026, 1, 1)
-endDate = datetime(2026, 1, 10)
+startDate = datetime(2026, 1, 11)
+endDate = datetime(2026, 3, 31)
 start_yyyymmdd = startDate.strftime("%Y%m%d")
 end_yyyymmdd = endDate.strftime("%Y%m%d")
 

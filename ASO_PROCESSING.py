@@ -19,7 +19,7 @@ print("modules imported")
 
 ## model run variables
 year = '2026'
-rundate = "20260412"
+rundate = "20260419"
 SNM_modelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens_noMdlFsca"
 WW_modelRun = "RT_CanAdj_rcn_woCCR_nofscamskSens_noMdlFsca"
 
