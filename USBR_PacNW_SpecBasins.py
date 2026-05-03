@@ -6,7 +6,7 @@ import pandas as pd
 print('modules import')
 
 # report information
-rundate = '20260419'
+rundate = '20260426'
 model_run = 'ASO_BiasCorrect_RT_CanAdj_rcn_woCCR_nofscamskSens_noMdlFsca_UseThis'
 avg_model_run = ''
 year = '2026'

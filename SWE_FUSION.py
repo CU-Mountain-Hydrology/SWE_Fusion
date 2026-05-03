@@ -30,16 +30,16 @@ arcpy.env.parallelProcessingFactor = "0"
 ## date info
 user = "Olaf"
 year = 2026
-rundate = "20260426"
-survey_date = "20260401"
-pillow_date = "26Apr2026"
-mean_date = "0426"
-prev_rundate = "20260419"
+rundate = "20260501"
+survey_date = "20260501"
+pillow_date = "01May2026"
+mean_date = "0501"
+prev_rundate = "20260426"
 
 # flags
 difference = "Y" # should be Y if you want to compare against a previous model run
 biasCorrection = "Y"
-surveys_use = "N"
+surveys_use = "Y"
 
 # model run information
 domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"]
@@ -861,8 +861,7 @@ else:
     SNM_ASO_biasCorr_basins = []
     WW_ASO_biasCorr_basins = []
 
-WW_ASO_biasCorr_basins = ['Blue', 'Colorado Headwaters', 'Gunnison', 'Lower Green', 'Rio Grande Headwaters', 'Roaring Fork', 'South Platte',
-                          'Upper Colorado-Dolores', 'Upper Green', 'Weber-Ogden', 'White-Yampa']
+
 print(f"\n WW ASO BIAS BASINS USED: {WW_ASO_biasCorr_basins}")
 print(f"SNM ASO BIAS BASINS USED: {SNM_ASO_biasCorr_basins}")
 # get tables and layers
