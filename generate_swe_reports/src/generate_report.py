@@ -15,7 +15,7 @@ import subprocess
 
 REPORT_CONFIGS = {
     "WW": {
-        "template": "TEMPLATE_WW_SWE_Report.tex",
+        "template": "TEMPLATE_WW_SWE_Report_NoSierra.tex",
         "output_name": lambda date: f"0WW_SWE_Report_{date}",
         "context": lambda date, maps_dir, tables_dir, project_root: {
             "instaar_logo_path": str(project_root / "report_templates" / "images" / "INSTAAR_75_Logo.png").replace("\\", "/"),
@@ -32,12 +32,12 @@ REPORT_CONFIGS = {
             "fig4_path":  str(maps_dir["WW"] / f"{date}_WW_Fig4.jpg").replace("\\", "/"),
             "fig5_path":  str(maps_dir["WW"] / f"{date}_WW_Fig5.jpg").replace("\\", "/"),
             "fig6_path":  str(maps_dir["WW"] / f"{date}_WW_Fig6.jpg").replace("\\", "/"),
-            "fig7_path":  str(maps_dir["SNM"] / f"{date}_SNM_Fig1.jpg").replace("\\", "/"),
+            # "fig7_path":  str(maps_dir["SNM"] / f"{date}_SNM_Fig1.jpg").replace("\\", "/"),
             "table1_path": str(tables_dir["WW"] / f"{date}_WW_Table01.tex").replace("\\", "/"),
             "table2_path": str(tables_dir["WW"] / f"{date}_WW_Table02.tex").replace("\\", "/"),
             "table3_path": str(tables_dir["WW"] / f"{date}_WW_Table03.tex").replace("\\", "/"),
             "table4_path": str(tables_dir["WW"] / f"{date}_WW_Table04.tex").replace("\\", "/"),
-            "table5_path": str(tables_dir["SNM"] / f"{date}_SNM_Table05.tex").replace("\\", "/"),
+            # "table5_path": str(tables_dir["SNM"] / f"{date}_SNM_Table05.tex").replace("\\", "/"),
         },
     },
     "SNM": {
