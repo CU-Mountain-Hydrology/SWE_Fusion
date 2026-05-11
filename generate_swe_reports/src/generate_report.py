@@ -15,7 +15,7 @@ import subprocess
 
 REPORT_CONFIGS = {
     "WW": {
-        "template": "TEMPLATE_WW_SWE_Report_NoSierra.tex",
+        "template": {"default": "TEMPLATE_WW_SWE_Report.tex", "no_sierra": "TEMPLATE_WW_SWE_Report_NoSierra.tex"},
         "output_name": lambda date: f"0WW_SWE_Report_{date}",
         "context": lambda date, maps_dir, tables_dir, project_root: {
             "instaar_logo_path": str(project_root / "report_templates" / "images" / "INSTAAR_75_Logo.png").replace("\\", "/"),
@@ -32,12 +32,12 @@ REPORT_CONFIGS = {
             "fig4_path":  str(maps_dir["WW"] / f"{date}_WW_Fig4.jpg").replace("\\", "/"),
             "fig5_path":  str(maps_dir["WW"] / f"{date}_WW_Fig5.jpg").replace("\\", "/"),
             "fig6_path":  str(maps_dir["WW"] / f"{date}_WW_Fig6.jpg").replace("\\", "/"),
-            # "fig7_path":  str(maps_dir["SNM"] / f"{date}_SNM_Fig1.jpg").replace("\\", "/"),
+            "fig7_path":  str(maps_dir["SNM"] / f"{date}_SNM_Fig1.jpg").replace("\\", "/"),
             "table1_path": str(tables_dir["WW"] / f"{date}_WW_Table01.tex").replace("\\", "/"),
             "table2_path": str(tables_dir["WW"] / f"{date}_WW_Table02.tex").replace("\\", "/"),
             "table3_path": str(tables_dir["WW"] / f"{date}_WW_Table03.tex").replace("\\", "/"),
             "table4_path": str(tables_dir["WW"] / f"{date}_WW_Table04.tex").replace("\\", "/"),
-            # "table5_path": str(tables_dir["SNM"] / f"{date}_SNM_Table05.tex").replace("\\", "/"),
+            "table5_path": str(tables_dir["SNM"] / f"{date}_SNM_Table05.tex").replace("\\", "/"),
         },
     },
     "SNM": {
@@ -62,14 +62,17 @@ REPORT_CONFIGS = {
     },
 }
 
-def generate_report(report_type: str, date: int, verbose=False, prompt_user=False) -> Path:
+def generate_report(report_type: str, date: int, verbose=False, prompt_user=False, no_sierra=False) -> Path:
     config = REPORT_CONFIGS[report_type]
     PROJECT_ROOT = Path(__file__).parent.parent
 
     maps_dir   = {rt: Path(get_maps_dir(date, rt))   for rt in ("WW", "SNM")}
     tables_dir = {rt: Path(get_tables_dir(date, rt)) for rt in ("WW", "SNM")}
 
-    template_path = PROJECT_ROOT / "report_templates" / config["template"]
+    template = config["template"]
+    if isinstance(template, dict):
+        template = template["no_sierra"] if no_sierra else template["default"]
+    template_path = PROJECT_ROOT / "report_templates" / template
     with open(template_path, encoding="utf-8") as f:
         template = Template(f.read())
 
@@ -98,6 +101,8 @@ def main():
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output messages")
     parser.add_argument("-u", "--prompt_user", action="store_true",
                         help="Prompt the user before overwriting or automatically selecting files")
+    parser.add_argument("--no-sierra", action="store_true",
+                        help="Use the No Sierra template for WW reports")
     args = parser.parse_args()
 
     figs_is_none = any(p.strip().lower() in {"none", ""} for p in args.figs.split(","))
@@ -112,7 +117,7 @@ def main():
     elif args.verbose:
         print(f"No tables will be generated: --tables={args.tables}")
 
-    output_path = generate_report(args.report_type, args.date, args.verbose, args.prompt_user)
+    output_path = generate_report(args.report_type, args.date, args.verbose, args.prompt_user, args.no_sierra)
 
     report_dir = Path(get_maps_dir(args.date, args.report_type)).parent
     output_name = REPORT_CONFIGS[args.report_type]["output_name"](args.date)
