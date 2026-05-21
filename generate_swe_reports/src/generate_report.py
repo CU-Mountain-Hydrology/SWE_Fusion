@@ -103,6 +103,7 @@ def main():
                         help="Prompt the user before overwriting or automatically selecting files")
     parser.add_argument("--no-sierra", action="store_true",
                         help="Use the No Sierra template for WW reports")
+    parser.add_argument("-c", "--compile", type=int, default=3, choices=range(1, 6), help="Number of times to compile the report (1-5). Set to 1 if not updating tables.")
     args = parser.parse_args()
 
     figs_is_none = any(p.strip().lower() in {"none", ""} for p in args.figs.split(","))
@@ -121,7 +122,9 @@ def main():
 
     report_dir = Path(get_maps_dir(args.date, args.report_type)).parent
     output_name = REPORT_CONFIGS[args.report_type]["output_name"](args.date)
-    for _ in range(3):
+    if args.verbose:
+        print(f"Compiling report {args.compile} time(s)...")
+    for _ in range(args.compile):
         print("Compiling LaTeX to PDF.")
         subprocess.run(
             ["pdflatex",
