@@ -1,7 +1,9 @@
 # function for getting files out of a zip file
 import zipfile
 import os
+import re
 import shutil
+import numpy as np
 
 from sympy.codegen.ast import continue_
 
@@ -18,27 +20,25 @@ def extract_zip(zip_path, ext, output_folder):
     # Create the destination folder if it doesn't exist
     os.makedirs(output_folder, exist_ok=True)
 
-    # Create a temporary extraction folder
-    temp_extract_path = os.path.join(os.path.dirname(zip_path), "temp_extract")
-    os.makedirs(temp_extract_path, exist_ok=True)
-
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        # Extract all to temporary location
-        zip_ref.extractall(temp_extract_path)
+        for member in zip_ref.namelist():
+            # Sanitize: strip newlines and other invalid Windows characters
+            clean_name = re.sub(r'[\n\r\t]', '', member)
+            clean_name = os.path.basename(clean_name)  # drop any subdirectory structure
 
-        # Iterate through extracted files
-        for root, _, files in os.walk(temp_extract_path):
-            for file in files:
-                if ext in file:
-                    src_file = os.path.join(root, file)
-                    dst_file = os.path.join(output_folder, file)
+            # Only process files matching the extension tag
+            if ext not in clean_name:
+                continue
 
-                    # Move file to destination
-                    shutil.move(src_file, dst_file)
-                    print(f"Moved: {src_file} → {dst_file}")
+            dst_file = os.path.join(output_folder, clean_name)
+
+            # Extract directly to destination without temp folder
+            with zip_ref.open(member) as src, open(dst_file, 'wb') as dst:
+                dst.write(src.read())
+                print(f"Extracted: {clean_name} → {dst_file}")
 
     # Clean up temp folder
-    shutil.rmtree(temp_extract_path)
+    # shutil.rmtree(temp_extract_path)
 
 
 import os
@@ -65,9 +65,10 @@ def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspa
     arcpy.CheckOutExtension("Spatial")
 
     basinName = file.split("_")[1]
+    basinDate = file.split("_")[2]
     output_dir = os.path.join(compareWS, f"{rundate}_{modelRun}")
     os.makedirs(output_dir, exist_ok=True)
-    if os.path.exists (os.path.join(output_dir, f"DIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}.tif")):
+    if os.path.exists (os.path.join(output_dir, f"DIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_{basinDate}.tif")):
         print(f'Difference file for {rundate}_{modelRun}_{basinName} is already created')
 
     else:
@@ -77,7 +78,7 @@ def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspa
         # Project
         arcpy.ProjectRaster_management(
             aso_raster, projected_aso, snapRaster,
-            "NEAREST", "50 50", "", "", projIn
+            "NEAREST", "500 500", "", "", projIn
         )
 
         # Create mask where ASO >= 0
@@ -88,37 +89,39 @@ def process_aso_comparison(file, rundate, modelRun, data_folder, modelRunWorkspa
         # Resample P8 model to 50m
         p8_input = os.path.join(modelRunWorkspace, f"p8_{rundate}_noneg.tif")
         p8_resampled = os.path.join(output_dir, f"p8_{rundate}_50m.tif")
-        arcpy.Resample_management(p8_input, p8_resampled)
-
+        if os.path.exists(p8_resampled):
+            print("")
+        else:
+            arcpy.Resample_management(p8_input, p8_resampled)
         # Apply mask
         masked_p8 = Raster(p8_resampled) * Raster(mask_path)
-        masked_p8_path = os.path.join(output_dir, f"p8_{rundate}_50m_msk.tif")
+        masked_p8_path = os.path.join(output_dir, f"p8_{rundate}_50m_{basinName}_{basinDate}_msk.tif")
         masked_p8.save(masked_p8_path)
 
         # Difference
         diff = Raster(masked_p8_path) - Raster(projected_aso)
-        diff_path = os.path.join(output_dir, f"DIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}.tif")
+        diff_path = os.path.join(output_dir, f"DIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_{basinDate}.tif")
         diff.save(diff_path)
 
         # Percent difference
         perc_diff = ((Raster(masked_p8_path) - Raster(projected_aso)) / Raster(projected_aso)) * 100
-        perc_diff_path = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}.tif")
+        perc_diff_path = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_{basinDate}.tif")
         perc_diff.save(perc_diff_path)
 
         # Zonal stats for % difference
-        zonal_table_perc = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_byBands.dbf")
-        ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", perc_diff_path, zonal_table_perc, "", "ALL")
-        arcpy.ExportTable_conversion(zonal_table_perc, zonal_table_perc.replace(".dbf", ".csv"))
+        # zonal_table_perc = os.path.join(output_dir, f"PercDIFF_LRM-ASO_{rundate}_{modelRun}_{basinName}_{basinDate}_byBands.dbf")
+        # ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", perc_diff_path, zonal_table_perc, "DATA","ALL")
+        # arcpy.ExportTable_conversion(zonal_table_perc, zonal_table_perc.replace(".dbf", ".csv"))
 
-        # Zonal stats for ASO mask
-        zonal_table_aso = os.path.join(output_dir, f"{file[:-4]}_albn83_byBands.dbf")
-        ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", mask_path, zonal_table_aso, "", "ALL")
-        arcpy.ExportTable_conversion(zonal_table_aso, zonal_table_aso.replace(".dbf", ".csv"))
+        # # Zonal stats for ASO mask
+        # zonal_table_aso = os.path.join(output_dir, f"{file[:-4]}_albn83_byBands.dbf")
+        # ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", mask_path, zonal_table_aso, "", "ALL")
+        # arcpy.ExportTable_conversion(zonal_table_aso, zonal_table_aso.replace(".dbf", ".csv"))
 
-        # Zonal stats for masked P8
-        zonal_table_p8 = os.path.join(output_dir, f"p8_{rundate}_50m_msk_byBands.dbf")
-        ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", masked_p8_path, zonal_table_p8, "", "ALL")
-        arcpy.ExportTable_conversion(zonal_table_p8, zonal_table_p8.replace(".dbf", ".csv"))
+        # # Zonal stats for masked P8
+        # zonal_table_p8 = os.path.join(output_dir, f"p8_{rundate}_50m_msk_byBands_{basinName}_{basinDate}.dbf")
+        # ZonalStatisticsAsTable(zonalRaster, "SrtNmeBand", masked_p8_path, zonal_table_p8, "", "ALL")
+        # arcpy.ExportTable_conversion(zonal_table_p8, zonal_table_p8.replace(".dbf", ".csv"))
 
         print("All ASO comparison outputs created.")
 
@@ -138,7 +141,7 @@ def fractional_error(filename, input_folder, output_folder, snapRaster, projIn, 
     """
     # Set snap raster
     arcpy.env.snapRaster = snapRaster
-
+    print(f"\nProcessing {filename} fractional error")
     # Create file paths
     input_path = input_folder + filename
     proj_output = output_folder + f"{filename[:-4]}_proj_50.tif"
@@ -152,16 +155,20 @@ def fractional_error(filename, input_folder, output_folder, snapRaster, projIn, 
         # Project raster
         arcpy.ProjectRaster_management(
             input_path, proj_output, snapRaster,
-            "NEAREST", "50 50", "", "", projIn
+            "NEAREST", "50 50", "", "", projIn, "NO_VERTICAL"
         )
 
         # Aggregate raster
+        print(f"Proj output: {proj_output}")
+        print(f"input path: {input_path}")
+        print(f"Agg output: {agg_output}")
+        print(proj_output)
         outAgg = Aggregate(proj_output, 10, "MEAN", "TRUNCATE", "DATA")
         outAgg.save(agg_output)
 
         # Calculate fractional error
         p8_input = os.path.join(modelRunWorkspace, f"p8_{rundate}_noneg.tif")
-        FracError = Raster(p8_input) / (1 + Raster(agg_output))
+        FracError = (Raster(p8_input) - Raster(agg_output)) / Raster(agg_output)
         FracError.save(error_output)
 
         if delete is True or delete == "True":
@@ -170,3 +177,28 @@ def fractional_error(filename, input_folder, output_folder, snapRaster, projIn, 
             print("intermediary files not deleted")
 
         return error_output  # Return the final output path
+
+import pandas as pd
+import numpy as np
+def classify_trend(series):
+    # Convert to numeric and drop NaN
+    s = pd.to_numeric(series, errors="coerce").dropna()
+
+    if len(s) == 0:
+        return "No Data"
+
+    # Special case: all zeros → treat as decreasing
+    if (s == 0).all():
+        return "Decreasing"
+
+    # If first and last value are the same, no trend
+    if s.iloc[0] == s.iloc[-1]:
+        return "No Trend"
+
+    # Compare first and last value for general trend
+    if s.iloc[-1] > s.iloc[0]:
+        return "Increasing"
+    elif s.iloc[-1] < s.iloc[0]:
+        return "Decreasing"
+    else:
+        return "No Trend"
