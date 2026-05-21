@@ -1,0 +1,769 @@
+"""
+Automatically generates report maps in ArcPy using post-processed rasters.
+
+**Usage:**
+    python generate_maps.py report_type date [--figs REGEX] [--preview]
+
+**Arguments:**
+    - ``report_type``: Type of report to generate (e.g., WW)
+    - ``date``: Date of report in YYYYMMDD format
+
+**Options:**
+    - ``--figs=REGEX``: Regex for figures to generate (default: all).
+      Example: ``--figs=1a`` or ``--figs=1*,2a,3`` or ``--figs=none``
+    - ``--preview``, ``-p``: Open the generated JPG maps upon completion
+    - ``--verbose``, ``-v``: Enable verbose output messages
+    - ``--prompt_user``, ``-u``: Prompt user before overwriting files or automatically selecting layer files
+"""
+
+#########################   These values should not need to be changed between runs, but may change depending on your
+#         CONFIG        #   operating system, filepaths, and preferred output location.
+#########################
+# Filepath configs
+ww_aprx = r"W:\Spatial_SWE\Reporting_ArcProProjects\WW_Report_Template.aprx"       # Project containing template for each figure
+snm_aprx = r"J:\Spatial_SWE\Reporting_ArcProProjects\SNM_Report_Template.aprx"
+ww_source_dir = r"W:\documents\2026_RT_Reports"         # Parent directory of the YYYYMMDD_RT_Report folders
+ww_results_dir = r"W:\Spatial_SWE\WW_regression\RT_report_data"
+snm_source_dir = r"J:\paperwork\0_UCSB_DWR_Project\2026_RT_Reports"
+snm_results_dir = r"J:\Spatial_SWE\SNM_regression\RT_report_data"
+rt_report_pattern = "_RT_report"
+
+# Figure configs
+layer_formats = ["tif","shp"]                           # List of all layer file formats
+table_formats = ["csv","dbf",]                          # List of all standalone table file formats
+ww_fig_data = {                                         # Dictionary of metadata for all figures in the WestWide reports
+    # The top level contains each figure id as it appears in the report, followed by an id for each map-frame within that
+    # figure. For each map, the files that need updated are specified with an id such as "p8", and its format, source
+    # directory (*UseThis or *UseAvg), and labelling type (None, Anno, or Layer) are specified. Anno means there is a
+    # separate annotation text that needs updated while Layer means some layer is joined to this source and has labels on.
+    "1a": {
+        "maps": {
+            "1a": [
+                {"layer": "p8*_noneg", "format": "tif", "dir": "*UseThis*", "label": "None"}
+            ]
+        }
+    },
+    "1b": {
+        "maps": {
+            "1b": [
+                {"layer": "anomRegion_table", "format": "csv", "dir": "*UseAvg", "label": ["WW_Regions_albn83_label","ZONE_CODE"]}
+            ]
+        }
+    },
+    "2a": {
+        "maps": {
+            "2a" : [
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
+            ]
+        }
+    },
+    "2b": {
+        "maps": {
+            "2b": [
+                {"layer": "p11", "format": "tif", "dir": "*UseAvg", "label": "None"},
+                {"layer": "huc6_anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["WW_HUC6_albn83","name"]},
+            ]
+        }
+    },
+    "3": {
+        "maps": {
+            "3a": [
+                {"layer": "p8*_noneg", "format": "tif", "dir": "*UseThis*", "label": "None"}
+            ],
+            "3b": [
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
+            ],
+            "3c": [
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
+                {"layer": "[0-9]anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
+            ],
+            "3d": []
+        }
+    },
+    "4": {
+        "maps": {
+            "4a": [
+                {"layer": "p8*_noneg", "format": "tif", "dir": "*UseThis*", "label": "None"},
+            ],
+            "4b": [
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"},
+            ],
+            "4c": [
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
+                {"layer": "[0-9]anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
+            ],
+            "4d": []
+        }
+    },
+    "5": {
+        "maps": {
+            "5a": [
+                {"layer": "p8*_noneg", "format": "tif", "dir": "*UseThis*", "label": "None"}
+            ],
+            "5b": [
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
+            ],
+            "5c": [
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
+                {"layer": "[0-9]anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
+            ],
+            "5d": []
+        }
+    },
+    "6": {
+        "maps": {
+            "6a": [
+                {"layer": "p8*_noneg", "format": "tif", "dir": "*UseThis*", "label": "None"}
+            ],
+            "6b": [
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
+            ],
+            "6c": [
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
+                {"layer": "[0-9]anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["*_Basins_albn83", "SrtName"]},
+            ],
+            "6d": []
+        }
+    },
+}
+
+#############################################################################################################################################################
+#############################################################################################################################################################
+
+snm_fig_data = {
+    "0": {
+        "maps": {
+            "regions": [
+                {"layer": "anomRegion_table", "format": "dbf", "dir": "*UseAvg", "label": ["dwr_region_poly_labels", "Regions"]}
+            ]
+        }
+    },
+    "1": {
+        "maps": {
+            "real_time_swe": [
+                {"layer": "p8*_noneg_msk", "format": "tif", "dir": "*UseThis*", "label": "None"}
+                # {"layer": "p8*msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
+            ],
+            "anomaly": [
+                {"layer": "anom0_200_msk", "format": "tif", "dir": "*UseAvg", "label": "None"}
+            ],
+            "watershed_map": [
+                {"layer": "p9", "format": "tif", "dir": "*UseAvg", "label": "None"},
+                {"layer": "anom_table_save", "format": "dbf", "dir": "*UseAvg", "label": ["dwr_basins_geon83", "SrtName"]},
+            ]
+        }
+    },
+    "2": {
+        "maps": {
+            "ASO_SWE_diff": [
+                # TODO: not sure how to automate updating ASO diff layers
+            ]
+        }
+    },
+    # Fig 3 is just fig 1 from the previous report, nothing to do here
+    "4": {
+        "maps": {
+            "real_time_swe_fires": [
+                {"layer": "p8*_noneg_msk", "format": "tif", "dir": "*UseThis*", "label": "None"}
+            ]
+        }
+    },
+    "5": {
+        "maps": {
+            "TC_MODIS_image": [
+                {"layer": "snapshot*UseThis", "format": "tif", "dir": "MODIS", "label": "None"}
+            ]
+        }
+    },
+    "6": {
+        "maps": {
+            "SNODAS_swe": [
+                {"layer": "Cp_m_albn83_clp", "format": "tif", "dir": "SNODAS", "label": "None"}
+            ],
+            "SNODAS_diff": [
+                {"layer": "SNODAS_Regress", "format": "tif", "dir": "*UseThis*", "label": "None"}
+            ],
+            "SNODAS_swe_overlap": [
+                {"layer": "both", "format": "tif", "dir": "*UseThis*", "label": "None"}
+            ]
+        }
+    },
+    "7": {
+        "maps": {
+            "mean_swe": [
+                {"layer": "mean_msk", "format": "tif", "dir": "*UseThis*", "label": "None"},
+                {"layer": "Zero_sensors", "format": "shp", "dir": "", "label": "None"},
+                {"layer": "SNM_*_sensors", "format": "shp", "dir": "", "label": "None"},
+                # {"layer": "Zero_CCR", "format": "shp", "dir": "", "label": "None"},
+                {"layer": "CCR_sensors", "format": "shp", "dir": "", "label": "None"},
+            ],
+            "banded_elev": []
+        }
+    }
+}
+
+#########################
+#       END CONFIG      #
+#########################
+
+from zero_to_no_data import *
+from utils import crop_whitespace
+import argparse
+import re # Regular Expression
+import os # Operating System
+import glob # OS Pattern Searching
+import tempfile
+import shutil
+import arcpy
+import uuid
+from datetime import datetime
+from pathlib import Path
+
+def _resolve_dir(parent: str, dir_pattern: str) -> str | None:
+    # Try the given pattern first, then fall back based on UseAvg/UseThis semantics
+    matches = glob.glob(os.path.join(parent, dir_pattern))
+    if matches:
+        return matches[0]
+    if "*UseAvg" in dir_pattern:
+        fallback_matches = [d for d in glob.glob(os.path.join(parent, "*woCCR*"))
+                            if "ASO" not in os.path.basename(d)]
+        if fallback_matches:
+            return fallback_matches[0]
+    elif "*UseThis*" in dir_pattern:
+        fallback_matches = glob.glob(os.path.join(parent, "ASO*"))
+        if fallback_matches:
+            return fallback_matches[0]
+    return None
+
+
+def get_output_dir(date:int, report_type:str) -> str:
+    # TODO: docs
+    source_dir = None
+    match report_type:
+        case 'WW':
+            source_dir = ww_source_dir
+        case 'SNM':
+            source_dir = snm_source_dir
+        case _:
+            raise Exception(f"Unrecognized report type: {report_type}")
+    output_dir=os.path.join(source_dir, str(date) + rt_report_pattern, "Report", f"{date}_JPG_maps")
+    return output_dir
+
+
+def interpret_figs(figs: str, report_type: str) -> list[str]:
+    """
+    Interprets the --figs regex flag
+
+    :param figs: String value of the --figs flag as generated by parser.parse_args()
+    :param report_type: Type of report to interpret figures for. e.g., WW
+    :return: List of interpreted figure names to generate maps for
+    :rtype: list[str]
+    """
+    # Determine list of figures based on report type
+    all_figs = set()
+    match report_type:
+        case 'WW':
+            all_figs = set(ww_fig_data.keys())
+        case 'SNM':
+            all_figs = set(snm_fig_data.keys())
+        case _:
+            raise Exception(f"Unrecognized report type: {report_type}")
+
+    # Parse the argument passed into --figs
+    patterns = figs.split(",")
+    fig_list = set()
+
+    for pattern in patterns:
+        pattern = pattern.lower()
+        # Shortcut search when all figs are specified
+        if pattern in ["all","."]:
+            return sorted(all_figs)
+        elif pattern in ["none",""]:
+            return []
+
+        # Modify regular expression syntax to better support * wildcard
+        regex_pattern = "^" + re.escape(pattern).replace("\\*", ".*") + "$"
+        regex = re.compile(regex_pattern)
+
+        # Match the pattern against all possible figure names
+        pattern_found = False
+        for fig in all_figs-fig_list:
+            if regex.match(fig):
+                fig_list.add(fig)
+                pattern_found = True
+        if not pattern_found:
+            # Pattern does not match any name in all_figs
+            if pattern == "0":
+                raise Exception(f"--figs pattern '0' not recognized! Did you mean 'none'?")
+            else:
+                raise Exception(f"--figs pattern '{pattern}' not recognized!")
+
+    return sorted(fig_list)
+
+
+def results_to_report(results_dir: str, report_dir: str, layer_id: str, dir_pattern: str, file_type: str, verbose=True) -> list[str]:
+    # TODO: docs
+    # Find the results directory
+    results_layer_dir = _resolve_dir(results_dir, dir_pattern)
+    if not results_layer_dir:
+        raise FileNotFoundError(f"No file matching pattern '{layer_id}' found in '{report_dir}', "
+                                f"and no directory matching pattern '{dir_pattern}' found in '{results_dir}'!")
+
+    # Find the file within the results directory
+    results_files = glob.glob(os.path.join(results_layer_dir, f"*{layer_id}*.{file_type}"))
+    if not results_files:
+        raise FileNotFoundError(
+            f"No file matching pattern '{layer_id}' found in '{report_dir}' or '{results_layer_dir}'!")
+
+    # Copy the file(s) to the rt_report directory
+    source_file = results_files[0]
+    copied_files = []
+
+    if file_type == "shp":
+        # For shapefiles, copy all related files (.shp, .shx, .dbf, .prj, etc.)
+        base_path = Path(source_file).parent
+        base_name = Path(source_file).stem
+        related_files = glob.glob(os.path.join(base_path, f"{base_name}.*"))
+
+        for file_path in related_files:
+            # Skip .lock files
+            if file_path.endswith('.lock'):
+                continue
+
+            destination_path = os.path.join(report_dir, os.path.basename(file_path))
+            shutil.copy2(file_path, destination_path)
+            if verbose:
+                print(f"Copied: {os.path.basename(file_path)} from results to report directory")
+            if file_path == source_file:
+                copied_files.append(destination_path)
+    else:
+        # For other file types, only copy the single file
+        destination_path = os.path.join(report_dir, os.path.basename(source_file))
+        shutil.copy2(source_file, destination_path)
+        if verbose:
+            print(f"Copied: {os.path.basename(source_file)} from results to report directory")
+        copied_files.append(destination_path)
+
+    # Return path of the main copied file
+    return copied_files
+
+def find_layer_file(report_type: str, date: int, layer_info: dict, prompt_user = True, warn = True, verbose = True) -> str:
+    """
+    Finds the specific layer file to use
+
+    :param report_type: Type of report to interpret figures for. e.g., WW, SNM
+    :param date: Date of report in YYYYMMDD format
+    :param layer_info: Dictionary containing the layer id, format, directory, and label type
+    :param prompt_user: Enable prompting the user when selecting between multiple options. Default: True
+    :param warn: Enable warning messages. Default: True
+    :param verbose: Enable verbose output messages. Default: True
+    :return: Path to the layer file
+    :rtype: str
+    """
+
+    # Extract layer metadata from layer_info
+    layer_id = layer_info["layer"]
+    file_type = layer_info["format"]
+    dir_pattern = layer_info["dir"]
+
+    # Find RT_Report directory for this date
+    if report_type == "WW":
+        results_dir = os.path.join(ww_results_dir, f"{date}_results")
+        rt_report_dir = os.path.join(ww_source_dir, str(date) + rt_report_pattern)
+    else: # SNM
+        results_dir = os.path.join(snm_results_dir, f"{date}_results")
+        rt_report_dir = os.path.join(snm_source_dir, str(date) + rt_report_pattern)
+
+    # Find the directory containing the layer products to be used e.g. "...UseThis"
+    layer_dir = _resolve_dir(rt_report_dir, dir_pattern)
+    if not layer_dir:
+        raise FileNotFoundError(f"No directory matching pattern '{dir_pattern}' found in '{rt_report_dir}'! "
+                                f"Confirm config values are set correctly.")
+
+    # Find the layer products that contains the layer_id e.g. "p8"
+    layer_files = glob.glob(os.path.join(layer_dir, f"*{layer_id}*.{file_type}"))
+    if not layer_files:
+        # Attempt to copy the file from the results directory to the rt_report directory
+        layer_files = results_to_report(results_dir, layer_dir, layer_id, dir_pattern, file_type, verbose=verbose)
+
+    layer_file = layer_files[0]
+
+    if len(layer_files) > 1:
+        # If one of the multiple layer files ends with "nulled", use it
+        for file in layer_files:
+            if file_type == "tif" and file.endswith("nulled.tif"):
+                layer_file = file
+                if warn: print(f"Multiple files matching pattern '{layer_id}' found! Using {layer_file}")
+                break
+            elif layer_id == "anom_table_save" and file.endswith(f"{date}anom_table_save.dbf"):
+                layer_file = file
+                if warn: print(f"Multiple files matching pattern '{layer_id}' found! Using {layer_file}")
+                break
+        else: # If none of the layer files end with "nulled"
+            if prompt_user:
+                # Ask the user to select which file to use
+                print(f"Multiple files matching pattern '{layer_id}' found in '{layer_dir}'.")
+                for i, file in enumerate(layer_files):
+                    print(f"\t{i+1}. {file}")
+                while True:
+                    print(f"Enter a number from 1 to {len(layer_files)}:", end=" ")
+                    result = input()
+                    try:
+                        result = int(result)
+                        if result in range(1,len(layer_files)+1): break
+                    except ValueError: pass
+                # TODO: option to remember this choice in the future e.g. always use the p*custom_name.tif pattern if multiple exist and no "nulled"
+                layer_file = layer_files[int(result)-1]
+                print(f"Using {layer_file}")
+            elif warn:
+                # Use the first layer file found
+                print(f"Multiple files matching pattern '{layer_id}' found in '{layer_dir}'. Using {layer_files[0]}")
+
+    return layer_file
+
+
+def get_modis_date(layer_file) -> int:
+    # TODO: docs
+    match = re.search(r"snapshot-(\d{4})-(\d{2})-(\d{2})", layer_file)
+    if not match:
+        raise ValueError("No valid MODIS snapshot date found in path: ", layer_file)
+
+    year, month, day = match.groups()
+    return int(f"{year}{month}{day}")
+
+
+def generate_maps(report_type: str, date: int, figs: str, preview: bool, verbose: bool, prompt_user: bool):
+    # TODO: docs
+
+    # Interpret --figs flag and return a list of figure names to generate
+    fig_list = interpret_figs(figs, report_type)
+    print(f"Generating the following figures: {fig_list}")
+
+    # Set report_type dependant variables
+    if report_type == "WW":
+        template_aprx = ww_aprx
+        fig_data_dict = ww_fig_data
+        rt_report_dir = os.path.join(ww_source_dir, str(date) + rt_report_pattern)
+    else: # SNM
+        template_aprx = snm_aprx
+        fig_data_dict = snm_fig_data
+        rt_report_dir = os.path.join(snm_source_dir, str(date) + rt_report_pattern)
+
+    # File overwrite choices
+    yes_to_all = False
+    no_to_all = False
+
+    # Generate maps
+    for fig_id in fig_list:
+        # Clone the template aprx to a temporary directory
+        temp_dir = tempfile.mkdtemp()
+        working_aprx = os.path.join(temp_dir, "working_aprx.aprx")
+        shutil.copyfile(template_aprx, working_aprx)
+        aprx = arcpy.mp.ArcGISProject(working_aprx)  # Open the working aprx in ArcPy
+
+        # Handle overwriting file
+        if no_to_all:
+            break
+        output_filename = f"{date}_{report_type}_Fig{fig_id}.jpg"
+        output_filepath = Path(get_output_dir(date,report_type)) / output_filename
+        if prompt_user and os.path.exists(output_filepath) and not yes_to_all:
+            print(f"{output_filename} already exists and will be overwritten! Continue?")
+            print("Options: [y]es, [n]o, [ya] yes to all, [na] no to all (default: no)")
+            while True:
+                user_answer = input("> ").strip().lower()
+                if user_answer in ["y", "yes"]:
+                    break # Generate fig_id
+                elif user_answer in ["ya"]:
+                    yes_to_all = True
+                    break # Generate all fig_ids in fig_list
+                elif user_answer in ["", "n", "no"]:
+                    print(f"Skipping map generation for Fig{fig_id}")
+                    fig_id = None
+                    break # Skip this fig only
+                elif user_answer in ["na"]:
+                    print("Safely aborting map generation...")
+                    no_to_all = True
+                    fig_id = None
+                    break # Skip all fig_ids in fig_list
+                else:
+                    print("Invalid input. Please enter y or n.")
+        if fig_id is None:
+            continue # Skip to next fig_id
+
+        print(f"Generating maps for fig {fig_id}...")
+        fig_data = fig_data_dict.get(fig_id)
+        if not fig_data:
+            raise ValueError(f"No metadata found for figure '{fig_id}'")
+
+        # Find the map(s) for this figure
+        for map_id, layers in fig_data["maps"].items():
+            _map = aprx.listMaps(f"*{map_id}*")[0]
+            if not _map:
+                raise ValueError(f"No map matching '{map_id}' found in '{working_aprx}'!")
+
+            # Process each layer in this map
+            for layer_info in layers:
+                layer_id = layer_info["layer"]
+                file_type = layer_info["format"]
+                label = layer_info["label"]
+
+                # Get the clean layer_id for ArcGIS (without glob patterns)
+                arcgis_layer_id = layer_id.replace("[0-9]", "")
+
+                # Special handling for SNM fig 7 CCR_sensors layer
+                if report_type == "SNM" and fig_id == "7" and layer_id == "CCR_sensors":
+                    # Check if "wCCR" is in the UseThis directory name
+                    use_this_dirs = glob.glob(os.path.join(rt_report_dir, "*UseThis*"))
+                    include_ccr = any("wCCR" in dir_name for dir_name in use_this_dirs)
+
+                    if not include_ccr:
+                        # Remove the layer from the map and skip to next layer
+                        ccr_layer = _map.listLayers(f"*{arcgis_layer_id}*")
+                        if ccr_layer:
+                            _map.removeLayer(ccr_layer[0])
+                            if verbose:
+                                print(f"Removed CCR_sensors layer from SNM Fig 7 (model run is woCCR).")
+                        continue
+
+                # Find and remove undefined placeholder layers/tables
+                symbology = None
+                ref_layer = None
+
+                if file_type in layer_formats:
+                    undefined_layer = _map.listLayers(f"*{arcgis_layer_id}*")[0]
+                    symbology = undefined_layer.symbology
+
+                    # Save position information before removing
+                    all_layers = _map.listLayers()
+                    layer_index = all_layers.index(undefined_layer)
+                    # Get reference layer (the one just above the current layer)
+                    ref_layer = all_layers[layer_index - 1] if layer_index > 0 else None
+
+                    _map.removeLayer(undefined_layer)
+                elif file_type in table_formats:
+                    undefined_table = _map.listTables(f"*{arcgis_layer_id}*")[0]
+                    _map.removeTable(undefined_table)
+
+                # Find the new layer source
+                try:
+                    new_layer_path = find_layer_file(report_type, date, layer_info, prompt_user=prompt_user, verbose=verbose)
+                except FileNotFoundError as e:
+                    print(f"Error: {e}")
+                    print(f"Skipping layer '{layer_id}' in map '{map_id}' for figure {fig_id}")
+                    continue # to next layer in this map
+
+                # Handle MODIS date
+                if "snapshot" in new_layer_path:
+                    modis_date = get_modis_date(new_layer_path)
+
+                # Special handling for non-MODIS rasters with zero-valued cells
+                if new_layer_path.endswith(".tif") and not new_layer_path.endswith(
+                        "_nulled.tif") and not "snapshot" in new_layer_path and contains_zero_value_cells(new_layer_path):
+                    nulled_path = new_layer_path.replace(".tif", "_nulled.tif")
+                    zero_to_no_data(new_layer_path, nulled_path, prompt_user=prompt_user, verbose=verbose)
+                    new_layer_path = nulled_path
+
+                # Update labels
+                if label == "None" or label == "" or label == [] or not label:
+                    if file_type in layer_formats:
+                        # Create layer object
+                        if file_type == "shp":
+                            new_layer = arcpy.management.MakeFeatureLayer(new_layer_path, f"temp_{arcgis_layer_id}").getOutput(0)
+                        else:  # raster (tif)
+                            new_layer = arcpy.management.MakeRasterLayer(new_layer_path, f"temp_{arcgis_layer_id}").getOutput(0)
+
+                        # Insert at saved position
+                        if ref_layer:
+                            _map.insertLayer(ref_layer, new_layer, "AFTER")
+                        else:
+                            _map.addLayer(new_layer, "TOP")
+
+                        # Update symbology
+                        layer = _map.listLayers(f"*{arcgis_layer_id}*")[0]
+                        if "snapshot" not in new_layer_path and symbology:
+                            layer.symbology = symbology
+                    else:  # table
+                        _map.addDataFromPath(new_layer_path)
+                elif isinstance(label, list):  # Join table to label layer
+                    label_pattern = label[0]  # Pattern of the shp layer with labels enabled
+                    join_field = label[1]  # Field in both the label layer and the join table
+
+                    # Find label layer first
+                    label_layers = _map.listLayers(f"*{label_pattern}*")
+                    if not label_layers:
+                        raise ValueError(f"No layers matching pattern '*{label_pattern}*' found in '{_map.name}'")
+
+                    if len(label_layers) > 1:
+                        if prompt_user:
+                            print(f"Multiple layers matching pattern '*{label_pattern}*' found in '{_map.name}'.")
+                            for i, lyr in enumerate(label_layers):
+                                print(f"\t{i + 1}. {lyr.name}")
+                            while True:
+                                print(f"Enter a number from 1 to {len(label_layers)}:", end=" ")
+                                result = input()
+                                try:
+                                    result = int(result)
+                                    if result in range(1, len(label_layers) + 1):
+                                        break
+                                except ValueError:
+                                    pass
+                            label_layer = label_layers[int(result) - 1]
+                            print(f"Using {label_layer.name}")
+                        else:
+                            print(f"Warning: Multiple layers matching pattern '*{label_pattern}*' found. "
+                                  f"Using {label_layers[0].name}.")
+                            label_layer = label_layers[0]
+                    else:
+                        label_layer = label_layers[0]
+
+                    # Remove existing joins from the original layer
+                    try:
+                        arcpy.management.RemoveJoin(label_layer)
+                    except:
+                        pass
+
+                    # Save label expression for later
+                    original_label_expression = label_layer.listLabelClasses()[0].expression
+                    # if verbose: # DEBUG not verbose
+                    #     print(f"Original label expression: {original_label_expression}")
+
+                    # Create a table view
+                    table_view_name = f"temp_table_{uuid.uuid4().hex[:8]}"
+                    arcpy.management.MakeTableView(new_layer_path, table_view_name)
+
+                    # Verify join field exists in both
+                    if verbose:
+                    #     print(f"Label layer: {label_layer}")
+                    #     print(f"Label layer type: {type(label_layer)}")
+                    #     print(f"Label layer name: {label_layer.name}")
+                    #     print(f"Label layer dataSource: {label_layer.dataSource}")
+
+                    # TODO: all this within the verbose check???
+                        label_data_source = label_layer.dataSource
+                        if not os.path.exists(label_data_source):
+                            label_data_source = label_data_source + '.shp'
+                        label_fields = [f.name for f in arcpy.ListFields(label_data_source)]
+                        table_fields = [f.name for f in arcpy.ListFields(table_view_name)]
+                        # print(f"Feature layer fields: {label_fields}")
+                        # print(f"Table fields: {table_fields}")
+                        # print(f"Join field: {join_field}")
+
+
+                        if join_field not in label_fields:
+                            raise ValueError(f"Join field '{join_field}' not found in feature layer")
+                        if join_field not in table_fields:
+                            raise ValueError(f"Join field '{join_field}' not found in table")
+
+                    # Perform the join directly on the map layer
+                    if verbose: print(
+                        f"Attempting join: layer={label_layer.name}, field={join_field}, table={table_view_name} aka {arcgis_layer_id}")
+                    arcpy.management.AddJoin(
+                        in_layer_or_view=label_layer,
+                        in_field=join_field,
+                        join_table=table_view_name,
+                        join_field=join_field,
+                        join_type="KEEP_ALL"
+                    )
+
+                    # if verbose:
+                    #     joined_fields = [f.name for f in arcpy.ListFields(label_layer)]
+                    #     print(f"Fields after join: {joined_fields}")
+
+                    # Find the actual table prefix used in the join (extract from filename)
+                    table_path = os.path.basename(new_layer_path)
+                    if table_path.lower().endswith('.csv'):
+                        # Keep the .csv extension for CSV files
+                        table_filename = table_path
+                    else:
+                        # Remove extension for other file types (like .dbf)
+                        table_filename = os.path.splitext(table_path)[0]
+
+                    # if verbose:
+                    #     print(f"Table filename (used as prefix): {table_filename}")
+
+                    # Set the label expression to use the joined field
+                    for lbl_class in label_layer.listLabelClasses():
+                        # After joining, field references need to include the table prefix
+                        # Replace $feature.fieldname with $feature['tablename.fieldname']
+                        import re
+
+                        # Extract field name from the original expression (e.g., "Average" from "$feature.Average")
+                        # This regex finds patterns like $feature.fieldname
+                        def replace_field_reference(match):
+                            field_name = match.group(1)
+                            return f"$feature['{table_filename}.{field_name}']"
+
+                        new_expression = re.sub(r'\$feature\.(\w+)', replace_field_reference, original_label_expression)
+
+                        lbl_class.expression = new_expression
+                        # if verbose:
+                        #     print(f"Updated label expression: {new_expression}")
+
+                    # Ensure layer is visible with labels
+                    label_layer.visible = True
+                    label_layer.showLabels = True
+
+                    # if verbose:
+                    #     print(f"Layer '{label_layer.name}' visible: {label_layer.visible}, showLabels: {label_layer.showLabels}")
+
+                    # Clean up (non-critical)
+                    try:
+                        arcpy.management.Delete(table_view_name)
+                    except:
+                        pass
+
+        # Save the project
+        aprx.save()
+
+        # Export the layout to JPEG
+        layout = aprx.listLayouts(f"*{fig_id}*")[0]
+        if not layout:
+            raise ValueError(f"No layout matching '{fig_id}' found in '{working_aprx}'!")
+        layout.name = f"{date}_{report_type}_Fig{fig_id}"
+
+        # Change date text
+        text_elements = layout.listElements("TEXT_ELEMENT")
+        for element in text_elements:
+            if "date" in element.name.lower():
+                if "date_modis" in element.name.lower() and modis_date: # January 1, 2000
+                    formatted_date = datetime.strptime(str(modis_date), "%Y%m%d").strftime("%B %#d, %Y")
+                elif "date_noyear" in element.name.lower(): # January 1
+                    formatted_date = datetime.strptime(str(date), "%Y%m%d").strftime("%B %#d")
+                else: # January 1, 2000
+                    formatted_date = datetime.strptime(str(date), "%Y%m%d").strftime("%B %#d, %Y")
+                element.text = f"{formatted_date}"
+
+            elif "pctavg" in element.name.lower():
+                date_str = str(date)
+                formatted_date = f"{int(date_str[4:6])}/{int(date_str[6:8])}" # 20250331 => 3/31
+                element.text = element.text.replace("3/31", formatted_date)
+
+        os.makedirs(get_output_dir(date,report_type), exist_ok=True)
+        layout.exportToJPEG(str(output_filepath), resolution=300)
+        print(f"Finished generating maps for fig {fig_id}.")
+
+        # Crop jpg map
+        print(f"Cropping {str(output_filepath)} ...")
+        crop_whitespace(str(output_filepath))
+
+        # Clean up
+        del aprx
+
+def main():
+    # Parse input arguments and flags, see top of file for argument usage examples
+    parser = argparse.ArgumentParser()
+    parser.add_argument("report_type", type=str, help="Acceptable report types: WW")
+    parser.add_argument("date", type=int, help="Date to process (YYYYMMDD)")
+    parser.add_argument("--figs", default="all", type=str, help="Regex pattern(s) for figure names to generate")
+    parser.add_argument("-p","--preview", action="store_true", help="Preview the generated maps")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output messages")
+    parser.add_argument("-u", "--prompt_user", action="store_true", help="Prompt the user before overwriting or automatically selecting files")
+    args = parser.parse_args()
+
+    # Generate each figure as specified by --figs
+    generate_maps(args.report_type, args.date, args.figs, args.preview, args.verbose, args.prompt_user)
+
+    # TODO: add support for preview flag
+
+if __name__ == '__main__':
+    main()
