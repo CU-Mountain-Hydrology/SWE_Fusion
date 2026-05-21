@@ -371,12 +371,13 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
         # Determine which footer notes to include
         aso_corrected = df.iloc[:, 0].astype(str).str.contains("§").any()
         fsca_issue = df.iloc[:, 0].astype(str).str.contains("+", regex=False).any()
+        omitted_data = df.iloc[:, 0].astype(str).str.contains("-", regex=False).any()
         high_pct_avg = df.apply(lambda col: col.astype(str).str.contains("†", regex=False)).any().any()
         is_ww = (report_type == "WW")
         is_socn = (is_ww and table_id == "03")
 
         if verbose:
-            print(f"ASO Corrected: {aso_corrected}, fSCA Issue: {fsca_issue}, High % Avg: {high_pct_avg}, Is SOCN: {is_socn}")
+            print(f"ASO Corrected: {aso_corrected}, fSCA Issue: {fsca_issue}, High % Avg: {high_pct_avg}, Is SOCN: {is_socn}, Omitted Data: {omitted_data}")
 
         # Escape LaTeX special characters in basin names (first column)
         df.iloc[:, 0] = df.iloc[:, 0].astype(str).apply(escape_latex)
@@ -405,6 +406,7 @@ def generate_tables(report_type: str, date: int, ids: str, verbose=False, prompt
             aso_corrected=aso_corrected,
             fsca_issue=fsca_issue,
             high_pct_avg=high_pct_avg,
+            omitted_data=omitted_data,
             is_ww=is_ww,
             is_socn=is_socn,
         )
@@ -438,7 +440,7 @@ def main():
     # TODO: check date format and range
 
     # Generate tables
-    generate_tables(args.report_type, args.date, args.tables, args.verbose, args.prompt_user, args.standalone)
+    # generate_tables(args.report_type, args.date, args.tables, args.verbose, args.prompt_user, args.standalone)
 
     # Compile SNM standalone tables and convert to jpg
     if args.standalone and args.report_type == "SNM":

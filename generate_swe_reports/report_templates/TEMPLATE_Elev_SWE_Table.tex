@@ -156,6 +156,11 @@
             \footnotesize $\dagger$ Deep and recent snow in areas that typically are snow-free can report high percent of average for this date because the mean 2001-2025 regression-derived SWE for that area is low or 0.
         } \\[-4pt]
     {% endif %}
+%     {% if omitted_data %}
+%         \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.98\textwidth}}{
+%             \footnotesize $-$ Data omitted due to inconsistencies with independent SWE estimates.
+%         } \\[-4pt]
+%     {% endif %}
     \\[-8pt]
     \bottomrule
     \endfoot
@@ -230,5 +235,10 @@
             \footnotesize $\dagger$ Deep and recent snow in areas that typically are snow-free can report high percent of average for this date because the mean 2001-2025 regression-derived SWE for that area is low or 0.
         } \\[-4pt]
     {% endif %}
+%     {% if omitted_data %}
+%         \multicolumn{ {{ 1 + df.shape[1]-1 }} }{p{0.98\textwidth}}{
+%             \footnotesize $-$ Data omitted due to inconsistencies with independent SWE estimates.
+%         } \\[-4pt]
+%     {% endif %}
     \\[-8pt]
 \end{longtable}
