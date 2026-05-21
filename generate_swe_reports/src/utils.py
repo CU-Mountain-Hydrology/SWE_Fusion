@@ -129,3 +129,8 @@ def merge_swe_csv(input_filepath_1: str, input_filepath_2: str, output_filepath:
         output.writelines(merged_lines)
 
     print(f"Merged SWE table saved to {output_filepath}")
+
+
+if __name__ == "__main__":
+    p = r"W:\documents\2026_RT_Reports\20260412_RT_report\Report\20260412_WW_JPEG_maps\20260412_WW_Fig2a.jpg"
+    crop_whitespace(p, p)
