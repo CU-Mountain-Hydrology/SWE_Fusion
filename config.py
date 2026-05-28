@@ -13,15 +13,30 @@ class Config:
     See .env.example for how each variable should be defined in the .env.
     """
     def __init__(self,
-        # fSCA Download Configs
-        fsca_src_path: str = None,
-        fsca_dst_path: str = None,
+        ##### fSCA Download Configs #####
+        local_fsca_path: str = None,
+         # PetaLibrary (ssh method)
+        curc_fsca_path: str = None,
+        curc_host: str = None,
         curc_identikey: str = None,
+        # Snow Today (ftp method)
+        snow_today_fsca_path: str = None,
+        snow_today_host: str = None,
+        snow_today_username: str = None,
+        snow_today_password: str = None,
     ):
         # Load .env file into os.environment
         load_dotenv(find_dotenv(usecwd=True))
 
-        # fSCA Download Configs
-        self.fsca_src_path = ( fsca_src_path or str(os.environ.get("FSCA_SRC_PATH")))
-        self.fsca_dst_path = ( fsca_dst_path or str(os.environ.get("FSCA_DST_PATH")))
-        self.curc_identikey = ( curc_identikey or str(os.environ.get("CURC_IDENTIKEY")))
+        ##### fSCA Download Configs #####
+        self.local_fsca_path = local_fsca_path or str(os.environ.get("LOCAL_FSCA_PATH"))
+        # PetaLibrary (ssh method)
+        self.curc_fsca_path = curc_fsca_path or str(os.environ.get("CURC_FSCA_PATH"))
+        self.curc_host = curc_host or str(os.environ.get("CURC_HOST"))
+        self.curc_identikey = curc_identikey or str(os.environ.get("CURC_IDENTIKEY"))
+        # Snow Today (ftp method)
+        self.snow_today_fsca_path = snow_today_fsca_path or str(os.environ.get("SNOW_TODAY_FSCA_PATH"))
+        self.snow_today_host = snow_today_host or str(os.environ.get("SNOW_TODAY_HOST"))
+        self.snow_today_username = snow_today_username or str(os.environ.get("SNOW_TODAY_USERNAME"))
+        self.snow_today_password = snow_today_password or str(os.environ.get("SNOW_TODAY_PASSWORD"))
+

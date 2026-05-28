@@ -14,12 +14,16 @@ While it would be possible to Globus and mimic the manual download process, this
     including having Karl or someone else on his team give the client permission to view files. Due to the unnecessary
     complexity of this method, I have omitted the functions from this file. See download/README.md for details on how to
     implement this if necessary.
+
+
+TODO: error handling for if the remote source does not contain fsca data for the run date
 """
 
 import os
 import re
 from datetime import datetime
 import subprocess
+import ftplib
 
 from config import Config
 
@@ -65,13 +69,25 @@ def _tile_from_filename(filename: str) -> str | None:
     return None
 
 
-def _list_remote_files_ssh(user: str, src_dir: str) -> list[str]:
+def _list_remote_files(src_dir: str, method: str, cfg: Config) -> list[str]:
     """
     Returns a list of bare filenames in src_dir on the remote host.
     """
-    cmd = ["ssh", "-o", "StrictHostKeyChecking=no", f"{user}@dtn.rc.colorado.edu", f"ls -1 {src_dir}"]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    match method:
+        case "ssh":
+            cmd = ["ssh", "-o", "StrictHostKeyChecking=no", f"{cfg.curc_identikey}@{cfg.curc_host}", f"ls -1 {src_dir}"]
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+        case "ftp":
+            with ftplib.FTP() as ftp:
+                # Connect to Snow Today server
+                ftp.connect(cfg.snow_today_host, port=21)
+                ftp.login(cfg.snow_today_username, cfg.snow_today_password)
+                ftp.cwd(src_dir)
+                return ftp.nlst()
+        case _:
+            print(f"Invalid method '{method}'. Valid methods are: ssh, ftp.")
+            return []
 
 
 def _scp_file(filepath: str, cfg: Config) -> bool:
@@ -82,8 +98,8 @@ def _scp_file(filepath: str, cfg: Config) -> bool:
     date = _date_from_filename(filename)
     tile = _tile_from_filename(filename)
 
-    remote = f"{cfg.curc_identikey}@dtn.rc.colorado.edu:{filepath}"
-    local = f"{cfg.fsca_dst_path}/{tile}/{str(date)[:4]}"
+    remote = f"{cfg.curc_identikey}@{cfg.curc_host}:{filepath}"
+    local = f"{cfg.local_fsca_path}/{tile}/{str(date)[:4]}"
 
     if not os.path.isdir(local):
         print(f"Directory not found: {local}")
@@ -98,7 +114,53 @@ def _scp_file(filepath: str, cfg: Config) -> bool:
         return False
 
 
-def download_fsca_ssh(date: int, cfg: Config, prompt_user: bool = False):
+def _ftp_file(filepath: str, cfg: Config) -> bool:
+    filename = filepath.split("/")[-1]
+    date = _date_from_filename(filename)
+    tile = _tile_from_filename(filename)
+
+    remote_dir = f"{cfg.snow_today_fsca_path}/{tile}/{str(date)[:4]}/"
+    local_dir = f"{cfg.local_fsca_path}/{tile}/{str(date)[:4]}"
+    local_path = os.path.join(local_dir, filename)
+
+    try:
+        with ftplib.FTP() as ftp:
+            # Connect to Snow Today
+            ftp.connect(cfg.snow_today_host, port=21)
+            ftp.login(cfg.snow_today_username, cfg.snow_today_password)
+            ftp.cwd(remote_dir)
+
+            # Download fSCA file
+            with open(local_path, "wb") as f:
+                ftp.retrbinary(f"RETR {filename}", f.write)
+
+        return True
+
+    except ftplib.all_errors as e:
+        print(f"FTP error downloading {filename}: {e}")
+        # Clean up partial file if it was created
+        if os.path.exists(local_path):
+            os.remove(local_path)
+        return False
+
+    except OSError as e:
+        print(f"File system error downloading {filename}: {e}")
+        return False
+
+
+
+def _download_file(filepath: str, method: str, cfg: Config) -> bool:
+    match method:
+        case "ssh":
+            return _scp_file(filepath, cfg)
+        case "ftp":
+            return _ftp_file(filepath, cfg)
+        case _:
+            print(f"Invalid method '{method}'. Valid methods are: ssh, ftp.")
+            return False
+
+
+def download_fsca(date: int, method: str, cfg: Config, prompt_user: bool = False):
     """
     Uses a CU research computing ssh connection to access and copy Rittger fSCA data from PetaLibrary to snowserver.
     Given a date, this function finds all fSCA netcdf's prior to and including the date, of the same year, that have not
@@ -116,10 +178,13 @@ def download_fsca_ssh(date: int, cfg: Config, prompt_user: bool = False):
     print(f"Checking for new fSCA data from {year}0101 until {date}...")
     for tile in tiles:
         # Define source and destination filepaths
-        src_dir = f"{cfg.fsca_src_path}/{tile}/{year}"
-        dst_dir = f"{cfg.fsca_dst_path}/{tile}/{year}"
+        if method == "ssh":
+            src_dir = f"{cfg.curc_fsca_path}/{tile}/{year}"
+        else : # method == "ftp"
+            src_dir = f"{cfg.snow_today_fsca_path}/{tile}/{year}"
+        dst_dir = f"{cfg.local_fsca_path}/{tile}/{year}"
 
-        for file in _list_remote_files_ssh(cfg.curc_identikey, src_dir):
+        for file in _list_remote_files(src_dir, method, cfg):
             if _date_from_filename(file) <= date:
                 # Check if it exists on snowserver
                 if os.path.exists(f"{dst_dir}/{file}"):
@@ -154,7 +219,7 @@ def download_fsca_ssh(date: int, cfg: Config, prompt_user: bool = False):
         for file in sorted(to_download):
             if _date_from_filename(file) == new_date:
                 # Download file
-                if _scp_file(file, cfg):
+                if _download_file(file, method, cfg):
                     print(f" {_tile_from_filename(file)}",end="")
                 else:
                     failed.append(file)
@@ -169,6 +234,44 @@ def download_fsca_ssh(date: int, cfg: Config, prompt_user: bool = False):
         # TODO: error handling to retry these files
         print(f"\033[31mSome fSCA files were not downloaded: {failed}\033[0m")
 
+
+# def download_fsca(date: int, cfg: Config, prompt_user: bool = False, method: str = "ssh"):
+#     """
+#     Main function to download fSCA data, which internally handles selecting the best method based on the .env
+#
+#     :param date: (YYYYMMDD) Date the model will be run on. fSCA data will be downloaded for this date and all previous undownloaded dates of the same year.
+#     :param cfg: Configuration object containing environment variables from the .env.
+#     :param prompt_user: Ask the user for confirmation before downloading files. Default: False
+#     :param method: fSCA download method ("ssh" or "ftp"). Default: "ssh"
+#     """
+#     # Confirm necessary config values have been set
+#     if not os.path.exists(cfg.local_fsca_path):
+#         print(f"fSCA download destination directory does not exist: {cfg.local_fsca_path}. Make sure local_fsca_path is set "
+#               f"correctly in the .env file!")
+#         exit(1)
+#
+#     if method not in ["ssh", "ftp"]:
+#         print(f"Invalid fSCA download method: '{method}'! Valid options: 'ssh', 'ftp'.")
+#         print("Attempting ssh method.")
+#         method = "ssh"
+#
+#     match method:
+#         case "ssh":
+#             # Confirm identikey is set
+#             if cfg.curc_identikey == "abcd1234" or cfg.curc_identikey is None:
+#                 print("Invalid CU Research Computing identikey! To download fSCA using SSH you must set up a CURC account"
+#                       "(see download/README.md) and make sure CURC_IDENTIKEY is set in the .env file.")
+#                 print("Attempting to download fSCA without authentication from Snow Today (ftp method).")
+#                 download_fsca_ftp(date, cfg, prompt_user=prompt_user)
+#
+#             else:
+#                 # Download fSCA
+#                 download_fsca_ssh(date, cfg, prompt_user=prompt_user)
+#
+#         case "ftp":
+#             download_fsca_ftp(date, cfg, prompt_user=prompt_user)
+
+
 if __name__ == "__main__":
     config = Config()
-    download_fsca_ssh(20260521, config)
+    download_fsca(20260522, "ftp", config)
