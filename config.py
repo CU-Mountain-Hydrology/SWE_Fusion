@@ -24,10 +24,15 @@ class Config:
         snow_today_host: str = None,
         snow_today_username: str = None,
         snow_today_password: str = None,
+
         ##### SNODAS Download Configs #####
         snodas_local_path: str = None,
         snodas_remote_path: str = None,
         snodas_host: str = None,
+
+        ##### SnowTrax Download Configs #####
+        snowtrax_path: str = None,
+        snowtrax_filename: str = None,
     ):
         # Load .env file into os.environment
         load_dotenv(find_dotenv(usecwd=True))
@@ -48,3 +53,7 @@ class Config:
         self.snodas_local_path = snodas_local_path or str(os.environ.get("SNODAS_LOCAL_PATH"))
         self.snodas_remote_path = snodas_remote_path or str(os.environ.get("SNODAS_REMOTE_PATH"))
         self.snodas_host = snodas_host or str(os.environ.get("SNODAS_HOST"))
+
+        ##### SnowTrax Download Configs #####
+        self.snowtrax_path = snowtrax_path or str(os.environ.get("SNOWTRAX_PATH"))
+        self.snowtrax_filename = snowtrax_filename or str(os.environ.get("SNOWTRAX_FILENAME"))
