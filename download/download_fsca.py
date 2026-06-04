@@ -168,6 +168,7 @@ def download_fsca(date: int, method: str, cfg: Config, prompt_user: bool = False
     See download/README.md for more information on how to set up the SSH key.
 
     :param date: (YYYYMMDD) Date the model will be run on. fSCA data will be downloaded for this date and all previous undownloaded dates of the same year.
+    :param method: "ssh" (default) downloads fSCA from PetaLibrary and requires CURC authentication. "ftp" downloads fSCA from Snow Today and does not require authentication.
     :param cfg: Configuration object containing environment variables from the .env.
     :param prompt_user: Ask the user for confirmation before downloading files. Default: False
     """
@@ -233,43 +234,6 @@ def download_fsca(date: int, method: str, cfg: Config, prompt_user: bool = False
     if len(failed) > 0:
         # TODO: error handling to retry these files
         print(f"\033[31mSome fSCA files were not downloaded: {failed}\033[0m")
-
-
-# def download_fsca(date: int, cfg: Config, prompt_user: bool = False, method: str = "ssh"):
-#     """
-#     Main function to download fSCA data, which internally handles selecting the best method based on the .env
-#
-#     :param date: (YYYYMMDD) Date the model will be run on. fSCA data will be downloaded for this date and all previous undownloaded dates of the same year.
-#     :param cfg: Configuration object containing environment variables from the .env.
-#     :param prompt_user: Ask the user for confirmation before downloading files. Default: False
-#     :param method: fSCA download method ("ssh" or "ftp"). Default: "ssh"
-#     """
-#     # Confirm necessary config values have been set
-#     if not os.path.exists(cfg.local_fsca_path):
-#         print(f"fSCA download destination directory does not exist: {cfg.local_fsca_path}. Make sure local_fsca_path is set "
-#               f"correctly in the .env file!")
-#         exit(1)
-#
-#     if method not in ["ssh", "ftp"]:
-#         print(f"Invalid fSCA download method: '{method}'! Valid options: 'ssh', 'ftp'.")
-#         print("Attempting ssh method.")
-#         method = "ssh"
-#
-#     match method:
-#         case "ssh":
-#             # Confirm identikey is set
-#             if cfg.curc_identikey == "abcd1234" or cfg.curc_identikey is None:
-#                 print("Invalid CU Research Computing identikey! To download fSCA using SSH you must set up a CURC account"
-#                       "(see download/README.md) and make sure CURC_IDENTIKEY is set in the .env file.")
-#                 print("Attempting to download fSCA without authentication from Snow Today (ftp method).")
-#                 download_fsca_ftp(date, cfg, prompt_user=prompt_user)
-#
-#             else:
-#                 # Download fSCA
-#                 download_fsca_ssh(date, cfg, prompt_user=prompt_user)
-#
-#         case "ftp":
-#             download_fsca_ftp(date, cfg, prompt_user=prompt_user)
 
 
 if __name__ == "__main__":
