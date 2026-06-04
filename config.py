@@ -33,6 +33,10 @@ class Config:
         ##### SnowTrax Download Configs #####
         snowtrax_path: str = None,
         snowtrax_filename: str = None,
+
+        ##### MODIS Download Configs #####
+        modis_bbox: list[float] = None,
+        modis_path: str = None,
     ):
         # Load .env file into os.environment
         load_dotenv(find_dotenv(usecwd=True))
@@ -57,3 +61,11 @@ class Config:
         ##### SnowTrax Download Configs #####
         self.snowtrax_path = snowtrax_path or str(os.environ.get("SNOWTRAX_PATH"))
         self.snowtrax_filename = snowtrax_filename or str(os.environ.get("SNOWTRAX_FILENAME"))
+
+        ##### MODIS Download Configs #####
+        self.modis_bbox = modis_bbox or [float(x) for x in str(os.environ.get("MODIS_BBOX")).split(",")]
+        self.modis_path = modis_path or str(os.environ.get("MODIS_PATH"))
+
+
+if __name__ == "__main__":
+    config = Config()
