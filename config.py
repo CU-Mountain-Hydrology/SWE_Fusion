@@ -37,6 +37,10 @@ class Config:
         ##### MODIS Download Configs #####
         modis_bbox: list[float] = None,
         modis_path: str = None,
+
+        ##### Snow Sensor Download Configs #####
+        sensor_path: str = None,
+        sensor_list: str = None,
     ):
         # Load .env file into os.environment
         load_dotenv(find_dotenv(usecwd=True))
@@ -66,6 +70,9 @@ class Config:
         self.modis_bbox = modis_bbox or [float(x) for x in str(os.environ.get("MODIS_BBOX")).split(",")]
         self.modis_path = modis_path or str(os.environ.get("MODIS_PATH"))
 
+        ##### Snow Sensor Download Configs #####
+        self.sensor_path = sensor_path or str(os.environ.get("SENSOR_PATH"))
+        self.sensor_list = sensor_list or str(os.environ.get("SENSOR_LIST"))
 
 if __name__ == "__main__":
     config = Config()
