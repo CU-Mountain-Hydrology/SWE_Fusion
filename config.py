@@ -16,10 +16,15 @@ class Config:
         ##### fSCA Download Configs #####
         local_fsca_path: str = None,
         processed_fsca_path: str = None,
+        dmfsca_path: str = None,
         fsca_tiles: list[str] = None,
         sin_modis_proj: str = None,
         fsca_snap_raster: str = None,
         fsca_extent: str = None,
+        mean_layer_workspace: str = None,
+        mean_layer_output: str = None,
+        mean_layer_start_year: int = None,
+        mean_layer_end_year: int = None,
          # PetaLibrary (ssh method)
         curc_fsca_path: str = None,
         curc_host: str = None,
@@ -53,10 +58,15 @@ class Config:
         ##### fSCA Download Configs #####
         self.local_fsca_path = local_fsca_path or str(os.environ.get("LOCAL_FSCA_PATH"))
         self.processed_fsca_path = processed_fsca_path or str(os.environ.get("PROCESSED_FSCA_PATH"))
+        self.dmfsca_path = dmfsca_path or str(os.environ.get("DMFSCA_PATH"))
         self.fsca_tiles = fsca_tiles or [str(x) for x in str(os.environ.get("FSCA_TILES")).split(",")]
         self.sin_modis_proj = sin_modis_proj or str(os.environ.get("SIN_MODIS_PROJ"))
         self.fsca_snap_raster = fsca_snap_raster or str(os.environ.get("FSCA_SNAP_RASTER"))
         self.fsca_extent = fsca_extent or str(os.environ.get("FSCA_EXTENT"))
+        self.mean_layer_workspace = mean_layer_workspace or str(os.environ.get("MEAN_LAYER_WORKSPACE"))
+        self.mean_layer_output = mean_layer_output or str(os.environ.get("MEAN_LAYER_OUTPUT"))
+        self.mean_layer_start_year = mean_layer_start_year or int(os.environ.get("MEAN_LAYER_START_YEAR"))
+        self.mean_layer_end_year = mean_layer_end_year or int(os.environ.get("MEAN_LAYER_END_YEAR"))
         # PetaLibrary (ssh method)
         self.curc_fsca_path = curc_fsca_path or str(os.environ.get("CURC_FSCA_PATH"))
         self.curc_host = curc_host or str(os.environ.get("CURC_HOST"))
