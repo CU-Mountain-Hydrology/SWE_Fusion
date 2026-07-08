@@ -1,4 +1,4 @@
-# run/run_model.py
+# run/main.py
 
 import argparse
 from datetime import datetime
@@ -8,6 +8,8 @@ from download.download_fsca import download_fsca
 from download.download_snodas import download_snodas
 from download.download_snowtrax import download_snowtrax
 from download.download_sensors import download_sensors
+from run.fsca_processing import fsca_processing
+from run.run_R_model import write_simulation_date, run_R_model
 
 def run_model(date: int, prompt_user: bool=False):
     """
@@ -32,19 +34,20 @@ def run_model(date: int, prompt_user: bool=False):
     download_snowtrax(cfg)
 
     # fSCA Processing
-    # TODO
+    fsca_processing(date, cfg)
 
-    # Set date in simulation_date_historic_ET.txt
-    # TODO
+    # Set date in text file at SIMULATION_DATE_PATH from the .env
+    # This is never read by the automated daily model, only kept for consistency and manual runs.
+    write_simulation_date(date, cfg)
 
     # Download snow sensor data
     download_sensors(date, cfg)
 
     # Run model with CCR
-    # TODO
+    run_R_model(date=date, isCCR=True, cfg=cfg)
 
     # Run model without CCR
-    # TODO
+    run_R_model(date=date, isCCR=False, cfg=cfg)
 
     # Run SWE_Fusion
     # TODO

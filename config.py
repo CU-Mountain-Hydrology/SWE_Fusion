@@ -51,6 +51,23 @@ class Config:
         ##### Snow Sensor Download Configs #####
         sensor_path: str = None,
         sensor_list: str = None,
+
+        ##### R Model Configs #####
+        rmodel_username: str = None,
+        regress_path: str = None,
+        simulation_date_path: str = None,
+        modscag_path: str = None,
+        rmodel_modscag_type: str = None,
+        rmodel_modscag_file: str = None,
+        rmodel_fveg_correction: str = None,
+        rmodel_sens_per: float = None,
+        rmodel_fsca_type: str = None,
+        rmodel_is_fsca_flag: str = None,
+        rmodel_is_fsca_mask: str = None,
+        rmodel_is_gpkg: str = None,
+        rmodel_is_his_day: str = None,
+        rmodel_best_his_date: str = None,
+        rmodel_snow_var: str = None,
     ):
         # Load .env file into os.environment
         load_dotenv(find_dotenv(usecwd=True))
@@ -93,6 +110,23 @@ class Config:
         ##### Snow Sensor Download Configs #####
         self.sensor_path = sensor_path or str(os.environ.get("SENSOR_PATH"))
         self.sensor_list = sensor_list or str(os.environ.get("SENSOR_LIST"))
+
+        ##### R Model Configs #####
+        self.rmodel_username = rmodel_username or str(os.environ.get("RMODEL_USERNAME"))
+        self.regress_path = regress_path or str(os.environ.get("REGRESS_PATH"))
+        self.simulation_date_path = simulation_date_path or str(os.environ.get("SIMULATION_DATE_PATH"))
+        self.modscag_path = modscag_path or str(os.environ.get("MODSCAG_PATH"))
+        self.rmodel_modscag_type = rmodel_modscag_type or str(os.environ.get("RMODEL_MODSCAG_TYPE", "NRT"))
+        self.rmodel_modscag_file = rmodel_modscag_file or str(os.environ.get("RMODEL_MODSCAG_FILE", "snow_fraction_canadj"))
+        self.rmodel_fveg_correction = rmodel_fveg_correction or str(os.environ.get("RMODEL_FVEG_CORRECTION", "F"))
+        self.rmodel_sens_per = rmodel_sens_per or float(os.environ.get("RMODEL_SENS_PER", 0.3))
+        self.rmodel_fsca_type = rmodel_fsca_type or str(os.environ.get("RMODEL_FSCA_TYPE", "Rittger"))
+        self.rmodel_is_fsca_flag = rmodel_is_fsca_flag or str(os.environ.get("RMODEL_IS_FSCA_FLAG", "T"))
+        self.rmodel_is_fsca_mask = rmodel_is_fsca_mask or str(os.environ.get("RMODEL_IS_FSCA_MASK", "T"))
+        self.rmodel_is_gpkg = rmodel_is_gpkg or str(os.environ.get("RMODEL_IS_GPKG", "T"))
+        self.rmodel_is_his_day = rmodel_is_his_day or str(os.environ.get("RMODEL_IS_HIS_DAY", "F"))
+        self.rmodel_best_his_date = rmodel_best_his_date or str(os.environ.get("RMODEL_BEST_HIS_DATE", "1989-06-12"))
+        self.rmodel_snow_var = rmodel_snow_var or str(os.environ.get("RMODEL_SNOW_VAR", "rcn"))
 
 if __name__ == "__main__":
     config = Config()
