@@ -1,9 +1,12 @@
 # run/run_R_model.py
 
-from dataclasses import dataclass, field, InitVar
+from dataclasses import dataclass, field, InitVar, asdict
 from datetime import datetime
-import math
 import os
+import math
+import json
+import subprocess
+
 
 from config import Config
 
@@ -97,18 +100,55 @@ def write_simulation_date(date: int, cfg: Config):
 
 
 
-def run_R_model(date: int, isCCR: bool, cfg: Config):
+def run_R_model(date: int, isCCR: bool, cfg: Config) -> tuple[int, str]:
     """
+    Runs the R model given the parameters defined by date and isCCR, as well as all those set in the .env
+    The path to the R code is RMODEL_SCRIPT_PATH in the .env
+    A JSON copy of all the config settings used is saved to H:/WestUS_Data/Regress_SWE/config_logs/WY{year}/{date}/{runname}
 
-    TODO: docs
+    :param date: (YYYYMMDD) Date the model will be run on.
+    :param isCCR: (bool) True if the model will be run with CoCoRaHs sensors, False otherwise.
+    :param cfg: Configuration object containing environment variables and all remaining R model configs from the .env.
+
+    :return: Tuple of (return code, model run name) where a return code of 0 indicates success.
     """
+    # Parse water year from date
+    date_f = datetime.strptime(str(date), "%Y%m%d")
+    water_year = date_f.year if date_f.month < 10 else date_f.year + 1
+
+    print(f"Generating R model config file for {date} with isCCR={isCCR}...", end="")
     model_config = RModelConfig(oldestDate=str(date), isCCR=isCCR, cfg=cfg)
-    print(model_config.RUNNAME)
 
-    # TODO: print statements
-    # subprocess.run
+    # Save JSON with all configs for this run
+    os.makedirs(f"{cfg.rmodel_config_log_dir}/WY{water_year}/{date}", exist_ok=True)
+    config_path = f"{cfg.rmodel_config_log_dir}/WY{water_year}/{date}/{model_config.RUNNAME}.json"
+    with open(config_path, "w") as f:
+        json.dump(asdict(model_config), f, indent=4)
+    print(". \033[32mDone.\033[0m")
+    print(f"Config saved to {config_path}")
+
+    # Run R model
+    print(f"Running R model for {date} with isCCR={isCCR}...", end="")
+    result = subprocess.run(
+        [cfg.rscript_exe_path, cfg.rmodel_script_path, str(config_path)],
+        capture_output=True,
+        text=True,
+        cwd=cfg.regress_path
+    )
+    print(". \033[32mDone.\033[0m")
+
+    if result.stdout:
+        print(result.stdout)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"R model failed!\n"
+            f"Config: {config_path}\n"
+            f"{result.stderr}"
+        )
+
+    return result.returncode, model_config.RUNNAME
 
 if __name__ == "__main__":
     config = Config()
     # write_simulation_date(20260517, config)
-    # run_R_model(20260517, config)
+    run_R_model(20260517, False, config)

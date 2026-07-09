@@ -53,6 +53,9 @@ class Config:
         sensor_list: str = None,
 
         ##### R Model Configs #####
+        rscript_exe_path: str = None,
+        rmodel_script_path: str = None,
+        rmodel_config_log_dir: str = None,
         rmodel_username: str = None,
         regress_path: str = None,
         simulation_date_path: str = None,
@@ -112,6 +115,9 @@ class Config:
         self.sensor_list = sensor_list or str(os.environ.get("SENSOR_LIST"))
 
         ##### R Model Configs #####
+        self.rscript_exe_path = rscript_exe_path or str(os.environ.get("RSCRIPT_EXE_PATH"))
+        self.rmodel_script_path = rmodel_script_path or str(os.environ.get("RMODEL_SCRIPT_PATH"))
+        self.rmodel_config_log_dir = rmodel_config_log_dir or str(os.environ.get("RMODEL_CONFIG_LOG_DIR"))
         self.rmodel_username = rmodel_username or str(os.environ.get("RMODEL_USERNAME"))
         self.regress_path = regress_path or str(os.environ.get("REGRESS_PATH"))
         self.simulation_date_path = simulation_date_path or str(os.environ.get("SIMULATION_DATE_PATH"))
