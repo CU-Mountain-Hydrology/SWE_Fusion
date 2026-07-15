@@ -13,6 +13,12 @@ class Config:
     See .env.example for how each variable should be defined in the .env.
     """
     def __init__(self,
+        ##### Workspace Paths #####
+        ww_results_workspace: str = None,
+        snm_results_workspace: str = None,
+        ww_reports_workspace: str = None,
+        snm_reports_workspace: str = None,
+
         ##### fSCA Download Configs #####
         local_fsca_path: str = None,
         processed_fsca_path: str = None,
@@ -74,6 +80,12 @@ class Config:
     ):
         # Load .env file into os.environment
         load_dotenv(find_dotenv(usecwd=True))
+
+        ##### Workspace Paths #####
+        self.ww_results_workspace = ww_results_workspace or str(os.environ.get("WW_RESULTS_WORKSPACE"))
+        self.snm_results_workspace = snm_results_workspace or str(os.environ.get("SNM_RESULTS_WORKSPACE"))
+        self.ww_reports_workspace = ww_reports_workspace or str(os.environ.get("WW_REPORTS_WORKSPACE"))
+        self.snm_reports_workspace = snm_reports_workspace or str(os.environ.get("SNM_REPORTS_WORKSPACE"))
 
         ##### fSCA Download Configs #####
         self.local_fsca_path = local_fsca_path or str(os.environ.get("LOCAL_FSCA_PATH"))

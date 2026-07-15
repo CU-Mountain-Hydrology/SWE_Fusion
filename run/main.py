@@ -10,6 +10,7 @@ from download.download_snowtrax import download_snowtrax
 from download.download_sensors import download_sensors
 from run.fsca_processing import fsca_processing
 from run.run_R_model import write_simulation_date, run_R_model
+from run.utils import make_directories
 
 def run_model(date: int, prompt_user: bool=False):
     """
@@ -49,7 +50,15 @@ def run_model(date: int, prompt_user: bool=False):
     # Run model without CCR
     run_R_model(date=date, isCCR=False, cfg=cfg)
 
-    # Run SWE_Fusion
+    # Create results and report directories
+    make_directories(date, cfg)
+
+
+
+    # Download surveys on the first of the month
+    # TODO: syrveys may come in throughout the week, only do this for first table of the month
+
+    # Download MODIS true color imagery for SNM report
     # TODO
 
 
