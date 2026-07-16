@@ -1,6 +1,7 @@
 # run/main.py
 
 import argparse
+import arcpy
 from datetime import datetime
 
 from config import Config
@@ -12,6 +13,7 @@ from run.fsca_processing import fsca_processing
 from run.run_R_model import write_simulation_date, run_R_model
 from run.utils import make_directories
 from run.tables_and_layers import ww_tables_and_layers
+from SWE_Fusion_functions import geopackage_to_shapefile
 
 def run_model(date: int, prompt_user: bool=False):
     """
@@ -53,8 +55,9 @@ def run_model(date: int, prompt_user: bool=False):
     # Run model without CCR
     _,model_woCCR = run_R_model(date=date, isCCR=False, cfg=cfg)
 
-    # Disable arcpy parallel processing for SWE Fusion?
+    # Disable arcpy parallel processing for SWE Fusion steps
     # TODO: learn why this caused crash and hopefully fix issue so it can run faster
+    arcpy.env.parallelProcessingFactor = "0"
 
     # Create results and report directories
     make_directories(date, cfg)
@@ -64,7 +67,13 @@ def run_model(date: int, prompt_user: bool=False):
     # TODO: function to download surveys and check if it is different than before in which case run with surveys again
 
     # GPKG -> SHP for woCCR model run
-    # TODO
+    # Convert geopackage to shapefile for woCCR model run
+    # TODO: restructure to just pass cfg directly
+    pillow_date = datetime.strptime(str(date), "%Y%m%d").strftime("%d%b%Y")
+    domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"] # TODO: temporarily placed this here, move to config
+    geopackage_to_shapefile(report_date=str(date), pillow_date=pillow_date, model_run=model_woCCR,
+                            user=cfg.rmodel_username, domainList=domainList, model_workspace=cfg.regress_path,
+                            results_workspace=f"{cfg.ww_results_workspace}/{date}_results/")
 
     ## ------- Should this whole section be moved to another function? --------------
     # Process & Sort WW sensors & surveys
@@ -72,6 +81,8 @@ def run_model(date: int, prompt_user: bool=False):
 
     # Run SNODAS for WW
     # TODO
+    # Add error handling for if SNODAS is not downloaded (err line 226)
+    # Should this be run when SNODAS is downloaded instead of now?
 
     # Tables and Layers WW wCCR/woCCR
     ww_tables_and_layers(date, model_wCCR, model_woCCR, cfg)
