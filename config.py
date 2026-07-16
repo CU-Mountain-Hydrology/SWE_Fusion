@@ -13,7 +13,7 @@ class Config:
     See .env.example for how each variable should be defined in the .env.
     """
     def __init__(self,
-        ##### Workspace Paths #####
+        ##### Results and Report Directories #####
         ww_results_workspace: str = None,
         snm_results_workspace: str = None,
         ww_reports_workspace: str = None,
@@ -77,11 +77,24 @@ class Config:
         rmodel_is_his_day: str = None,
         rmodel_best_his_date: str = None,
         rmodel_snow_var: str = None,
+
+        ##### Tables and Layers Config #####
+        mean_workspace: str = None,
+        ww_watershed_zones: str = None,
+        huc6_zones: str = None,
+        ww_region_zones: str = None,
+        case_field_watershed: str = None,
+        case_field_band: str = None,
+        water_mask: str = None,
+        glacier_mask: str = None,
+        ww_snap_raster_geon83: str = None,
+        ww_snap_raster_albn83: str = None,
+        snm_snap_raster_albn83: str = None,
     ):
         # Load .env file into os.environment
         load_dotenv(find_dotenv(usecwd=True))
 
-        ##### Workspace Paths #####
+        #####  Results and Report Directories #####
         self.ww_results_workspace = ww_results_workspace or str(os.environ.get("WW_RESULTS_WORKSPACE"))
         self.snm_results_workspace = snm_results_workspace or str(os.environ.get("SNM_RESULTS_WORKSPACE"))
         self.ww_reports_workspace = ww_reports_workspace or str(os.environ.get("WW_REPORTS_WORKSPACE"))
@@ -145,6 +158,19 @@ class Config:
         self.rmodel_is_his_day = rmodel_is_his_day or str(os.environ.get("RMODEL_IS_HIS_DAY", "F"))
         self.rmodel_best_his_date = rmodel_best_his_date or str(os.environ.get("RMODEL_BEST_HIS_DATE", "1989-06-12"))
         self.rmodel_snow_var = rmodel_snow_var or str(os.environ.get("RMODEL_SNOW_VAR", "rcn"))
+
+        ##### Tables and Layers Config #####
+        self.mean_workspace = mean_workspace or str(os.environ.get("MEAN_WORKSPACE"))
+        self.ww_watershed_zones = ww_watershed_zones or str(os.environ.get("WW_WATERSHED_ZONES"))
+        self.huc6_zones = huc6_zones or str(os.environ.get("HUC6_ZONES"))
+        self.ww_region_zones = ww_region_zones or str(os.environ.get("WW_REGION_ZONES"))
+        self.case_field_watershed = case_field_watershed or str(os.environ.get("CASE_FIELD_WATERSHED"))
+        self.case_field_band = case_field_band or str(os.environ.get("CASE_FIELD_BAND"))
+        self.water_mask = water_mask or str(os.environ.get("WATER_MASK"))
+        self.glacier_mask = glacier_mask or str(os.environ.get("GLACIER_MASK"))
+        self.ww_snap_raster_geon83 = ww_snap_raster_geon83 or str(os.environ.get("WW_SNAP_RASTER_GEON83"))
+        self.ww_snap_raster_albn83 = ww_snap_raster_albn83 or str(os.environ.get("WW_SNAP_RASTER_ALBN83"))
+        self.snm_snap_raster_albn83 = snm_snap_raster_albn83 or str(os.environ.get("SNM_SNAP_RASTER_ALBN83"))
 
 if __name__ == "__main__":
     config = Config()

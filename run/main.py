@@ -11,12 +11,15 @@ from download.download_sensors import download_sensors
 from run.fsca_processing import fsca_processing
 from run.run_R_model import write_simulation_date, run_R_model
 from run.utils import make_directories
+from run.tables_and_layers import ww_tables_and_layers
 
 def run_model(date: int, prompt_user: bool=False):
     """
     This is the master script to automatically run the whole model. Each step is called sequentially, with checkpoints
     in order to resume mid way through in case of a fatal error.
     TODO: add checkpoints
+    TODO: time elapsed / progress indicator
+    TODO: clear arcpy locks between function calls <- look more into what this actually does
 
     :param date: (YYYYMMDD) Date the model is run on.
     :param prompt_user: Ask the user for confirmation before downloading files. Default: False
@@ -45,18 +48,55 @@ def run_model(date: int, prompt_user: bool=False):
     download_sensors(date, cfg)
 
     # Run model with CCR
-    run_R_model(date=date, isCCR=True, cfg=cfg)
+    _,model_wCCR = run_R_model(date=date, isCCR=True, cfg=cfg)
 
     # Run model without CCR
-    run_R_model(date=date, isCCR=False, cfg=cfg)
+    _,model_woCCR = run_R_model(date=date, isCCR=False, cfg=cfg)
+
+    # Disable arcpy parallel processing for SWE Fusion?
+    # TODO: learn why this caused crash and hopefully fix issue so it can run faster
 
     # Create results and report directories
     make_directories(date, cfg)
 
-
-
     # Download surveys on the first of the month
     # TODO: syrveys may come in throughout the week, only do this for first table of the month
+    # TODO: function to download surveys and check if it is different than before in which case run with surveys again
+
+    # GPKG -> SHP for woCCR model run
+    # TODO
+
+    ## ------- Should this whole section be moved to another function? --------------
+    # Process & Sort WW sensors & surveys
+    # TODO
+
+    # Run SNODAS for WW
+    # TODO
+
+    # Tables and Layers WW wCCR/woCCR
+    ww_tables_and_layers(date, model_wCCR, model_woCCR, cfg)
+
+    # Get zero sensors for all domains
+    # TODO: why here
+    ## ------- ^^^^^ Should this whole section be moved to another function? --------------
+
+
+    # Process & Sort SNM sensors & surveys
+    # TODO
+
+    # Run SNODAS for SNM
+    # TODO
+
+    # Tables and Layers SNM wCCR/woCCR
+    # TODO
+
+    # Get zero sensors for SNM
+    # TODO: is this redundant?
+
+    ######### Vetting Starts Now #######
+
+
+
 
     # Download MODIS true color imagery for SNM report
     # TODO
