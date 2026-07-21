@@ -12,7 +12,7 @@ from download.download_sensors import download_sensors
 from run.fsca_processing import fsca_processing
 from run.run_R_model import write_simulation_date, run_R_model
 from run.utils import make_directories
-from run.tables_and_layers import ww_tables_and_layers
+from run.tables_and_layers import ww_tables_and_layers, snm_tables_and_layers
 from SWE_Fusion_functions import geopackage_to_shapefile
 
 def run_model(date: int, prompt_user: bool=False):
@@ -99,7 +99,7 @@ def run_model(date: int, prompt_user: bool=False):
     # TODO
 
     # Tables and Layers SNM wCCR/woCCR
-    # TODO
+    snm_tables_and_layers(date, model_woCCR, model_woCCR, cfg)
 
     # Get zero sensors for SNM
     # TODO: is this redundant?
