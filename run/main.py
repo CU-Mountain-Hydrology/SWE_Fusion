@@ -10,10 +10,11 @@ from download.download_snodas import download_snodas
 from download.download_snowtrax import download_snowtrax
 from download.download_sensors import download_sensors
 from run.fsca_processing import fsca_processing
+from run.snodas_processing import snodas_processing
 from run.run_R_model import write_simulation_date, run_R_model
 from run.utils import make_directories, get_previous_model_run, get_water_year
 from run.tables_and_layers import ww_tables_and_layers, snm_tables_and_layers
-from SWE_Fusion_functions import geopackage_to_shapefile, merge_sort_sensors_surveys, SNODAS_Processing
+from SWE_Fusion_functions import geopackage_to_shapefile, merge_sort_sensors_surveys
 
 def run_model(date: int, prompt_user: bool=False):
     """
@@ -95,15 +96,7 @@ def run_model(date: int, prompt_user: bool=False):
 
 
     # Run SNODAS for WW
-    # Add error handling for if SNODAS is not downloaded (err line 226)
-    # Should this be run when SNODAS is downloaded instead of now?
-    SNODAS_Processing(
-        report_date=str(date), domain = "WW", RunName=model_woCCR, NOHRSC_workspace=cfg.ww_nohrsc_workspace,
-        results_workspace=cfg.ww_results_workspace,
-        projin=arcpy.SpatialReference(cfg.proj_geo), projout=arcpy.SpatialReference(cfg.proj_alb), Cellsize=500,
-        snapRaster=cfg.ww_snap_raster_albn83, watermask=cfg.water_mask, glacierMask=cfg.glacier_mask,
-        band_zones=cfg.ww_band_zones, watershed_zones=cfg.ww_watershed_zones, unzip_SNODAS="Y")
-
+    snodas_processing(date=date, domain="WW", model_woCCR=model_woCCR, cfg=cfg)
 
     # Tables and Layers WW wCCR/woCCR
     ww_tables_and_layers(date, model_wCCR, model_woCCR, cfg)
@@ -132,16 +125,7 @@ def run_model(date: int, prompt_user: bool=False):
         prev_results_workspace=f"{cfg.snm_results_workspace}/{prev_snm_rundate}_results/")
 
     # Run SNODAS for SNM
-    # TODO: why does this use ww_nohrsc_workspace? snm_nohrsc_workspace is never used
-    SNODAS_Processing(
-        report_date=str(date), domain="SNM", RunName=model_woCCR, NOHRSC_workspace=cfg.ww_nohrsc_workspace,
-        results_workspace=cfg.snm_results_workspace,
-        projin=arcpy.SpatialReference(cfg.proj_geo), projout=arcpy.SpatialReference(cfg.proj_alb), Cellsize=500,
-        snapRaster=cfg.snm_snap_raster_albn83,
-        watermask=cfg.water_mask, glacierMask=cfg.glacier_mask,
-        band_zones=cfg.snm_band_zones, watershed_zones=cfg.snm_watershed_zones, unzip_SNODAS="N",
-        dwr_mask=cfg.snm_domain_mask)
-
+    snodas_processing(date=date, domain="SNM", model_woCCR=model_woCCR, cfg=cfg)
 
     # Tables and Layers SNM wCCR/woCCR
     snm_tables_and_layers(date, model_woCCR, model_woCCR, cfg)
