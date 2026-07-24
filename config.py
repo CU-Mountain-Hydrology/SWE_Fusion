@@ -45,6 +45,8 @@ class Config:
         snodas_local_path: str = None,
         snodas_remote_path: str = None,
         snodas_host: str = None,
+        ww_nohrsc_workspace: str = None,
+        snm_nohrsc_workspace: str = None,
 
         ##### SnowTrax Download Configs #####
         snowtrax_path: str = None,
@@ -86,6 +88,7 @@ class Config:
         huc6_zones: str = None,
         ww_region_zones: str = None,
         snm_region_zones: str = None,
+        ww_band_zones: str = None,
         snm_band_zones: str = None,
         case_field_watershed: str = None,
         case_field_band: str = None,
@@ -140,6 +143,8 @@ class Config:
         self.snodas_local_path = snodas_local_path or str(os.environ.get("SNODAS_LOCAL_PATH"))
         self.snodas_remote_path = snodas_remote_path or str(os.environ.get("SNODAS_REMOTE_PATH"))
         self.snodas_host = snodas_host or str(os.environ.get("SNODAS_HOST"))
+        self.ww_nohrsc_workspace = ww_nohrsc_workspace or str(os.environ.get("WW_NOHRSC_WORKSPACE"))
+        self.snm_nohrsc_workspace = snm_nohrsc_workspace or str(os.environ.get("SNM_NOHRSC_WORKSPACE"))
 
         ##### SnowTrax Download Configs #####
         self.snowtrax_path = snowtrax_path or str(os.environ.get("SNOWTRAX_PATH"))
@@ -181,6 +186,7 @@ class Config:
         self.huc6_zones = huc6_zones or str(os.environ.get("HUC6_ZONES"))
         self.ww_region_zones = ww_region_zones or str(os.environ.get("WW_REGION_ZONES"))
         self.snm_region_zones = snm_region_zones or str(os.environ.get("SNM_REGION_ZONES"))
+        self.ww_band_zones = ww_band_zones or str(os.environ.get("WW_BAND_ZONES"))
         self.snm_band_zones = snm_band_zones or str(os.environ.get("SNM_BAND_ZONES"))
         self.case_field_watershed = case_field_watershed or str(os.environ.get("CASE_FIELD_WATERSHED"))
         self.case_field_band = case_field_band or str(os.environ.get("CASE_FIELD_BAND"))

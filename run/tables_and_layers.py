@@ -26,7 +26,7 @@ def ww_tables_and_layers(date: int, model_wCCR: str, model_woCCR: str, cfg: Conf
     # Run tables and layers WW wCCR
     tables_and_layers(user=cfg.rmodel_username, year=year, report_date=str(date), mean_date=mean_date,
                       meanWorkspace=cfg.mean_workspace, model_run=model_wCCR, masking="N",
-                      watershed_zones=cfg.ww_watershed_zones, band_zones=cfg.ww_watershed_zones, HUC6_zones=cfg.huc6_zones, region_zones=cfg.ww_region_zones,
+                      watershed_zones=cfg.ww_watershed_zones, band_zones=cfg.ww_band_zones, HUC6_zones=cfg.huc6_zones, region_zones=cfg.ww_region_zones,
                       case_field_wtrshd=cfg.case_field_watershed,case_field_band=cfg.case_field_band,
                       watermask=cfg.water_mask, glacierMask=cfg.glacier_mask,
                       snapRaster_geon83=cfg.ww_snap_raster_geon83, snapRaster_albn83=cfg.ww_snap_raster_albn83,
@@ -36,7 +36,7 @@ def ww_tables_and_layers(date: int, model_wCCR: str, model_woCCR: str, cfg: Conf
     # Run tables and layers WW woCCR
     tables_and_layers(user=cfg.rmodel_username, year=year, report_date=str(date), mean_date=mean_date,
                       meanWorkspace=cfg.mean_workspace, model_run=model_woCCR, masking="N",
-                      watershed_zones=cfg.ww_watershed_zones, band_zones=cfg.ww_watershed_zones,
+                      watershed_zones=cfg.ww_watershed_zones, band_zones=cfg.ww_band_zones,
                       HUC6_zones=cfg.huc6_zones, region_zones=cfg.ww_region_zones,
                       case_field_wtrshd=cfg.case_field_watershed, case_field_band=cfg.case_field_band,
                       watermask=cfg.water_mask, glacierMask=cfg.glacier_mask,
