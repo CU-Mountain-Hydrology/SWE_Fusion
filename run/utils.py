@@ -57,40 +57,47 @@ def get_previous_model_run(date: int, domain: str, cfg: Config) -> tuple[int, st
 
     :return: tuple[int,str] The date and name of the model run prior to the given date.
     """
-    if domain == "SNM":
-        # Get dates from all results subdirectories
-        subdirs = [x for x in os.listdir(cfg.snm_results_workspace) if os.path.isdir(f"{cfg.snm_results_workspace}/{x}")]
-        run_dates = [int(x[:8]) for x in subdirs if x.endswith("_results")]
-        run_dates.sort()
+    results_workspace = None
+    match domain:
+        case "WW":
+            results_workspace = cfg.ww_results_workspace
+        case "SNM":
+            results_workspace = cfg.snm_results_workspace
+        case _:
+            print(f"Error - get_previous_model_run: domain {domain} not recognized!")
+            return 0, ""
 
-        # Find the model run date prior to the given date
-        previous_run_date = run_dates[0]
-        for run_date in run_dates:
-            if run_date < date:
-                previous_run_date = run_date
-            else:
-                break
+    # Get dates from all results subdirectories
+    subdirs = [x for x in os.listdir(results_workspace) if os.path.isdir(f"{results_workspace}/{x}")]
+    run_dates = [int(x[:8]) for x in subdirs if x.endswith("_results")]
+    run_dates.sort()
 
-        # Access config logs to get model run name for that date
-        water_year = get_water_year(previous_run_date)
-        config_dir = f"{cfg.rmodel_config_log_dir}/WY{water_year}/{previous_run_date}"
-        model_runs = os.listdir(config_dir)
+    # Find the model run date prior to the given date
+    previous_run_date = run_dates[0]
+    for run_date in run_dates:
+        if run_date < date:
+            previous_run_date = run_date
+        else:
+            break
+    # TODO: error handling for if run_dates is Null or if there is no previous date
 
-        # TODO: How to determine which previous model run to use? woCCR? What if there are multiple woCCR?
-        previous_model_run = model_runs[0].split(".")[0]
+    # Access config logs to get model run name for that date
+    water_year = get_water_year(previous_run_date)
+    config_dir = f"{cfg.rmodel_config_log_dir}/WY{water_year}/{previous_run_date}"
+    if not os.path.exists(config_dir):
+        print(f"No config logs found for previous run! {config_dir}")
+        # TODO: documentation on how to create a JSON config with the previous model run name
+        return previous_run_date, ""
+    model_runs = os.listdir(config_dir)
 
-        return previous_run_date, previous_model_run
+    # TODO: How to determine which previous model run to use? woCCR? What if there are multiple woCCR?
+    previous_model_run = model_runs[0].split(".")[0]
 
-
-    elif domain == "WW":
-        print("get_previous_model_run has not been implemented yet for the WW")
-    else:
-        print(f"Error - get_previous_model_run: domain {domain} not recognized!")
-    return 0, ""
+    return previous_run_date, previous_model_run
 
 
 if __name__ == "__main__":
     # Quick dev tests
     config = Config()
-    prev_date, prev_run = get_previous_model_run(20260518, "SNM", config)
+    prev_date, prev_run = get_previous_model_run(20260516, "WW", config)
     print(prev_date, prev_run)

@@ -57,6 +57,7 @@ class Config:
         ##### Snow Sensor Download Configs #####
         sensor_path: str = None,
         sensor_list: str = None,
+        snm_sensors_shp: str = None,
 
         ##### R Model Configs #####
         rscript_exe_path: str = None,
@@ -94,6 +95,15 @@ class Config:
         ww_snap_raster_geon83: str = None,
         ww_snap_raster_albn83: str = None,
         snm_snap_raster_albn83: str = None,
+        ww_watershed_shapefile: str = None,
+        snm_watershed_shapefile: str = None,
+        ww_band_shapefile: str = None,
+        snm_band_shapefile: str = None,
+
+        ##### ArcGIS Projection Spatial References #####
+        proj_geo: int = None,
+        proj_alb: int = None,
+        proj_utm: int = None,
     ):
         # Load .env file into os.environment
         load_dotenv(find_dotenv(usecwd=True))
@@ -142,6 +152,7 @@ class Config:
         ##### Snow Sensor Download Configs #####
         self.sensor_path = sensor_path or str(os.environ.get("SENSOR_PATH"))
         self.sensor_list = sensor_list or str(os.environ.get("SENSOR_LIST"))
+        self.snm_sensors_shp = snm_sensors_shp or str(os.environ.get("SNM_SENSORS_SHP"))
 
         ##### R Model Configs #####
         self.rscript_exe_path = rscript_exe_path or str(os.environ.get("RSCRIPT_EXE_PATH"))
@@ -179,6 +190,15 @@ class Config:
         self.ww_snap_raster_geon83 = ww_snap_raster_geon83 or str(os.environ.get("WW_SNAP_RASTER_GEON83"))
         self.ww_snap_raster_albn83 = ww_snap_raster_albn83 or str(os.environ.get("WW_SNAP_RASTER_ALBN83"))
         self.snm_snap_raster_albn83 = snm_snap_raster_albn83 or str(os.environ.get("SNM_SNAP_RASTER_ALBN83"))
+        self.ww_watershed_shapefile = ww_watershed_shapefile or str(os.environ.get("WW_WATERSHED_SHAPEFILE"))
+        self.snm_watershed_shapefile = snm_watershed_shapefile or str(os.environ.get("SNM_WATERSHED_SHAPEFILE"))
+        self.ww_band_shapefile = ww_band_shapefile or str(os.environ.get("WW_BAND_SHAPEFILE"))
+        self.snm_band_shapefile = snm_band_shapefile or str(os.environ.get("SNM_BAND_SHAPEFILE"))
+
+        ##### ArcGIS Projection Spatial References #####
+        self.proj_geo = proj_geo or int(os.environ.get("PROJ_GEO"))
+        self.proj_alb = proj_alb or int(os.environ.get("PROJ_ALB"))
+        self.proj_utm = proj_utm or int(os.environ.get("PROJ_UTM"))
 
 if __name__ == "__main__":
     config = Config()

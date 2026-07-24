@@ -11,9 +11,9 @@ from download.download_snowtrax import download_snowtrax
 from download.download_sensors import download_sensors
 from run.fsca_processing import fsca_processing
 from run.run_R_model import write_simulation_date, run_R_model
-from run.utils import make_directories
+from run.utils import make_directories, get_previous_model_run, get_water_year
 from run.tables_and_layers import ww_tables_and_layers, snm_tables_and_layers
-from SWE_Fusion_functions import geopackage_to_shapefile
+from SWE_Fusion_functions import geopackage_to_shapefile, merge_sort_sensors_surveys
 
 def run_model(date: int, prompt_user: bool=False):
     """
@@ -65,6 +65,7 @@ def run_model(date: int, prompt_user: bool=False):
     # Download surveys on the first of the month
     # TODO: syrveys may come in throughout the week, only do this for first table of the month
     # TODO: function to download surveys and check if it is different than before in which case run with surveys again
+    surveys_use="Y"
 
     # GPKG -> SHP for woCCR model run
     # Convert geopackage to shapefile for woCCR model run
@@ -76,8 +77,22 @@ def run_model(date: int, prompt_user: bool=False):
                             results_workspace=f"{cfg.ww_results_workspace}/{date}_results/")
 
     ## ------- Should this whole section be moved to another function? --------------
+    # Get previous run date to know if differencing should be used
+    prev_ww_rundate, _ = get_previous_model_run(date=date, domain="WW", cfg=cfg)
+
+    if get_water_year(prev_ww_rundate) == get_water_year(date):
+        difference = "Y" # If the previous report date was from this water year, then difference="Y" (compare to last report)
+    else:
+        difference = "N"
+
     # Process & Sort WW sensors & surveys
-    # TODO
+    merge_sort_sensors_surveys(
+        report_date=str(date), results_workspace=f"{cfg.ww_results_workspace}/{date}_results/",
+        surveys=surveys_use, difference=difference,
+        watershed_shapefile=cfg.ww_watershed_shapefile, case_field_wtrshd=cfg.case_field_watershed,
+        case_field_band=cfg.case_field_band, band_shapefile=cfg.ww_band_shapefile, projOut=arcpy.SpatialReference(cfg.proj_alb), merge="Y",
+        domainList=domainList, prev_report_date=str(prev_ww_rundate), prev_results_workspace=f"{cfg.ww_results_workspace}/{prev_ww_rundate}_results/")
+
 
     # Run SNODAS for WW
     # TODO
@@ -93,7 +108,22 @@ def run_model(date: int, prompt_user: bool=False):
 
 
     # Process & Sort SNM sensors & surveys
-    # TODO
+    # Get previous run date to know if differencing should be used
+    prev_snm_rundate, _ = get_previous_model_run(date=date, domain="SNM", cfg=cfg)
+
+    if get_water_year(prev_snm_rundate) == get_water_year(date):
+        difference = "Y"  # If the previous report date was from this water year, then difference="Y" (compare to last report)
+    else:
+        difference = "N"
+
+    merge_sort_sensors_surveys(
+        report_date=str(date), results_workspace=f"{cfg.snm_results_workspace}/{date}_results/",
+        surveys=surveys_use, difference=difference,
+        watershed_shapefile=cfg.snm_watershed_shapefile, band_shapefile=cfg.snm_band_shapefile,
+        case_field_wtrshd=cfg.case_field_watershed, case_field_band=cfg.case_field_band,
+        projOut=arcpy.SpatialReference(cfg.proj_alb), projIn=arcpy.SpatialReference(cfg.proj_geo),
+        domain = "SNM", merge="N", domain_shapefile=cfg.snm_sensors_shp.format(date=date), prev_report_date=str(prev_snm_rundate),
+        prev_results_workspace=f"{cfg.snm_results_workspace}/{prev_snm_rundate}_results/")
 
     # Run SNODAS for SNM
     # TODO

@@ -15,9 +15,9 @@ def ww_tables_and_layers(date: int, model_wCCR: str, model_woCCR: str, cfg: Conf
 
     """
     # Projections
-    projGEO = arcpy.SpatialReference(4269) # NAD83
-    projALB = arcpy.SpatialReference(102039) # USA Contiguous Albers Equal Area Conic (USGS version)
-    ProjOut_UTM = arcpy.SpatialReference(26911) # NAD 1983 / UTM Zone 11N (Nevada)
+    projGEO = arcpy.SpatialReference(cfg.proj_geo)
+    projALB = arcpy.SpatialReference(cfg.proj_alb)
+    ProjOut_UTM = arcpy.SpatialReference(cfg.proj_utm)
 
     # Format date
     year = datetime.strptime(str(date), "%Y%m%d").year
