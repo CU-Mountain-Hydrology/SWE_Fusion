@@ -11,8 +11,9 @@ from download.download_snowtrax import download_snowtrax
 from download.download_sensors import download_sensors
 from run.fsca_processing import fsca_processing
 from run.snodas_processing import snodas_processing
+from run.sensor_processing import sensor_survey_processing
 from run.run_R_model import write_simulation_date, run_R_model
-from run.utils import make_directories, get_previous_model_run, get_water_year
+from run.utils import make_directories
 from run.tables_and_layers import ww_tables_and_layers, snm_tables_and_layers
 from SWE_Fusion_functions import geopackage_to_shapefile, merge_sort_sensors_surveys
 
@@ -72,28 +73,12 @@ def run_model(date: int, prompt_user: bool=False):
     # Convert geopackage to shapefile for woCCR model run
     # TODO: restructure to just pass cfg directly
     pillow_date = datetime.strptime(str(date), "%Y%m%d").strftime("%d%b%Y")
-    domainList = ["NOCN", "PNW", "SNM", "SOCN", "INMT"] # TODO: temporarily placed this here, move to config
     geopackage_to_shapefile(report_date=str(date), pillow_date=pillow_date, model_run=model_woCCR,
-                            user=cfg.rmodel_username, domainList=domainList, model_workspace=cfg.regress_path,
+                            user=cfg.rmodel_username, domainList=cfg.domain_list, model_workspace=cfg.regress_path,
                             results_workspace=f"{cfg.ww_results_workspace}/{date}_results/")
 
-    ## ------- Should this whole section be moved to another function? --------------
-    # Get previous run date to know if differencing should be used
-    prev_ww_rundate, _ = get_previous_model_run(date=date, domain="WW", cfg=cfg)
-
-    if get_water_year(prev_ww_rundate) == get_water_year(date):
-        difference = "Y" # If the previous report date was from this water year, then difference="Y" (compare to last report)
-    else:
-        difference = "N"
-
-    # Process & Sort WW sensors & surveys
-    merge_sort_sensors_surveys(
-        report_date=str(date), results_workspace=f"{cfg.ww_results_workspace}/{date}_results/",
-        surveys=surveys_use, difference=difference,
-        watershed_shapefile=cfg.ww_watershed_shapefile, case_field_wtrshd=cfg.case_field_watershed,
-        case_field_band=cfg.case_field_band, band_shapefile=cfg.ww_band_shapefile, projOut=arcpy.SpatialReference(cfg.proj_alb), merge="Y",
-        domainList=domainList, prev_report_date=str(prev_ww_rundate), prev_results_workspace=f"{cfg.ww_results_workspace}/{prev_ww_rundate}_results/")
-
+    # Process and sort sensors and surveys for WW
+    sensor_survey_processing(date=date, domain="WW", surveys_use=surveys_use, cfg=cfg)
 
     # Run SNODAS for WW
     snodas_processing(date=date, domain="WW", model_woCCR=model_woCCR, cfg=cfg)
@@ -103,26 +88,9 @@ def run_model(date: int, prompt_user: bool=False):
 
     # Get zero sensors for all domains
     # TODO: why here
-    ## ------- ^^^^^ Should this whole section be moved to another function? --------------
 
-
-    # Process & Sort SNM sensors & surveys
-    # Get previous run date to know if differencing should be used
-    prev_snm_rundate, _ = get_previous_model_run(date=date, domain="SNM", cfg=cfg)
-
-    if get_water_year(prev_snm_rundate) == get_water_year(date):
-        difference = "Y"  # If the previous report date was from this water year, then difference="Y" (compare to last report)
-    else:
-        difference = "N"
-
-    merge_sort_sensors_surveys(
-        report_date=str(date), results_workspace=f"{cfg.snm_results_workspace}/{date}_results/",
-        surveys=surveys_use, difference=difference,
-        watershed_shapefile=cfg.snm_watershed_shapefile, band_shapefile=cfg.snm_band_shapefile,
-        case_field_wtrshd=cfg.case_field_watershed, case_field_band=cfg.case_field_band,
-        projOut=arcpy.SpatialReference(cfg.proj_alb), projIn=arcpy.SpatialReference(cfg.proj_geo),
-        domain = "SNM", merge="N", domain_shapefile=cfg.snm_sensors_shp.format(date=date), prev_report_date=str(prev_snm_rundate),
-        prev_results_workspace=f"{cfg.snm_results_workspace}/{prev_snm_rundate}_results/")
+    # Process and sort sensors and surveys for SNM
+    sensor_survey_processing(date=date, domain="SNM", surveys_use=surveys_use, cfg=cfg)
 
     # Run SNODAS for SNM
     snodas_processing(date=date, domain="SNM", model_woCCR=model_woCCR, cfg=cfg)
