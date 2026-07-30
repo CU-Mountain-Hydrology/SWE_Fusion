@@ -13,6 +13,9 @@ class Config:
     See .env.example for how each variable should be defined in the .env.
     """
     def __init__(self,
+        ##### Checkpoint savefiles #####
+        checkpoint_path: str = None,
+
         ##### Results and Report Directories #####
         ww_results_workspace: str = None,
         snm_results_workspace: str = None,
@@ -111,6 +114,9 @@ class Config:
     ):
         # Load .env file into os.environment
         load_dotenv(find_dotenv(usecwd=True))
+
+        ##### Checkpoint savefiles #####
+        self.checkpoint_path = checkpoint_path or str(os.environ.get("CHECKPOINT_PATH"))
 
         #####  Results and Report Directories #####
         self.ww_results_workspace = ww_results_workspace or str(os.environ.get("WW_RESULTS_WORKSPACE"))
