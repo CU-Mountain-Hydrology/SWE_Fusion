@@ -96,6 +96,36 @@ def get_previous_model_run(date: int, domain: str, cfg: Config) -> tuple[int, st
     return previous_run_date, previous_model_run
 
 
+from SWE_Fusion_functions import zero_CCR_sensors
+def get_zero_sensors(date: int, domains: list[str], model_wCCR: str, cfg: Config):
+    """
+    Wrapper for calling zero_CCR_sensors
+    TODO: refactor original function to incorporate into pipeline
+    TODO: add error handling
+
+    :param date: (YYYYMMDD) The date the model is run on (and also the date for the pillows).
+    :param domains: (list[str]) The list of domains to get zero sensors for.
+    :param model_wCCR: Name of the model run with CoCoRaHS sensors enabled
+    :param cfg: Configuration object containing environment variables from the .env.
+    """
+    # When running on only SNM, use SNM results workspace
+    if domains == ["SNM"]:
+        results_workspace = cfg.snm_results_workspace
+        sensors_path = "{results_workspace}/{date}_results/SNM_{date}_sensors_albn83.shp"
+    else:
+        results_workspace = cfg.ww_results_workspace
+        sensors_path = "{results_workspace}/{date}_results/{date}_sensors_{domain}.shp"
+
+
+    pillow_date = datetime.strptime(str(date), "%Y%m%d").strftime("%d%b%Y")
+    for domain in domains:
+        zero_CCR_sensors(
+            rundate=str(date), results_workspace=results_workspace, pillow_date=pillow_date, domain=domain,
+            sensors=sensors_path.format(results_workspace=results_workspace, date=date, domain=domain), zero_sensors=True,
+            CCR=False, model_workspace_domain=f"{cfg.regress_path}/{domain}/{cfg.rmodel_username}/StationSWERegressionV2/data/outputs/{model_wCCR}/"
+        )
+
+
 if __name__ == "__main__":
     # Quick dev tests
     config = Config()

@@ -13,7 +13,7 @@ from run.fsca_processing import fsca_processing
 from run.snodas_processing import snodas_processing
 from run.sensor_processing import sensor_survey_processing
 from run.run_R_model import write_simulation_date, run_R_model
-from run.utils import make_directories
+from run.utils import make_directories, get_zero_sensors
 from run.tables_and_layers import ww_tables_and_layers, snm_tables_and_layers
 from SWE_Fusion_functions import geopackage_to_shapefile, merge_sort_sensors_surveys
 
@@ -87,7 +87,8 @@ def run_model(date: int, prompt_user: bool=False):
     ww_tables_and_layers(date, model_wCCR, model_woCCR, cfg)
 
     # Get zero sensors for all domains
-    # TODO: why here
+    # TODO: why here instead of after sensor download
+    get_zero_sensors(date=date, domains=cfg.domain_list, model_wCCR=model_wCCR, cfg=cfg)
 
     # Process and sort sensors and surveys for SNM
     sensor_survey_processing(date=date, domain="SNM", surveys_use=surveys_use, cfg=cfg)
@@ -99,7 +100,7 @@ def run_model(date: int, prompt_user: bool=False):
     snm_tables_and_layers(date, model_woCCR, model_woCCR, cfg)
 
     # Get zero sensors for SNM
-    # TODO: is this redundant?
+    get_zero_sensors(date=date, domains=["SNM"], model_wCCR=model_wCCR, cfg=cfg)
 
     ######### Vetting Starts Now #######
 
