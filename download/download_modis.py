@@ -5,6 +5,7 @@ from owslib.wms import WebMapService
 from PIL import Image
 import numpy as np
 import io
+import os
 
 from config import Config
 
@@ -110,6 +111,7 @@ def download_modis(date: int, cfg: Config, cloud_cover_max: int = 30, loopback_d
     # TODO: move hardcoded path to .env
     year = str(date)[:4]
     rt_report_folder = f"J:/paperwork/0_UCSB_DWR_Project/{year}_RT_Reports/{date}_RT_report"
+    os.makedirs(f"{rt_report_folder}{cfg.modis_path}", exist_ok=True)
 
     # Sequentially check the previous days until a date with low enough cloud cover is found
     for days_back in range(loopback_days):

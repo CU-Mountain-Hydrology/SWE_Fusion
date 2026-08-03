@@ -27,10 +27,6 @@ import ftplib
 
 from config import Config
 
-##### Config #####
-tiles = {"h08v04", "h08v05", "h09v04", "h09v05", "h10v04"}
-##################
-
 def _date_from_filename(filename: str) -> int | None:
     """
     Parses the first valid YYYYMMDD date from a filename
@@ -59,12 +55,12 @@ def _date_from_filename(filename: str) -> int | None:
     return None
 
 
-def _tile_from_filename(filename: str) -> str | None:
+def _tile_from_filename(filename: str, cfg: Config) -> str | None:
     """
     Return the tile ID found in a filename, or None if not recognised.
     """
     match = re.search(r"(h\d{2}v\d{2})", filename)
-    if match and match.group(1) in tiles:
+    if match and match.group(1) in cfg.fsca_tiles:
         return match.group(1)
     return None
 
@@ -96,7 +92,7 @@ def _scp_file(filepath: str, cfg: Config) -> bool:
     """
     filename = filepath.split("/")[-1]
     date = _date_from_filename(filename)
-    tile = _tile_from_filename(filename)
+    tile = _tile_from_filename(filename, cfg)
 
     remote = f"{cfg.curc_identikey}@{cfg.curc_host}:{filepath}"
     local = f"{cfg.local_fsca_path}/{tile}/{str(date)[:4]}"
@@ -117,7 +113,7 @@ def _scp_file(filepath: str, cfg: Config) -> bool:
 def _ftp_file(filepath: str, cfg: Config) -> bool:
     filename = filepath.split("/")[-1]
     date = _date_from_filename(filename)
-    tile = _tile_from_filename(filename)
+    tile = _tile_from_filename(filename, cfg)
 
     remote_dir = f"{cfg.snow_today_fsca_path}/{tile}/{str(date)[:4]}/"
     local_dir = f"{cfg.local_fsca_path}/{tile}/{str(date)[:4]}"
@@ -177,7 +173,7 @@ def download_fsca(date: int, method: str, cfg: Config, prompt_user: bool = False
     # Add each file from each tile to a queue
     to_download = []
     print(f"Checking for new fSCA data from {year}0101 until {date}...")
-    for tile in tiles:
+    for tile in cfg.fsca_tiles:
         # Define source and destination filepaths
         if method == "ssh":
             src_dir = f"{cfg.curc_fsca_path}/{tile}/{year}"
@@ -221,7 +217,7 @@ def download_fsca(date: int, method: str, cfg: Config, prompt_user: bool = False
             if _date_from_filename(file) == new_date:
                 # Download file
                 if _download_file(file, method, cfg):
-                    print(f" {_tile_from_filename(file)}",end="")
+                    print(f" {_tile_from_filename(file, cfg)}",end="")
                 else:
                     failed.append(file)
                 to_download.remove(file)
