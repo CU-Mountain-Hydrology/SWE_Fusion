@@ -32,6 +32,7 @@ def weekly_swe_trend_snm(date: int, cfg: Config, basin_means: bool = False, volu
     # TODO: move to .env
     snm_basins = r"M:/SWE/WestWide/data/hydro/SNM/dwr_basins_albn83.shp"
 
+    ACRE_FEET_PER_CUBIC_METER = 1 / 1233.48184
 
     # Check that rasters exist for each day
     # TODO: handle one or more days missing by excluding them from the plot. What about trend lines (discontinuity or go to next)?
@@ -60,6 +61,7 @@ def weekly_swe_trend_snm(date: int, cfg: Config, basin_means: bool = False, volu
 
     # Extract and mask pixel values for each day
     day_values = []
+    day_volumes_af = []
     for path in raster_paths:
         # masked_raster = ExtractByMask(path, BASIN_SHP)
 
@@ -80,6 +82,16 @@ def weekly_swe_trend_snm(date: int, cfg: Config, basin_means: bool = False, volu
         print(f"{os.path.basename(path)}: {flat.size} valid non-zero pixels, "
               f"mean={flat.mean():.4f} m, max={flat.max():.4f} m")
 
+        # Calculate volume in acre feet
+        if volume_total:
+            cell_area_m2 = 250000 # TODO: Get this from the raster instead of hardcoding it
+            print(f"cell_area_m2: {cell_area_m2:.4f} m2")
+            volume_m3 = flat.sum() * cell_area_m2
+            print(f"sum: {flat.sum():.4f}")
+            volume_af = volume_m3 * ACRE_FEET_PER_CUBIC_METER
+            day_volumes_af.append(volume_af)
+            print(f"{os.path.basename(path)}: volume={volume_af:,.0f} acre-feet")
+
     arcpy.CheckInExtension("Spatial")
 
     # Plot
@@ -96,14 +108,32 @@ def weekly_swe_trend_snm(date: int, cfg: Config, basin_means: bool = False, volu
     )
 
     ax.set_ylabel("SWE (m)")
-    ax.set_xlabel(f"Date ({str(date)[:4]}")
+    ax.set_xlabel(f"Date ({str(date)[:4]})")
     ax.set_title("Weekly SWE Trend for SNM")
     ax.grid(axis="y", linestyle="--", alpha=0.4)
     plt.xticks(rotation=30, ha="right")
+
+    if volume_total:
+        # Boxplot x-positions are 1-indexed (1, 2, 3, ...)
+        x_positions = range(1, len(day_labels) + 1)
+
+        ax2 = ax.twinx()
+        ax2.plot(
+            x_positions,
+            day_volumes_af,
+            color="#27ae60",
+            marker="o",
+            linewidth=2,
+            label="Volume (acre-feet)",
+        )
+        ax2.set_ylabel("SWE Volume (acre-feet)", color="#27ae60")
+        ax2.tick_params(axis="y", labelcolor="#27ae60")
+        ax2.set_ylim(bottom=0)  # volume shouldn't go negative; keeps the line readable
+
     plt.tight_layout()
 
     # TODO: move output path to .env
-    output_png = f"./output/weekly_swe_trend_snm_{date}.png"
+    output_png = f"./output/weekly_swe_trend_snm_{date}_vt.png"
 
     plt.savefig(output_png, dpi=300)
     print(f"\nSaved plot to {output_png}")
@@ -113,4 +143,4 @@ def weekly_swe_trend_snm(date: int, cfg: Config, basin_means: bool = False, volu
 if __name__ == "__main__":
     # Development tests
     config = Config()
-    weekly_swe_trend_snm(20260409, config, basin_means=False, volume_total=False, show_plot=True)
+    weekly_swe_trend_snm(20260409, config, basin_means=False, volume_total=True, show_plot=True)
