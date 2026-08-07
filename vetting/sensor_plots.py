@@ -13,6 +13,39 @@ from arcpy.sa import ExtractMultiValuesToPoints, FocalStatistics, NbrRectangle
 
 from config import Config
 
+def _filter_extent(sensor_shapefile: str, extent_shapefile: str):
+    """
+    Clips the sensor shapefile to only contain those that are inside extent_shapefile. Returns the filtered shapefile.
+
+    :param sensor_shapefile: Path to the SNOTEL/CDEC sensor point shapefile
+    :param extent_shapefile: Path to a polygon shapefile defining the area of interest
+
+    :return: Path to an in-memory feature class containing only the points within extent_shp
+    """
+    if not arcpy.Exists(extent_shapefile):
+        raise FileNotFoundError(f"Extent shapefile not found: {extent_shapefile}")
+
+    sensor_lyr = "sensor_lyr"
+    if arcpy.Exists(sensor_lyr):
+        arcpy.management.Delete(sensor_lyr)
+    arcpy.management.MakeFeatureLayer(sensor_shapefile, sensor_lyr)
+
+    arcpy.management.SelectLayerByLocation(sensor_lyr, "WITHIN", extent_shapefile)
+
+    matched = int(arcpy.management.GetCount(sensor_lyr)[0])
+    if matched == 0:
+        raise ValueError("No sensor points fall within the provided extent shapefile.")
+
+    filtered_fc = "in_memory/sensor_filtered"
+    if arcpy.Exists(filtered_fc):
+        arcpy.management.Delete(filtered_fc)
+    arcpy.management.CopyFeatures(sensor_lyr, filtered_fc)
+    arcpy.management.Delete(sensor_lyr)
+
+    print(f"{matched} sensor points fall within the extent shapefile.")
+    return filtered_fc
+
+
 def _extract_values(sensor_fc: str, raster_path: str, cfg: Config, focal_window: int = None) -> dict:
     """
     Runs ExtractMultiValuesToPoints against a raster (optionally pre-smoothed with FocalStatistics) and returns
@@ -60,6 +93,7 @@ def _plot_scatter(single_cell: dict, focal: dict, date: int, out_path: str = Non
     """
     Plots single-cell vs 3x3-averaged extraction on the same axes for comparison, with a 1:1 line.
     TODO: remove 3x3 from legend if focal is None
+    TODO: docs
     """
     fig, ax = plt.subplots(figsize=(7, 7))
 
@@ -79,7 +113,7 @@ def _plot_scatter(single_cell: dict, focal: dict, date: int, out_path: str = Non
     def _stats(d):
         if d["sensor"].size < 2:
             return None
-        rmse = np.sqrt(np.mean((d["model"] - d["sensor"]) ** 2))
+        rmse = np.sqrt(np.mean((d["model"] - d["sensor"]) ** 2)) # TODO: this probably isn't that useful, use abs mae
         bias = np.mean(d["model"] - d["sensor"])
         r2 = np.corrcoef(d["sensor"], d["model"])[0, 1] ** 2
         return rmse, bias, r2
@@ -103,6 +137,9 @@ def _plot_scatter(single_cell: dict, focal: dict, date: int, out_path: str = Non
     fig.tight_layout()
 
     if out_path:
+        # Confirm directory exists
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        # Save plot
         fig.savefig(out_path, dpi=150)
         print(f"Saved plot to {out_path}")
     else:
@@ -111,18 +148,17 @@ def _plot_scatter(single_cell: dict, focal: dict, date: int, out_path: str = Non
     plt.close(fig)
 
 
-
-def model_vs_sensor(date: int, cfg: Config, focal_sampling: bool = False, extent_shp: str = None):
+def model_vs_sensor(date: int, cfg: Config, focal_sampling: bool = False, extent_shapefile: str = None, out_path: str = None):
     """
     Creates a scatter plot of model SWE vs sensor SWE.
     TODO: print statements
-    TODO: pass region shapefile to clip extent of plot for. Maybe clip difference computation too if its slow
-            or have some way of storing the computed difference to then make many plots
+    TODO: pass plot title as parameter?
 
     :param date: (YYYYMMDD) Date to compare the two products on
     :param cfg: Configuration object containing environment variables set in the .env
     :param focal_sampling: (bool) If true, compare sensors to a 3x3 focal-mean sample instead of a single cell value
-    :param extent_shp: Path to a shapefile defining the extent for comparison. Default = None (full extent)
+    :param extent_shapefile: Path to a shapefile defining the extent for comparison. Default = None (full extent)
+    :param out_path: Path to where the png should be saved. Default = None (show plot but don't save)
     """
 
     # Select model SWE raster
@@ -138,17 +174,28 @@ def model_vs_sensor(date: int, cfg: Config, focal_sampling: bool = False, extent
         raise FileNotFoundError(f"Sensor shapefile not found at {sensor_shapefile}")
 
     # Check that the extent shapefile is valid
-    # TODO
+    if extent_shapefile and not arcpy.Exists(extent_shapefile):
+        raise FileNotFoundError(f"Extent shapefile not found at {extent_shapefile}")
+
+    # Clip sensors to the extent shapefile
+    points_fc = sensor_shapefile
+    if extent_shapefile:
+        print(f"Filtering sensor points to extent: {extent_shapefile}")
+        points_fc = _filter_extent(sensor_shapefile, extent_shapefile)
 
     # Compute difference for a single cell (no focal window)
     arcpy.CheckOutExtension("Spatial")
-    single_cell = _extract_values(sensor_shapefile, model_raster, cfg, focal_window=None)
+    single_cell = _extract_values(points_fc, model_raster, cfg, focal_window=None)
 
     # Compute difference for a 3x3 focal window
     focal = {"model": np.array([]), "sensor": np.array([])}
     if focal_sampling:
         print("Running 3x3 focal-mean extraction...")
-        focal = _extract_values(sensor_shapefile, model_raster, cfg, focal_window=3)
+        focal = _extract_values(points_fc, model_raster, cfg, focal_window=3)
+
+    # Clear filtered points from local memory
+    if extent_shapefile and arcpy.Exists(points_fc):
+        arcpy.management.Delete(points_fc)
 
     print(f"{len(single_cell['sensor'])} valid sensor points matched (single cell), "
           f"{len(focal['sensor'])} matched (3x3 average).")
@@ -156,10 +203,11 @@ def model_vs_sensor(date: int, cfg: Config, focal_sampling: bool = False, extent
     arcpy.CheckInExtension("Spatial")
 
     # Create scatter plot
-    _plot_scatter(single_cell, focal, date, "./output/model_vs_sensor_20260412_focal.png")
+    _plot_scatter(single_cell, focal, date, out_path=out_path)
 
 
 
 if __name__ == "__main__":
     config = Config()
-    model_vs_sensor(20260412, cfg=config, focal_sampling=True)
+    socn_extent = r"W:/data/hydro/SOCN_Region_albn83.shp"
+    model_vs_sensor(20260412, cfg=config, focal_sampling=True, extent_shapefile=socn_extent, out_path="./output/model_vs_sensor_20260412_focal_socn.png")
