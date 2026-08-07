@@ -63,6 +63,7 @@ class Config:
         sensor_path: str = None,
         sensor_list: str = None,
         snm_sensors_shp: str = None,
+        sensor_swe_field: str = None,
 
         ##### R Model Configs #####
         rscript_exe_path: str = None,
@@ -165,6 +166,7 @@ class Config:
         self.sensor_path = sensor_path or str(os.environ.get("SENSOR_PATH"))
         self.sensor_list = sensor_list or str(os.environ.get("SENSOR_LIST"))
         self.snm_sensors_shp = snm_sensors_shp or str(os.environ.get("SNM_SENSORS_SHP"))
+        self.sensor_swe_field = sensor_swe_field or str(os.environ.get("SENSOR_SWE_FIELD"))
 
         ##### R Model Configs #####
         self.rscript_exe_path = rscript_exe_path or str(os.environ.get("RSCRIPT_EXE_PATH"))
