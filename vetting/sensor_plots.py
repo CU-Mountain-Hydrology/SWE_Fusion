@@ -3,6 +3,7 @@
 Functions to create the following Snotel and CDEC sensor plots:
  * TODO: Sensor difference plot
  * Scatter plot of model swe vs sensor swe, for both single cell and 3x3 averaged window, within a given area
+ * TODO: Plot of model vs sensor error over time (week to months)
 """
 
 import os
@@ -50,7 +51,6 @@ def _extract_values(sensor_fc: str, raster_path: str, cfg: Config, focal_window:
     """
     Runs ExtractMultiValuesToPoints against a raster (optionally pre-smoothed with FocalStatistics) and returns
     paired model/sensor values.
-    TODO: pass region shapefile to limit extraction extent
 
     :param sensor_fc: Path to the sensor point shapefile
     :param raster_path: Path to the model SWE raster (.tif)
@@ -153,6 +153,7 @@ def model_vs_sensor(date: int, cfg: Config, focal_sampling: bool = False, extent
     Creates a scatter plot of model SWE vs sensor SWE.
     TODO: print statements
     TODO: pass plot title as parameter?
+    TODO: save error stats to a csv so it can be plotted over time
 
     :param date: (YYYYMMDD) Date to compare the two products on
     :param cfg: Configuration object containing environment variables set in the .env
@@ -206,6 +207,21 @@ def model_vs_sensor(date: int, cfg: Config, focal_sampling: bool = False, extent
     _plot_scatter(single_cell, focal, date, out_path=out_path)
 
 
+def sensor_error_trend(date: int, n_days: int, cfg: Config, focal_sampling: bool = False, extent_shapefile: str = None, out_path: str = None):
+    """
+    Plots the daily error between the model and sensors over some period of time.
+
+    :param date: (YYYYMMDD) The date the comparison is run on. This is the last day on the plot.
+    :param n_days: The number of days to plot
+    :param cfg: Configuration object containing environment variables set in the .env
+    :param focal_sampling: (bool) If true, compare sensors to a 3x3 focal-mean sample instead of a single cell value
+    :param extent_shapefile: Path to a shapefile defining the extent for comparison. Default = None (full extent)
+    :param out_path: Path to where the png should be saved. Default = None (show plot but don't save)
+    """
+    # TODO: Load csv with error stats generated when the model_vs_sensor function was called previously.
+    # TODO: If any dates are missing for the focal method chosen, run _extract_values
+    # TODO: Plot
+    pass
 
 if __name__ == "__main__":
     config = Config()
