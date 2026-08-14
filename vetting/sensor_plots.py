@@ -7,6 +7,7 @@ Functions to create the following Snotel and CDEC sensor plots:
 """
 
 import os
+import csv
 import numpy as np
 import arcpy
 import matplotlib.pyplot as plt
@@ -89,11 +90,72 @@ def _extract_values(sensor_fc: str, raster_path: str, cfg: Config, focal_window:
     return {"model": np.array(model_vals), "sensor": np.array(sensor_vals)}
 
 
-def _plot_scatter(single_cell: dict, focal: dict, date: int, out_path: str = None):
+def _stats(d):
+    """
+    Calculates error metrics for a dict output from _extract_values()
+
+    :param d: dict with "model" and "sensor" numpy arrays
+
+    :returns: rmse, bias, r2, mae, mape
+    """
+    if d["sensor"].size < 2:
+        return None
+
+    sensor = d["sensor"]
+    model = d["model"]
+    nonzero = sensor != 0
+
+    rmse = np.sqrt(np.mean((model - sensor) ** 2))  # Root mean squared error
+    bias = np.mean(model - sensor)
+    r2 = np.corrcoef(sensor, model)[0, 1] ** 2
+    mae = np.mean(np.abs(sensor - model))  # Mean absolute error
+    mape = float(np.mean(np.abs((sensor[nonzero] - model[nonzero]) / sensor[
+        nonzero]))) * 100  # Mean absolute percent error (abs. avg. percent error)
+    return rmse, bias, r2, mae, mape
+
+
+def _write_stat_row(csv_path, row, key_cols=("Date", "Extent", "Method")):
+    """
+    Write/update a row in the stats CSV, overwriting any existing row with the same (Date, Extent, Method).
+
+    :param csv_path: Path to the CSV file
+    :param row: Row to write
+    :param key_cols: Columns to use as keys
+    """
+    header = ["Date", "Extent", "Method", "RMSE", "Bias", "R2", "MAE", "MAPE"]
+    rows = {}
+
+    if os.path.exists(csv_path) and os.path.getsize(csv_path) > 0:
+        with open(csv_path, "r", newline="") as f:
+            reader = csv.DictReader(f)
+            for r in reader:
+                key = tuple(r[c] for c in key_cols)
+                rows[key] = r
+
+    new_row = {h: ("" if v is None else v) for h, v in zip(header, row)} # Convert None to "" and zip
+    key = tuple(str(new_row[c]) for c in key_cols)
+    rows[key] = new_row
+
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=header)
+        writer.writeheader()
+        for r in rows.values():
+            writer.writerow(r)
+
+
+def _plot_scatter(single_cell: dict, focal: dict, date: int, cfg: Config, extent_shapefile: str, out_path: str = None, save_stats: bool = True):
     """
     Plots single-cell vs 3x3-averaged extraction on the same axes for comparison, with a 1:1 line.
     TODO: remove 3x3 from legend if focal is None
-    TODO: docs
+
+    :param single_cell: dict with "model" and "sensor" numpy arrays
+    :param focal: dict with "model" and "sensor" numpy arrays
+    :param date: (YYYYMMDD) Date to run the comparison on
+    :param cfg: Configuration object containing environment variables set in the .env
+    :param extent_shapefile: Path to a shapefile defining the spatial extent of the data being plotted. Only used for
+        saving the error stats. Can be set to None if save_stats = False or no clipping extent was used.
+    :param out_path: (str) Path to the save the plot to. Default = None (show plot but don't save)
+    :param save_stats: (bool) If True, save error stats to a csv defined in the .env (MODEL_SENSOR_ERR_CSV). Default = True
     """
     fig, ax = plt.subplots(figsize=(7, 7))
 
@@ -110,20 +172,15 @@ def _plot_scatter(single_cell: dict, focal: dict, date: int, out_path: str = Non
         ax.set_xlim(lims)
         ax.set_ylim(lims)
 
-    def _stats(d):
-        if d["sensor"].size < 2:
-            return None
-        rmse = np.sqrt(np.mean((d["model"] - d["sensor"]) ** 2)) # TODO: this probably isn't that useful, use abs mae
-        bias = np.mean(d["model"] - d["sensor"])
-        r2 = np.corrcoef(d["sensor"], d["model"])[0, 1] ** 2
-        return rmse, bias, r2
-
     stats_lines = []
     for label, d in [("Single cell", single_cell), ("3x3 avg", focal)]:
         s = _stats(d)
         if s:
-            rmse, bias, r2 = s
-            stats_lines.append(f"{label}: RMSE={rmse:.2f}  Bias={bias:.2f}  R2={r2:.2f}")
+            rmse, bias, r2, mae, mape = s
+            if save_stats:
+                _write_stat_row(cfg.model_sensor_err_csv,[date, extent_shapefile, label, rmse, bias, r2, mae, mape])
+
+            stats_lines.append(f"{label}: RMSE={rmse:.2f}  Bias={bias:.2f}  R2={r2:.2f}  MAE={mae:.2f}  MAPE={mape:.2f}")
     if stats_lines:
         ax.text(0.03, 0.97, "\n".join(stats_lines), transform=ax.transAxes,
                 va="top", ha="left", fontsize=9,
@@ -148,18 +205,19 @@ def _plot_scatter(single_cell: dict, focal: dict, date: int, out_path: str = Non
     plt.close(fig)
 
 
-def model_vs_sensor(date: int, cfg: Config, focal_sampling: bool = False, extent_shapefile: str = None, out_path: str = None):
+def model_vs_sensor(date: int, cfg: Config, focal_sampling: bool = False, extent_shapefile: str = None,
+                    out_path: str = None, save_stats: bool = True):
     """
     Creates a scatter plot of model SWE vs sensor SWE.
     TODO: print statements
     TODO: pass plot title as parameter?
-    TODO: save error stats to a csv so it can be plotted over time
 
     :param date: (YYYYMMDD) Date to compare the two products on
     :param cfg: Configuration object containing environment variables set in the .env
     :param focal_sampling: (bool) If true, compare sensors to a 3x3 focal-mean sample instead of a single cell value
     :param extent_shapefile: Path to a shapefile defining the extent for comparison. Default = None (full extent)
     :param out_path: Path to where the png should be saved. Default = None (show plot but don't save)
+    :param save_stats: (bool) If True, save error stats to a csv defined in the .env (MODEL_SENSOR_ERR_CSV)
     """
 
     # Select model SWE raster
@@ -204,7 +262,7 @@ def model_vs_sensor(date: int, cfg: Config, focal_sampling: bool = False, extent
     arcpy.CheckInExtension("Spatial")
 
     # Create scatter plot
-    _plot_scatter(single_cell, focal, date, out_path=out_path)
+    _plot_scatter(single_cell, focal, date, cfg, extent_shapefile, out_path=out_path, save_stats=save_stats)
 
 
 def sensor_error_trend(date: int, n_days: int, cfg: Config, focal_sampling: bool = False, extent_shapefile: str = None, out_path: str = None):
@@ -226,4 +284,4 @@ def sensor_error_trend(date: int, n_days: int, cfg: Config, focal_sampling: bool
 if __name__ == "__main__":
     config = Config()
     socn_extent = r"W:/data/hydro/SOCN_Region_albn83.shp"
-    model_vs_sensor(20260412, cfg=config, focal_sampling=True, extent_shapefile=socn_extent, out_path="./output/model_vs_sensor_20260412_focal_socn.png")
+    model_vs_sensor(20260412, cfg=config, focal_sampling=True, extent_shapefile=None, out_path="./output/model_vs_sensor_20260412_focal_socn.png")

@@ -112,6 +112,9 @@ class Config:
         proj_geo: int = None,
         proj_alb: int = None,
         proj_utm: int = None,
+
+        ##### Vetting #####
+        model_sensor_err_csv: str = None,
     ):
         # Load .env file into os.environment
         load_dotenv(find_dotenv(usecwd=True))
@@ -215,6 +218,9 @@ class Config:
         self.proj_geo = proj_geo or int(os.environ.get("PROJ_GEO"))
         self.proj_alb = proj_alb or int(os.environ.get("PROJ_ALB"))
         self.proj_utm = proj_utm or int(os.environ.get("PROJ_UTM"))
+
+        ##### Vetting #####
+        self.model_sensor_err_csv = model_sensor_err_csv or str(os.environ.get("MODEL_SENSOR_ERR_CSV"))
 
 if __name__ == "__main__":
     config = Config()
