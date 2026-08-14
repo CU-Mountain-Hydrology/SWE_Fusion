@@ -8,6 +8,8 @@ Functions to create the following Snotel and CDEC sensor plots:
 
 import os
 import csv
+import glob
+from datetime import datetime as dt
 import numpy as np
 import arcpy
 import matplotlib.pyplot as plt
@@ -143,7 +145,7 @@ def _write_stat_row(csv_path, row, key_cols=("Date", "Extent", "Method")):
             writer.writerow(r)
 
 
-def _plot_scatter(single_cell: dict, focal: dict, date: int, cfg: Config, extent_shapefile: str, out_path: str = None, save_stats: bool = True):
+def _plot_scatter(single_cell: dict, focal: dict, date: int, cfg: Config, extent_shapefile: str, out_path: str = None, plot_title: str = None, save_stats: bool = True):
     """
     Plots single-cell vs 3x3-averaged extraction on the same axes for comparison, with a 1:1 line.
     TODO: remove 3x3 from legend if focal is None
@@ -155,6 +157,7 @@ def _plot_scatter(single_cell: dict, focal: dict, date: int, cfg: Config, extent
     :param extent_shapefile: Path to a shapefile defining the spatial extent of the data being plotted. Only used for
         saving the error stats. Can be set to None if save_stats = False or no clipping extent was used.
     :param out_path: (str) Path to the save the plot to. Default = None (show plot but don't save)
+    :param plot_title: Plot title. Default = None
     :param save_stats: (bool) If True, save error stats to a csv defined in the .env (MODEL_SENSOR_ERR_CSV). Default = True
     """
     fig, ax = plt.subplots(figsize=(7, 7))
@@ -188,7 +191,8 @@ def _plot_scatter(single_cell: dict, focal: dict, date: int, cfg: Config, extent
 
     ax.set_xlabel("Sensor SWE (m)")
     ax.set_ylabel("Model SWE (m)")
-    ax.set_title(f"Model vs Sensor SWE — {date}")
+    if plot_title:
+        ax.set_title(plot_title)
     ax.legend(loc="lower right")
     ax.set_aspect("equal", adjustable="box")
     fig.tight_layout()
@@ -206,26 +210,30 @@ def _plot_scatter(single_cell: dict, focal: dict, date: int, cfg: Config, extent
 
 
 def model_vs_sensor(date: int, cfg: Config, focal_sampling: bool = False, extent_shapefile: str = None,
-                    out_path: str = None, save_stats: bool = True):
+                    out_path: str = None, plot_title: str = None, save_stats: bool = True):
     """
     Creates a scatter plot of model SWE vs sensor SWE.
-    TODO: print statements
-    TODO: pass plot title as parameter?
 
     :param date: (YYYYMMDD) Date to compare the two products on
     :param cfg: Configuration object containing environment variables set in the .env
     :param focal_sampling: (bool) If true, compare sensors to a 3x3 focal-mean sample instead of a single cell value
     :param extent_shapefile: Path to a shapefile defining the extent for comparison. Default = None (full extent)
     :param out_path: Path to where the png should be saved. Default = None (show plot but don't save)
+    :param plot_title: Plot title. Default = None
     :param save_stats: (bool) If True, save error stats to a csv defined in the .env (MODEL_SENSOR_ERR_CSV)
     """
 
     # Select model SWE raster
-    # TODO: how to know which tif should be used? What about after ASO bias correction?
-    # TODO: remove hardcoded path
-    model_raster = "W:/documents/2026_RT_Reports/20260412_RT_report/ASO_BiasCorrect_RT_CanAdj_rcn_woCCR_nofscamskSens_noMdlFsca_UseThis/p8_20260412_noneg.tif"
+    year = dt.strptime(str(date), "%Y%m%d").year
+    use_this_dirs = glob.glob(f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report/*UseThis*")
+    print(f"Use this dirs: {use_this_dirs}")
+    if not use_this_dirs:
+        raise FileNotFoundError(f"No UseThis directory found with pattern {cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report")
+    use_this_dir = use_this_dirs[0]
+
+    model_raster = f"{use_this_dir}/p8_{date}_noneg.tif"
     if not os.path.exists(model_raster):
-        raise FileNotFoundError(f"Model SWE raster not found at {model_raster}")
+        raise FileNotFoundError(f"No p8 raster tif found in {use_this_dir}")
 
     # Select sensor shapefile
     sensor_shapefile = f"{cfg.ww_results_workspace}/{date}_results/{date}_sensors_albn83.shp"
@@ -262,7 +270,7 @@ def model_vs_sensor(date: int, cfg: Config, focal_sampling: bool = False, extent
     arcpy.CheckInExtension("Spatial")
 
     # Create scatter plot
-    _plot_scatter(single_cell, focal, date, cfg, extent_shapefile, out_path=out_path, save_stats=save_stats)
+    _plot_scatter(single_cell, focal, date, cfg, extent_shapefile, out_path=out_path, plot_title=plot_title, save_stats=save_stats)
 
 
 def sensor_error_trend(date: int, n_days: int, cfg: Config, focal_sampling: bool = False, extent_shapefile: str = None, out_path: str = None):
