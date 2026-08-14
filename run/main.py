@@ -18,6 +18,8 @@ from run.sensor_processing import sensor_survey_processing
 from run.run_R_model import write_simulation_date, run_R_model
 from run.utils import make_directories, get_zero_sensors, get_water_year
 from run.tables_and_layers import ww_tables_and_layers, snm_tables_and_layers
+from vetting.sensor_plots import model_vs_sensor
+
 from SWE_Fusion_functions import geopackage_to_shapefile
 
 logger = logging.getLogger(__name__)
@@ -30,6 +32,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
     TODO: time elapsed / progress indicator
     TODO: clear arcpy locks between function calls <- look more into what this actually does
     TODO: add tests to confirm config/.env is set up correctly
+    TODO: mark directories with UseThis, UseAvg for report code and vetting plots
 
     :param date: (YYYYMMDD) Date the model is run on.
     :param prompt_user: Ask the user for confirmation before downloading files. Default: False
@@ -144,8 +147,25 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
     )
 
     ######### Vetting Starts Now #######
-
-
+    domain_to_shapefile = {
+        "SNM": r"W:/data/hydro/SNM_Region_albn83.shp",
+        "SOCN": r"W:/data/hydro/SOCN_Region_albn83.shp",
+        "NOCN": r"W:/data/hydro/NOCN_Region_albn83.shp",
+        "INMT": r"W:/data/hydro/INMT_Region_albn83_woTahoe.shp",
+        "PNW": r"W:/data/hydro/PNW_Region_albn83_v2.shp",
+    }
+    year = datetime.strptime(str(date), "%Y%m%d").year
+    for domain in cfg.domain_list:
+        if domain == "SNM":
+            out_path = f"{cfg.snm_reports_workspace.format(year=year)}/{date}_RT_report/model_vs_sensor_{date}_{domain}.png"
+        else:
+            out_path = f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report/model_vs_sensor_{date}_{domain}.png"
+        ckpt.run_step(
+            f"model_vs_sensor_{domain}",
+            model_vs_sensor,
+            date=date, cfg=cfg, focal_sampling=True, extent_shapefile=domain_to_shapefile[domain], out_path=out_path,
+            plot_title=f"Model vs Sensor SWE ({domain}) - {date}", save_stats=True
+        )
 
 
     # Download MODIS true color imagery for SNM report
