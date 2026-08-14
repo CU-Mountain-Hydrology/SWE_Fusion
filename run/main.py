@@ -20,7 +20,7 @@ from run.utils import make_directories, get_zero_sensors, get_water_year
 from run.tables_and_layers import ww_tables_and_layers, snm_tables_and_layers
 from vetting.sensor_plots import model_vs_sensor
 
-from SWE_Fusion_functions import geopackage_to_shapefile
+from SWE_Fusion_functions import geopackage_to_shapefile, clear_arcpy_locks
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
     This is the master script to automatically run the whole model. Each step is called sequentially, with checkpoints
     in order to resume mid way through in case of a fatal error.
     TODO: time elapsed / progress indicator
-    TODO: clear arcpy locks between function calls <- look more into what this actually does
+    TODO: look into the root cause necessitating clear_arcpy_locks()
     TODO: add tests to confirm config/.env is set up correctly
     TODO: mark directories with UseThis, UseAvg for report code and vetting plots
 
@@ -59,6 +59,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
 
     # fSCA Processing
     ckpt.run_step("fsca_processing", fsca_processing, date, cfg)
+    clear_arcpy_locks()
 
     # Set date in text file at SIMULATION_DATE_PATH from the .env
     # This is never read by the automated daily model, only kept for consistency and manual runs.
@@ -69,9 +70,11 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
 
     # Run model with CCR
     _, model_wCCR = ckpt.run_step("run_R_model_wCCR", run_R_model, date=date, isCCR=True, cfg=cfg)
+    clear_arcpy_locks()
 
     # Run model without CCR
     _, model_woCCR = ckpt.run_step("run_R_model_woCCR", run_R_model, date=date, isCCR=False, cfg=cfg)
+    clear_arcpy_locks()
 
     # Disable arcpy parallel processing for SWE Fusion steps
     # TODO: learn why this caused crash and hopefully fix issue so it can run faster
@@ -96,6 +99,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         user=cfg.rmodel_username, domainList=cfg.domain_list, model_workspace=cfg.regress_path,
         results_workspace=f"{cfg.ww_results_workspace}/{date}_results/",
     )
+    clear_arcpy_locks()
 
     # Process and sort sensors and surveys for WW
     ckpt.run_step(
@@ -103,6 +107,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         sensor_survey_processing,
         date=date, domain="WW", surveys_use=surveys_use, cfg=cfg,
     )
+    clear_arcpy_locks()
 
     # Run SNODAS for WW
     ckpt.run_step(
@@ -110,9 +115,11 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         snodas_processing,
         date=date, domain="WW", model_woCCR=model_woCCR, cfg=cfg,
     )
+    clear_arcpy_locks()
 
     # Tables and Layers WW wCCR/woCCR
     ckpt.run_step("ww_tables_and_layers", ww_tables_and_layers, date, model_wCCR, model_woCCR, cfg)
+    clear_arcpy_locks()
 
     # Get zero sensors for all domains
     # TODO: why here instead of after sensor download
@@ -121,6 +128,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         get_zero_sensors,
         date=date, domains=cfg.domain_list, model_wCCR=model_wCCR, cfg=cfg,
     )
+    clear_arcpy_locks()
 
     # Process and sort sensors and surveys for SNM
     ckpt.run_step(
@@ -128,6 +136,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         sensor_survey_processing,
         date=date, domain="SNM", surveys_use=surveys_use, cfg=cfg,
     )
+    clear_arcpy_locks()
 
     # Run SNODAS for SNM
     ckpt.run_step(
@@ -135,9 +144,11 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         snodas_processing,
         date=date, domain="SNM", model_woCCR=model_woCCR, cfg=cfg,
     )
+    clear_arcpy_locks()
 
     # Tables and Layers SNM wCCR/woCCR
     ckpt.run_step("snm_tables_and_layers", snm_tables_and_layers, date, model_woCCR, model_woCCR, cfg)
+    clear_arcpy_locks()
 
     # Get zero sensors for SNM
     ckpt.run_step(
@@ -145,6 +156,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         get_zero_sensors,
         date=date, domains=["SNM"], model_wCCR=model_wCCR, cfg=cfg,
     )
+    clear_arcpy_locks()
 
     ######### Vetting Starts Now #######
     domain_to_shapefile = {
