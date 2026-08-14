@@ -16,7 +16,7 @@ from run.fsca_processing import fsca_processing
 from run.snodas_processing import snodas_processing
 from run.sensor_processing import sensor_survey_processing
 from run.run_R_model import write_simulation_date, run_R_model
-from run.utils import make_directories, get_zero_sensors, get_water_year
+from run.utils import make_directories, get_zero_sensors, get_water_year, mark_usethis_useavg
 from run.tables_and_layers import ww_tables_and_layers, snm_tables_and_layers
 from vetting.sensor_plots import model_vs_sensor
 
@@ -32,7 +32,6 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
     TODO: time elapsed / progress indicator
     TODO: look into the root cause necessitating clear_arcpy_locks()
     TODO: add tests to confirm config/.env is set up correctly
-    TODO: mark directories with UseThis, UseAvg for report code and vetting plots
 
     :param date: (YYYYMMDD) Date the model is run on.
     :param prompt_user: Ask the user for confirmation before downloading files. Default: False
@@ -88,7 +87,6 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
     # TODO: function to download surveys and check if it is different than before in which case run with surveys again
     surveys_use="Y"
 
-    # GPKG -> SHP for woCCR model run
     # Convert geopackage to shapefile for woCCR model run
     # TODO: restructure to just pass cfg directly
     pillow_date = datetime.strptime(str(date), "%Y%m%d").strftime("%d%b%Y")
@@ -118,7 +116,11 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
     clear_arcpy_locks()
 
     # Tables and Layers WW wCCR/woCCR
-    ckpt.run_step("ww_tables_and_layers", ww_tables_and_layers, date, model_wCCR, model_woCCR, cfg)
+    ckpt.run_step(
+        "ww_tables_and_layers",
+        ww_tables_and_layers,
+        date, model_wCCR, model_woCCR, cfg
+    )
     clear_arcpy_locks()
 
     # Get zero sensors for all domains
@@ -130,33 +132,45 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
     )
     clear_arcpy_locks()
 
-    # Process and sort sensors and surveys for SNM
-    ckpt.run_step(
-        "sensor_survey_processing_SNM",
-        sensor_survey_processing,
-        date=date, domain="SNM", surveys_use=surveys_use, cfg=cfg,
-    )
-    clear_arcpy_locks()
+    if "SNM" in cfg.domain_list:
+        # Process and sort sensors and surveys for SNM
+        ckpt.run_step(
+            "sensor_survey_processing_SNM",
+            sensor_survey_processing,
+            date=date, domain="SNM", surveys_use=surveys_use, cfg=cfg,
+        )
+        clear_arcpy_locks()
 
-    # Run SNODAS for SNM
-    ckpt.run_step(
-        "snodas_processing_SNM",
-        snodas_processing,
-        date=date, domain="SNM", model_woCCR=model_woCCR, cfg=cfg,
-    )
-    clear_arcpy_locks()
+        # Run SNODAS for SNM
+        ckpt.run_step(
+            "snodas_processing_SNM",
+            snodas_processing,
+            date=date, domain="SNM", model_woCCR=model_woCCR, cfg=cfg,
+        )
+        clear_arcpy_locks()
 
-    # Tables and Layers SNM wCCR/woCCR
-    ckpt.run_step("snm_tables_and_layers", snm_tables_and_layers, date, model_woCCR, model_woCCR, cfg)
-    clear_arcpy_locks()
+        # Tables and Layers SNM wCCR/woCCR
+        ckpt.run_step(
+            "snm_tables_and_layers",
+            snm_tables_and_layers,
+            date, model_woCCR, model_woCCR, cfg
+        )
+        clear_arcpy_locks()
 
-    # Get zero sensors for SNM
+        # Get zero sensors for SNM
+        ckpt.run_step(
+            "get_zero_sensors_SNM",
+            get_zero_sensors,
+            date=date, domains=["SNM"], model_wCCR=model_wCCR, cfg=cfg,
+        )
+        clear_arcpy_locks()
+
+    # Mark UseThis and UseAvg directories
     ckpt.run_step(
-        "get_zero_sensors_SNM",
-        get_zero_sensors,
-        date=date, domains=["SNM"], model_wCCR=model_wCCR, cfg=cfg,
+        "mark_usethis_useavg",
+        mark_usethis_useavg,
+        date=date, cfg=cfg,
     )
-    clear_arcpy_locks()
 
     ######### Vetting Starts Now #######
     domain_to_shapefile = {

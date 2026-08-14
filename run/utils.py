@@ -1,6 +1,7 @@
 # run/utils.py
 
 import os
+import glob
 from datetime import datetime
 
 from config import Config
@@ -11,6 +12,8 @@ def make_directories(date: int, cfg: Config):
     Unlike in the original SWE_FUSION.py, the MODIS directory does not need to be made here since it is now handled
     in download/download_modis.py
 
+    Only creates SNM directories if "SNM" is in the DOMAIN_LIST set in the .env
+
     :param date: int (YYYYMMDD) Date the model is run on.
     :param cfg: Configuration object containing environment variables from the .env.
 
@@ -19,18 +22,77 @@ def make_directories(date: int, cfg: Config):
 
     # Make results directories
     os.makedirs(f"{cfg.ww_results_workspace}/{date}_results", exist_ok=True)
-    os.makedirs(f"{cfg.snm_results_workspace}/{date}_results", exist_ok=True)
+    if "SNM" in cfg.domain_list:
+        os.makedirs(f"{cfg.snm_results_workspace}/{date}_results", exist_ok=True)
 
     # Make report directories
     year = datetime.strptime(f"{date}", "%Y%m%d").year
     ww_report_dir = f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report"
     snm_report_dir = f"{cfg.snm_reports_workspace.format(year=year)}/{date}_RT_report"
     os.makedirs(ww_report_dir, exist_ok=True)
-    os.makedirs(snm_report_dir, exist_ok=True)
+    if "SNM" in cfg.domain_list:
+        os.makedirs(snm_report_dir, exist_ok=True)
 
     # Make SNODAS directories
     os.makedirs(f"{ww_report_dir}/SNODAS", exist_ok=True)
-    os.makedirs(f"{snm_report_dir}/SNODAS", exist_ok=True)
+    if "SNM" in cfg.domain_list:
+        os.makedirs(f"{snm_report_dir}/SNODAS", exist_ok=True)
+
+    print(". \033[32mDone.\033[0m")
+
+
+def mark_usethis_useavg(date: int, cfg: Config):
+    """
+    Marks the different model run directories with UseThis and UseAvg in both the results and reports directories for
+    both WW and SNM. This function is called before any ASO processing, so the directories may need to be renamed after
+    that processing is complete.
+
+    In the event there are multiple woCCR model runs with differing other parameters, the most recent will be used as
+    the UseThis directory. THe UseAvg directory will always use the same methods that have been used historically.
+
+    TODO: decide between using an error metric for wCCR vs woCCR or just always using woCCR
+
+    :param date: (YYYYMMDD) Date to rename the directories for.
+    :param cfg: Configuration object containing environment variables from the .env.
+    """
+    print(f"Marking directories with UseThis and UseAvg...",end="")
+
+    year = datetime.strptime(str(date), "%Y%m%d").year
+    directories = {
+        "ww_results": f"{cfg.ww_results_workspace}/{date}_results",
+        "ww_report": f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report",
+        "snm_results": f"{cfg.snm_results_workspace}/{date}_results",
+        "snm_report": f"{cfg.snm_reports_workspace.format(year=year)}/{date}_RT_report",
+    }
+
+    if not "SNM" in cfg.domain_list:
+        directories.pop("snm_results", None)
+        directories.pop("snm_report", None)
+
+    for d in directories.keys():
+        # Remove any existing UseThis tags from previous runs (UseAvg never changes)
+        usethis_dirs = glob.glob(f"{directories[d]}/*UseThis*")
+        if usethis_dirs:
+            usethis_dir = usethis_dirs[0]
+            os.rename(usethis_dir, usethis_dir.replace(f"_UseThis", ""))
+
+        # Find all woCCR directories (currently only woCCR model runs are considered for UseThis, see the to-do above)
+        woCCR_dirs = glob.glob(f"{directories[d]}/*woCCR*")
+        if not woCCR_dirs:
+            raise FileNotFoundError(f"No woCCR directory found in {directories[d]}!")
+
+        # Sort matches by time and use the most recent for UseThis
+        usethis_dir = max(woCCR_dirs, key=os.path.getmtime)
+        os.rename(usethis_dir, usethis_dir+"_UseThis")
+
+        # UseAvg dir always uses the same methods (and therefore same directory name)
+        useavg_dir = f"{directories[d]}/RT_CanAdj_rcn_woCCR_nofscamskSens"
+        if not os.path.exists(useavg_dir):
+            # Check if the RT_CanAdj_rcn_woCCR_nofscamskSens directory has already been marked as UseThis
+            useavg_dir += "_UseThis"
+            if not os.path.exists(useavg_dir):
+                raise FileNotFoundError(f"No potential UseAvg directory found in {directories[d]}!")
+        os.rename(useavg_dir, useavg_dir+"_UseAvg")
 
     print(". \033[32mDone.\033[0m")
 
