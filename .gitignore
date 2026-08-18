@@ -4,6 +4,11 @@ out
 vetting/output
 generate_swe_reports/output
 generate_swe_reports/src/__pycache__/
+__pycache__/
+*/__pycache__/
+*.pyc
+*.pyo
+*.pyd
 .env
 .env.*
 !.env.example
