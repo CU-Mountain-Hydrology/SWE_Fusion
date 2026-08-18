@@ -18,14 +18,17 @@ def download_snowtrax(cfg: Config):
     url = "https://snow.water.ca.gov/service/plotly/dash/fcast_resources/_dash-update-component"
 
     payload = {
-        "output": "download-data.data",
-        "outputs": {"id": "download-data", "property": "data"},
+        "output": "..download-data.data...data-export-loading-target.children..",
+        "outputs": [
+            {"id": "download-data", "property": "data"},
+            {"id": "data-export-loading-target", "property": "children"}
+        ],
         "inputs": [
             {"id": "data-export-snow", "property": "n_clicks", "value": 1},
             {"id": "data-export-flow", "property": "n_clicks", "value": 0}
         ],
         "changedPropIds": ["data-export-snow.n_clicks"],
-        "parsedChangedPropIds": ["data-export-snow.n_clicks"]
+        "parsedChangedPropsIds": ["data-export-snow.n_clicks"]
     }
 
     headers = {
