@@ -6,13 +6,14 @@ import json
 
 from config import Config
 
-def download_snowtrax(cfg: Config):
+def download_snowtrax(cfg: Config, progress_callback=None):
     """
     Downloads the most recent CCSS SnowTrax data my mimicking the network request sent by visiting https://snow.water.ca.gov/fcast_resources
     and clicking Download Data > Snow Data.
     The downloaded data is written to SNOWTRAX_FILENAME and saved to SNOWTRAX_PATH, as set in the .env
 
     :param cfg: Configuration object containing environment variables from the .env.
+    :param progress_callback: Function to return download progress to the main script.
     """
     # Create network request
     url = "https://snow.water.ca.gov/service/plotly/dash/fcast_resources/_dash-update-component"
@@ -54,9 +55,16 @@ def download_snowtrax(cfg: Config):
     for chunk in response.iter_content(chunk_size=65536):
         raw += chunk
         downloaded += len(chunk)
-        print(f"\rDownloading SnowTrax SWE data... {min(100, round(downloaded / total_bytes * 100))}%", end="", flush=True)
+        pct = min(100, round(downloaded / total_bytes * 100))
+        if progress_callback:
+            progress_callback(pct)
+        else:
+            print(f"\rDownloading SnowTrax SWE data... {pct}%", end="", flush=True)
 
-    print("\rDownloading SnowTrax SWE data... \033[32m100%\033[0m")
+    if progress_callback:
+        progress_callback(100)
+    else:
+        print("\rDownloading SnowTrax SWE data... \033[32m100%\033[0m")
 
     # Write downloaded content to csv file
     data = json.loads(raw)

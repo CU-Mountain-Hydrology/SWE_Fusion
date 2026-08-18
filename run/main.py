@@ -77,6 +77,12 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
             progress.advance(task)
             return result
 
+        def make_progress_callback(base_description):
+            """Report sub-progress within a step"""
+            def callback(pct):
+                progress.update(task, description=f"{base_description} ({pct}%)")
+            return callback
+
         # Download fSCA data
         step("download_fsca", "Downloading fSCA data", download_fsca, date, "ssh", cfg, prompt_user=prompt_user)
 
@@ -84,7 +90,9 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         step("download_snodas", "Downloading SNODAS data", download_snodas, date, cfg)
 
         # Download SnowTrax SWE data
-        step("download_snowtrax", "Downloading SnowTrax data", download_snowtrax, cfg)
+        step("download_snowtrax", "Downloading SnowTrax data", download_snowtrax, cfg,
+             progress_callback=make_progress_callback("Downloading SnowTrax data")
+        )
 
         # fSCA Processing
         step("fsca_processing", "Processing fSCA", fsca_processing, date, cfg)
