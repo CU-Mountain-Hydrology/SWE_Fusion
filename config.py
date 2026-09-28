@@ -115,6 +115,14 @@ class Config:
 
         ##### Vetting #####
         model_sensor_err_csv: str = None,
+
+        ##### Automatic Daily Run Parameters #####
+        conda_env: str = None,
+        model_run_log_dir: str = None,
+        max_retries: int = None,
+        retry_delay_s: int = None,
+        stderr_tail_lines: int = None,
+
     ):
         # Load .env file into os.environment
         load_dotenv(find_dotenv(usecwd=True))
@@ -222,5 +230,11 @@ class Config:
         ##### Vetting #####
         self.model_sensor_err_csv = model_sensor_err_csv or str(os.environ.get("MODEL_SENSOR_ERR_CSV"))
 
+        ##### Automatic Daily Run Parameters #####
+        self.conda_env = conda_env or str(os.environ.get("CONDA_ENV"))
+        self.model_run_log_dir = model_run_log_dir or str(os.environ.get("MODEL_RUN_LOG_DIR"))
+        self.max_retries = max_retries or str(os.environ.get("MAX_RETRIES"))
+        self.retry_delay_s = retry_delay_s or str(os.environ.get("RETRY_DELAY_S"))
+        self.stderr_tail_lines = stderr_tail_lines or str(os.environ.get("STDERR_TAIL_LINES"))
 if __name__ == "__main__":
     config = Config()

@@ -3,6 +3,7 @@
 import argparse
 import logging
 import arcpy
+from datetime import timedelta
 from datetime import datetime as dt
 from rich.progress import (
     Progress, SpinnerColumn, BarColumn, TextColumn,
@@ -242,7 +243,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("date", type=int, help="YYYYMMDD Date the model is run on.")
+    parser.add_argument("-d", "--date", type=int, help="YYYYMMDD Date the model is run on.")
     parser.add_argument("-u", "--prompt_user", action="store_true",
                         help="Prompt the user before overwriting or automatically selecting files")
     parser.add_argument("-r", "--reset_checkpoints", action="store_true",
@@ -250,11 +251,16 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # Sanity checks
-    date_d = dt.strptime(str(args.date), "%Y%m%d")
-    if date_d > dt.today():
-        print(f"Date ({args.date} is in the future! Aborting.")
-        exit(1)
+    # Check if date was manually passed to script
+    if args.date:
+        # Sanity checks
+        date_d = dt.strptime(str(args.date), "%Y%m%d")
+        if date_d > dt.today():
+            print(f"Date ({args.date} is in the future! Aborting.")
+            exit(1)
+    else:
+        # Otherwise run model on the prior day
+        date_d = dt.today() - timedelta(days=1)
 
     # Run Model
     run_model(args.date, args.prompt_user, args.reset_checkpoints)
