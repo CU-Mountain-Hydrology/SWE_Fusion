@@ -14,7 +14,8 @@ import os
 import subprocess
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
+from datetime import datetime as dt
 from pathlib import Path
 
 # Task Scheduler starts in System32 by default, set cwd to ...\SWE_Fusion
@@ -135,7 +136,7 @@ def main():
     cfg = Config()
 
     # Get yesterday's date
-    run_date = datetime.now() - timedelta(days=1)
+    run_date = dt.now() - timedelta(days=1)
     date_str = run_date.strftime("%Y%m%d")
     date_int = int(date_str)
 
