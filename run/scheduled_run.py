@@ -26,7 +26,7 @@ os.chdir(PROJECT_ROOT)
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from config import Config
-from utils import get_water_year
+from run.utils import get_water_year
 
 def unique_log_path(log_dir: Path, date_str: str) -> Path:
     """
@@ -40,6 +40,7 @@ def unique_log_path(log_dir: Path, date_str: str) -> Path:
     while (candidate := log_dir / f"run_{date_str}_{n}.log").exists():
         n += 1
     return candidate
+
 
 def setup_logging(date_str: str, cfg: Config) -> logging.Logger:
     """

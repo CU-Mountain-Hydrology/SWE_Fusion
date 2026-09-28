@@ -5,7 +5,7 @@ import arcpy
 import os
 
 from config import Config
-from utils import make_directories
+from run.utils import make_directories
 from download.download_snodas import download_snodas
 from SWE_Fusion_functions import SNODAS_Processing
 

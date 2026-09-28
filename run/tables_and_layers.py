@@ -4,7 +4,7 @@ from datetime import datetime
 import arcpy
 
 from config import Config
-from utils import get_water_year, get_previous_model_run
+from run.utils import get_water_year, get_previous_model_run
 from SWE_Fusion_functions import tables_and_layers, tables_and_layers_SNM
 
 def ww_tables_and_layers(date: int, model_wCCR: str, model_woCCR: str, cfg: Config):
