@@ -28,18 +28,31 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from config import Config
 from utils import get_water_year
 
+def unique_log_path(log_dir: Path, date_str: str) -> Path:
+    """
+    Returns log_dir/run_{date_str}.log if it doesn't exist yet, otherwise run_{date_str}_2.log, _3.log, etc.
+    TODO: docs
+    """
+    base = log_dir / f"run_{date_str}.log"
+    if not base.exists():
+        return base
+    n = 2
+    while (candidate := log_dir / f"run_{date_str}_{n}.log").exists():
+        n += 1
+    return candidate
+
 def setup_logging(date_str: str, cfg: Config) -> logging.Logger:
     """
     TODO: docs
     """
-    log_dir = cfg.model_run_log_dir.format(water_year=get_water_year(int(date_str)))
-    Path(log_dir).mkdir(parents=True, exist_ok=True)
+    log_dir = Path(cfg.model_run_log_dir.format(water_year=get_water_year(int(date_str))))
+    log_dir.mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger("scheduled_run")
     logger.setLevel(logging.INFO)
     logger.handlers.clear()
 
     log_format = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-    fh = logging.FileHandler(f"{log_dir}/run_{date_str}.log", encoding="utf-8")
+    fh = logging.FileHandler(unique_log_path(log_dir, date_str), encoding="utf-8")
     fh.setFormatter(log_format)
     logger.addHandler(fh)
     ch = logging.StreamHandler(sys.stdout)
@@ -104,7 +117,7 @@ def flag_stuck(date_str: str, reason: str, logger: logging.Logger, cfg: Config):
     Write a STUCK marker and log CRITICAL.
     """
     logger.critical(f"PIPELINE STUCK for {date_str}: {reason}")
-    log_dir = cfg.model_run_log_dir.format(water_year=get_water_year(int(date_str)))
+    log_dir = Path(cfg.model_run_log_dir.format(water_year=get_water_year(int(date_str))))
     (log_dir / f"STUCK_{date_str}.flag").write_text(reason, encoding="utf-8")
 
 
