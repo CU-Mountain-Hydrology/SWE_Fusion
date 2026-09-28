@@ -18,7 +18,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 # Task Scheduler starts in System32 by default, set cwd to ...\SWE_Fusion
-PROJECT_ROOT = Path(r"H:\path\to\SWE_Fusion")
+# This has to be derived from the current filepath here rather than set in the .env since we need
+# to know what the project root is initially to even find the .env and import Config
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 os.chdir(PROJECT_ROOT)
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -66,6 +68,45 @@ def read_checkpoint(cp_path: Path):
         return None, None
 
 
+def git_pull(logger: logging.Logger) -> bool:
+    """
+    Pull the latest code in PROJECT_ROOT before running. Returns True on success.
+    A dirty working tree with throw an error which gets logged and treated as fatal.
+    """
+    cmd = ["git", "pull"]
+    logger.info(f"Running: {' '.join(cmd)} (cwd={PROJECT_ROOT})")
+    proc = subprocess.run(
+        cmd,
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+        shell=True,
+    )
+    if proc.stdout:
+        logger.info(f"git pull stdout:\n{proc.stdout.strip()}")
+    if proc.stderr:
+        logger.warning(f"git pull stderr:\n{proc.stderr.strip()}")
+    if proc.returncode != 0:
+        logger.error(f"git pull failed (exit {proc.returncode}); aborting run.")
+        return False
+    return True
+
+
+def stderr_tail(stderr_text: str, n_lines: int) -> str:
+    if not stderr_text:
+        return ""
+    return "\n".join(stderr_text.strip().splitlines()[-n_lines:])
+
+
+def flag_stuck(date_str: str, reason: str, logger: logging.Logger, cfg: Config):
+    """
+    Write a STUCK marker and log CRITICAL.
+    """
+    logger.critical(f"PIPELINE STUCK for {date_str}: {reason}")
+    log_dir = cfg.model_run_log_dir.format(water_year=get_water_year(int(date_str)))
+    (log_dir / f"STUCK_{date_str}.flag").write_text(reason, encoding="utf-8")
+
+
 def run_once(date_str: str, logger: logging.Logger, cfg: Config):
     """
     Runs main.py once as a module from PROJECT_ROOT. Returns (returncode, stderr_text).
@@ -89,21 +130,6 @@ def run_once(date_str: str, logger: logging.Logger, cfg: Config):
     return proc.returncode, proc.stderr
 
 
-def stderr_tail(stderr_text: str, n_lines: int) -> str:
-    if not stderr_text:
-        return ""
-    return "\n".join(stderr_text.strip().splitlines()[-n_lines:])
-
-
-def flag_stuck(date_str: str, reason: str, logger: logging.Logger, cfg: Config):
-    """
-    Write a STUCK marker and log CRITICAL.
-    """
-    logger.critical(f"PIPELINE STUCK for {date_str}: {reason}")
-    log_dir = cfg.model_run_log_dir.format(water_year=get_water_year(int(date_str)))
-    (log_dir / f"STUCK_{date_str}.flag").write_text(reason, encoding="utf-8")
-
-
 def main():
     # Read config from .env
     cfg = Config()
@@ -116,6 +142,10 @@ def main():
     # Set up logger
     logger = setup_logging(date_str, cfg)
     logger.info(f"=== Starting SWE_Fusion pipeline for {date_str} ===")
+
+    # Pull latest code
+    if not git_pull(logger):
+        return 1
 
     cp_path = checkpoint_file(date_int, cfg)
     logger.info(f"Checkpoint file expected at: {cp_path}")
