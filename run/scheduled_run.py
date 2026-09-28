@@ -1,7 +1,7 @@
 """
 run/scheduled_run.py
 
-Daily wrapper around run/main.py, launched by Windows Task Scheduler (see run/schedule_run.ps1).
+Daily wrapper around run/main.py, launched by Windows Task Scheduler.
 
 Automatically runs the model for the previous day, within the conda environment. On a fatal error, the main script is
 retried using the checkpoint system managed in main.py. After cfg.max_retries failed attempts, it exits. If the same
