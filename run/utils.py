@@ -2,7 +2,7 @@
 
 import os
 import glob
-from datetime import datetime
+from datetime import datetime as dt
 
 from config import Config
 
@@ -26,7 +26,7 @@ def make_directories(date: int, cfg: Config):
         os.makedirs(f"{cfg.snm_results_workspace}/{date}_results", exist_ok=True)
 
     # Make report directories
-    year = datetime.strptime(f"{date}", "%Y%m%d").year
+    year = dt.strptime(f"{date}", "%Y%m%d").year
     ww_report_dir = f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report"
     snm_report_dir = f"{cfg.snm_reports_workspace.format(year=year)}/{date}_RT_report"
     os.makedirs(ww_report_dir, exist_ok=True)
@@ -57,7 +57,7 @@ def mark_usethis_useavg(date: int, cfg: Config):
     """
     print(f"Marking directories with UseThis and UseAvg...",end="")
 
-    year = datetime.strptime(str(date), "%Y%m%d").year
+    year = dt.strptime(str(date), "%Y%m%d").year
     directories = {
         "ww_results": f"{cfg.ww_results_workspace}/{date}_results",
         "ww_report": f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report",
@@ -105,8 +105,8 @@ def get_water_year(date: int) -> int:
     :param date: (YYYYMMDD) The date to calculate the water year for.
     :return: (int) The water year formatted as YYYY.
     """
-    date_f = datetime.strptime(str(date), "%Y%m%d")
-    return date_f.year + 1 if date_f >= datetime(date_f.year, 10, 1) else date_f.year
+    date_f = dt.strptime(str(date), "%Y%m%d")
+    return date_f.year + 1 if date_f >= dt(date_f.year, 10, 1) else date_f.year
 
 
 def get_previous_model_run(date: int, domain: str, cfg: Config) -> tuple[int, str]:
@@ -148,9 +148,11 @@ def get_previous_model_run(date: int, domain: str, cfg: Config) -> tuple[int, st
     config_dir = f"{cfg.rmodel_config_log_dir}/WY{water_year}/{previous_run_date}"
     if not os.path.exists(config_dir):
         print(f"No config logs found for previous run! {config_dir}")
-        # TODO: documentation on how to create a JSON config with the previous model run name
+        # TODO: documentation on how to create a JSON config for the previous model run
+        # TODO: check results dir for a UseThis tag, then strip it
         return previous_run_date, ""
     model_runs = os.listdir(config_dir)
+    print(f"DEBUG - Model runs: {model_runs}")
 
     # TODO: How to determine which previous model run to use? woCCR? What if there are multiple woCCR?
     previous_model_run = model_runs[0].split(".")[0]
@@ -179,7 +181,7 @@ def get_zero_sensors(date: int, domains: list[str], model_wCCR: str, cfg: Config
         sensors_path = "{results_workspace}/{date}_results/{date}_sensors_{domain}.shp"
 
 
-    pillow_date = datetime.strptime(str(date), "%Y%m%d").strftime("%d%b%Y")
+    pillow_date = dt.strptime(str(date), "%Y%m%d").strftime("%d%b%Y")
     for domain in domains:
         zero_CCR_sensors(
             rundate=str(date), results_workspace=results_workspace, pillow_date=pillow_date, domain=domain,
