@@ -233,8 +233,8 @@ class Config:
         ##### Automatic Daily Run Parameters #####
         self.conda_env = conda_env or str(os.environ.get("CONDA_ENV"))
         self.model_run_log_dir = model_run_log_dir or str(os.environ.get("MODEL_RUN_LOG_DIR"))
-        self.max_retries = max_retries or str(os.environ.get("MAX_RETRIES"))
-        self.retry_delay_s = retry_delay_s or str(os.environ.get("RETRY_DELAY_S"))
-        self.stderr_tail_lines = stderr_tail_lines or str(os.environ.get("STDERR_TAIL_LINES"))
+        self.max_retries = max_retries or int(os.environ.get("MAX_RETRIES"))
+        self.retry_delay_s = retry_delay_s or int(os.environ.get("RETRY_DELAY_S"))
+        self.stderr_tail_lines = stderr_tail_lines or int(os.environ.get("STDERR_TAIL_LINES"))
 if __name__ == "__main__":
     config = Config()

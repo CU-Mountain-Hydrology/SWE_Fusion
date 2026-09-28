@@ -33,13 +33,13 @@ def setup_logging(date_str: str, cfg: Config) -> logging.Logger:
     TODO: docs
     """
     log_dir = cfg.model_run_log_dir.format(water_year=get_water_year(int(date_str)))
-    log_dir.mkdir(parents=True, exist_ok=True)
+    Path(log_dir).mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger("scheduled_run")
     logger.setLevel(logging.INFO)
     logger.handlers.clear()
 
     log_format = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-    fh = logging.FileHandler(log_dir / f"run_{date_str}.log", encoding="utf-8")
+    fh = logging.FileHandler(f"{log_dir}/run_{date_str}.log", encoding="utf-8")
     fh.setFormatter(log_format)
     logger.addHandler(fh)
     ch = logging.StreamHandler(sys.stdout)
