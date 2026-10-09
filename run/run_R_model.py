@@ -6,6 +6,9 @@ import os
 import math
 import json
 import subprocess
+import re
+from collections import Counter
+from pathlib import Path
 
 
 from config import Config
@@ -17,7 +20,9 @@ def _parse_r_bool(value: str, default: str = "F") -> bool:
 @dataclass
 class RModelConfig:
     # Passed every run
-    oldestDate: str # 'YYYYMMDD' Same as run date
+    oldestDate: str # 'YYYYMMDD' Same as run date unless running in the past in which case it is the date which sensors
+                    #  were last updated for (ex. 20260604 if Regress_SWE/snow_sensors/cdec_ADM_2026-06-04.csv)
+    runDate: str    # 'YYYYMMDD' Date the model is simulating
     isCCR: bool
     cfg: InitVar['Config'] # injected Config class
 
@@ -65,7 +70,7 @@ class RModelConfig:
         self.FVEG_CORRECTION = _parse_r_bool(cfg.rmodel_fveg_correction)
 
         # Derived from other configs
-        self.simulationday = datetime.strptime(self.oldestDate, "%Y%m%d").strftime("%Y-%m-%d")
+        self.simulationday = datetime.strptime(self.runDate, "%Y%m%d").strftime("%Y-%m-%d")
         self.RUNNAME = self._build_runname()
 
     def _build_runname(self) -> str:
@@ -99,6 +104,28 @@ def write_simulation_date(date: int, cfg: Config):
         f.write(formatted_date)
 
 
+def get_sensor_date(run_date: int, cfg: Config) -> str:
+    """
+    Returns the download date str(YYYYMMDD) of the sensor CSVs the R model should read.
+
+    Sensor files are named like cdec_ADM_2026-06-04.csv. This picks the date >= run_date that has the most files,
+    in case of a corrupted or partial download. Falls back to run_date if nothing is found.
+    """
+    sensor_dir = Path(cfg.regress_path) / "snow_sensors"   # same dir R reads (PATH_regress + 'snow_sensors')
+    pattern = re.compile(r"_(\d{4})-(\d{2})-(\d{2})\.csv$")
+
+    counts = Counter()
+    for f in sensor_dir.glob("*.csv"):
+        m = pattern.search(f.name)
+        if m:
+            d = int("".join(m.groups()))
+            if d >= run_date:
+                counts[d] += 1
+
+    if not counts:
+        return str(run_date)
+    return str(min(counts, key=lambda d: (-counts[d], d)))
+
 
 def run_R_model(date: int, isCCR: bool, cfg: Config) -> tuple[int, str]:
     """
@@ -117,7 +144,9 @@ def run_R_model(date: int, isCCR: bool, cfg: Config) -> tuple[int, str]:
     water_year = date_f.year if date_f.month < 10 else date_f.year + 1
 
     print(f"Generating R model config file for {date} with isCCR={isCCR}...", end="")
-    model_config = RModelConfig(oldestDate=str(date), isCCR=isCCR, cfg=cfg)
+    # Parse the oldest date from the snow sensor filepaths. This should always be >= model run date.
+    oldest_date = get_sensor_date(date, cfg)
+    model_config = RModelConfig(oldestDate=oldest_date, runDate=str(date), isCCR=isCCR, cfg=cfg)
 
     # Save JSON with all configs for this run
     os.makedirs(f"{cfg.rmodel_config_log_dir}/WY{water_year}/{date}", exist_ok=True)
@@ -135,7 +164,10 @@ def run_R_model(date: int, isCCR: bool, cfg: Config) -> tuple[int, str]:
         text=True,
         cwd=cfg.regress_path
     )
-    print(". \033[32mDone.\033[0m")
+    if result.returncode == 0:
+        print(". \033[32mDone.\033[0m")
+    else:
+        print(". \033[31mFailed.\033[0m")
 
     if result.stdout:
         print(result.stdout)
