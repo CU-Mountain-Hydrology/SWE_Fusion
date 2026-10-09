@@ -24,7 +24,7 @@ def fsca_processing(date: int, cfg: Config):
     :param cfg: Configuration object containing environment variables from the .env
     """
     # Determine date of oldest fSCA image that's not processed
-    start_date = dt(2000,0,0)
+    start_date = dt(2000,1,1)
     for file in os.listdir(cfg.processed_fsca_path):
         if not file.endswith(".tif"):
             continue
