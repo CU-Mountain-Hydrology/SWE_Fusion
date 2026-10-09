@@ -127,7 +127,10 @@ def run_once(date_str: str, logger: logging.Logger, cfg: Config):
     Runs main.py once as a module from PROJECT_ROOT. Returns (returncode, stderr_text).
     Uses subprocess rather than direct import so that this script continues running even if main hard crashes (eg. OOM)
     """
-    cmd = ["conda", "run", "-n", cfg.conda_env, "python", "-m", "run.main", "-d", date_str]
+    env_prefix = Path(sys.executable).parent  # ...\anaconda3\envs\auto instead of the default ESRI\conda\envs
+    conda_bat = env_prefix.parent.parent / "condabin" / "conda.bat"
+
+    cmd = [str(conda_bat), "run", "-p", str(env_prefix), "python", "-m", "run.main", "-d", date_str]
     logger.info(f"Running: {' '.join(cmd)} (cwd={PROJECT_ROOT})")
 
     proc = subprocess.run(
