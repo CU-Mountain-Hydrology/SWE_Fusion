@@ -107,8 +107,9 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         step("download_sensors", "Downloading sensor data", download_sensors, date, cfg)
 
         # Run model with CCR
-        _, model_wCCR = step("run_R_model_wCCR", "Running R model with CCR", run_R_model, date=date, isCCR=True, cfg=cfg)
-        clear_arcpy_locks()
+        # For WY2027 we are no longer running with CoCoRaHs sensors, at least not automatically
+        # _, model_wCCR = step("run_R_model_wCCR", "Running R model with CCR", run_R_model, date=date, isCCR=True, cfg=cfg)
+        # clear_arcpy_locks()
 
         # Run model without CCR
         _, model_woCCR = step("run_R_model_woCCR", "Running R model without CCR", run_R_model, date=date, isCCR=False, cfg=cfg)
