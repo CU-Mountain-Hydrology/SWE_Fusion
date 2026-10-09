@@ -202,7 +202,7 @@ class Config:
         self.rmodel_snow_var = rmodel_snow_var or str(os.environ.get("RMODEL_SNOW_VAR", "rcn"))
 
         ##### Tables and Layers Config #####
-        self.domain_list = domain_list or [x for x in str(os.environ.get("DOMAIN_LIST").split(","))]
+        self.domain_list = domain_list or [x.strip() for x in str(os.environ.get("DOMAIN_LIST")).split(",")]
         self.mean_workspace = mean_workspace or str(os.environ.get("MEAN_WORKSPACE"))
         self.ww_watershed_zones = ww_watershed_zones or str(os.environ.get("WW_WATERSHED_ZONES"))
         self.snm_watershed_zones = snm_watershed_zones or str(os.environ.get("SNM_WATERSHED_ZONES"))

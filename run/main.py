@@ -56,7 +56,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         ckpt.reset()
 
     # Set up progress bar
-    total_steps = 15 + (4 if "SNM" in cfg.domain_list else 0) + len(cfg.domain_list)
+    total_steps = 14 + (4 if "SNM" in cfg.domain_list else 0) + len(cfg.domain_list)
 
     with Progress(
             SpinnerColumn(),
