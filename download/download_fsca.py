@@ -79,7 +79,11 @@ def _list_remote_files(src_dir: str, method: str, cfg: Config) -> list[str]:
                 # Connect to Snow Today server
                 ftp.connect(cfg.snow_today_host, port=21)
                 ftp.login(cfg.snow_today_username, cfg.snow_today_password)
-                ftp.cwd(src_dir)
+                try:
+                    ftp.cwd(src_dir)
+                except ftplib.error_perm:
+                    print(f"Remote directory not found: {src_dir}")
+                    return []
                 return ftp.nlst()
         case _:
             print(f"Invalid method '{method}'. Valid methods are: ssh, ftp.")
