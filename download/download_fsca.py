@@ -172,9 +172,9 @@ def download_fsca(date: int, cfg: Config, prompt_user: bool = False):
     # Add each file from each tile to a queue
     to_download = []
     print(f"Checking for new fSCA data from {year}0101 until {date}...")
+    method = cfg.fsca_download_method
     for tile in cfg.fsca_tiles:
         # Define source and destination filepaths
-        method = cfg.fsca_download_method
         if method == "ssh":
             src_dir = f"{cfg.curc_fsca_path}/{tile}/{year}"
         else : # method == "ftp"
