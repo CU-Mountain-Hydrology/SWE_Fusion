@@ -12,6 +12,7 @@ import os
 
 from config import Config
 from download.download_fsca import download_fsca
+from run.utils import get_water_year
 from SWE_Fusion_functions import fsca_processing_tif, calculate_dmfsca, create_mean_layer
 
 
@@ -24,7 +25,8 @@ def fsca_processing(date: int, cfg: Config):
     :param cfg: Configuration object containing environment variables from the .env
     """
     # Determine date of oldest fSCA image that's not processed
-    start_date = dt(2000,1,1)
+    water_year_start = dt(get_water_year(date) - 1, 10, 1)
+    last_processed = water_year_start - timedelta(days=1)
     for file in os.listdir(cfg.processed_fsca_path):
         if not file.endswith(".tif"):
             continue
@@ -33,19 +35,18 @@ def fsca_processing(date: int, cfg: Config):
             file_date = dt.strptime(filename, "%Y%m%d")
         except ValueError:
             continue
-        if file_date > start_date:
-            start_date = file_date
-    start_date += timedelta(days=1)
+        if file_date > last_processed:
+            last_processed = file_date
+    start_date = last_processed + timedelta(days=1)
 
     # Determine date of the newest fSCA image to process
     end_date = dt.strptime(str(date), "%Y%m%d")
 
-    # Check that the fsca data has been downloaded for all those dates
-    date_list = [
-        start_date.date() + timedelta(days=1) for _ in range((end_date.date() - start_date.date()).days + 1)
-    ]
-    for d in date_list:
-        download_fsca(int(d.strftime("%Y%m%d")), cfg)
+    # One call per calendar year
+    wy_start_int = int(water_year_start.strftime("%Y%m%d"))
+    if start_date.year < end_date.year:
+        download_fsca(int(f"{start_date.year}1231"), cfg, start_date=wy_start_int)
+    download_fsca(date, cfg, start_date=wy_start_int)
 
     # Process fSCA Data
     print(f"Processing fSCA data from {start_date.strftime('%Y%m%d')} to {end_date.strftime('%Y%m%d')}...", end="")
@@ -68,14 +69,10 @@ def fsca_processing(date: int, cfg: Config):
     # Calculate DMFSCA
     print(f"Calculating DMFSCA data from {start_date.strftime('%Y%m%d')} to {end_date.strftime('%Y%m%d')}...", end="")
     try:
-        # Get calendar year that the current water year starts in (current WY - 1)
-        today = dt.now()
-        prev_water_year = today.year if today >= dt(today.year, 10, 1) else today.year - 1
-
         calculate_dmfsca(
             fSCA_folder=cfg.processed_fsca_path,
             DMFSCA_folder=cfg.dmfsca_path,
-            wateryear_start=dt(prev_water_year, 10, 1), # ex. Oct 1, 2025 for a model run in Jan 2026
+            wateryear_start=water_year_start, # ex. Oct 1, 2025 for a model run in Jan 2026
             process_start_date=start_date,
             process_end_date=end_date,
         )

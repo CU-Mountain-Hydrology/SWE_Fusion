@@ -156,7 +156,7 @@ def _download_file(filepath: str, method: str, cfg: Config) -> bool:
             return False
 
 
-def download_fsca(date: int, cfg: Config, prompt_user: bool = False):
+def download_fsca(date: int, cfg: Config, prompt_user: bool = False, start_date: int = 0):
     """
     Uses a CU research computing ssh connection to access and copy Rittger fSCA data from PetaLibrary to snowserver.
     Given a date, this function finds all fSCA netcdf's prior to and including the date, of the same year, that have not
@@ -182,7 +182,10 @@ def download_fsca(date: int, cfg: Config, prompt_user: bool = False):
         dst_dir = f"{cfg.local_fsca_path}/{tile}/{year}"
 
         for file in _list_remote_files(src_dir, method, cfg):
-            if _date_from_filename(file) <= date:
+            file_date = _date_from_filename(file)
+            if file_date is None or file_date < start_date:
+                continue
+            if file_date <= date:
                 # Check if it exists on snowserver
                 if os.path.exists(f"{dst_dir}/{file}"):
                     continue
