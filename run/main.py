@@ -85,7 +85,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
             return callback
 
         # Download fSCA data
-        step("download_fsca", "Downloading fSCA data", download_fsca, date, "ssh", cfg, prompt_user=prompt_user)
+        step("download_fsca", "Downloading fSCA data", download_fsca, date, cfg, prompt_user=prompt_user)
 
         # Download SNODAS data
         step("download_snodas", "Downloading SNODAS data", download_snodas, date, cfg)

@@ -27,6 +27,7 @@ class Config:
         processed_fsca_path: str = None,
         dmfsca_path: str = None,
         fsca_tiles: list[str] = None,
+        fsca_download_method: str = None,
         sin_modis_proj: str = None,
         fsca_snap_raster: str = None,
         fsca_extent: str = None,
@@ -141,6 +142,7 @@ class Config:
         self.processed_fsca_path = processed_fsca_path or str(os.environ.get("PROCESSED_FSCA_PATH"))
         self.dmfsca_path = dmfsca_path or str(os.environ.get("DMFSCA_PATH"))
         self.fsca_tiles = fsca_tiles or [str(x) for x in str(os.environ.get("FSCA_TILES")).split(",")]
+        self.fsca_download_method = fsca_download_method or str(os.environ.get("FSCA_DOWNLOAD_METHOD"))
         self.sin_modis_proj = sin_modis_proj or str(os.environ.get("SIN_MODIS_PROJ"))
         self.fsca_snap_raster = fsca_snap_raster or str(os.environ.get("FSCA_SNAP_RASTER"))
         self.fsca_extent = fsca_extent or str(os.environ.get("FSCA_EXTENT"))

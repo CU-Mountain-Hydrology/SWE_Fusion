@@ -156,7 +156,7 @@ def _download_file(filepath: str, method: str, cfg: Config) -> bool:
             return False
 
 
-def download_fsca(date: int, method: str, cfg: Config, prompt_user: bool = False):
+def download_fsca(date: int, cfg: Config, prompt_user: bool = False):
     """
     Uses a CU research computing ssh connection to access and copy Rittger fSCA data from PetaLibrary to snowserver.
     Given a date, this function finds all fSCA netcdf's prior to and including the date, of the same year, that have not
@@ -164,7 +164,6 @@ def download_fsca(date: int, method: str, cfg: Config, prompt_user: bool = False
     See download/README.md for more information on how to set up the SSH key.
 
     :param date: (YYYYMMDD) Date the model will be run on. fSCA data will be downloaded for this date and all previous undownloaded dates of the same year.
-    :param method: "ssh" (default) downloads fSCA from PetaLibrary and requires CURC authentication. "ftp" downloads fSCA from Snow Today and does not require authentication.
     :param cfg: Configuration object containing environment variables from the .env.
     :param prompt_user: Ask the user for confirmation before downloading files. Default: False
     """
@@ -175,6 +174,7 @@ def download_fsca(date: int, method: str, cfg: Config, prompt_user: bool = False
     print(f"Checking for new fSCA data from {year}0101 until {date}...")
     for tile in cfg.fsca_tiles:
         # Define source and destination filepaths
+        method = cfg.fsca_download_method
         if method == "ssh":
             src_dir = f"{cfg.curc_fsca_path}/{tile}/{year}"
         else : # method == "ftp"
@@ -234,4 +234,4 @@ def download_fsca(date: int, method: str, cfg: Config, prompt_user: bool = False
 
 if __name__ == "__main__":
     config = Config()
-    download_fsca(20260522, "ftp", config)
+    download_fsca(20260522, config)
