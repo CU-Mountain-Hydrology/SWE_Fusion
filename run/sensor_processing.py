@@ -27,7 +27,7 @@ def sensor_survey_processing(date: int, domain: str, surveys_use: str, cfg: Conf
 
         # Process & Sort WW sensors & surveys
         merge_sort_sensors_surveys(
-            report_date=str(date), results_workspace=f"{cfg.ww_results_workspace}/{date}_results/",
+            report_date=str(date), results_workspace=f"{cfg.ww_results_workspace}{date}_results/",
             surveys=surveys_use, difference=difference,
             watershed_shapefile=cfg.ww_watershed_shapefile, case_field_wtrshd=cfg.case_field_watershed,
             case_field_band=cfg.case_field_band, band_shapefile=cfg.ww_band_shapefile,

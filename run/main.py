@@ -125,7 +125,10 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         # Download surveys on the first of the month
         # TODO: syrveys may come in throughout the week, only do this for first table of the month
         # TODO: function to download surveys and check if it is different than before in which case run with surveys again
-        surveys_use="Y"
+        if dt.strptime(str(date), "%Y%m%d").day == 1:
+            surveys_use="Y"
+        else:
+            surveys_use="N"
 
         # Convert geopackage to shapefile for woCCR model run
         # TODO: restructure to just pass cfg directly
