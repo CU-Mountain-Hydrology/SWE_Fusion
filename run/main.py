@@ -112,6 +112,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         # Run model with CCR
         # For WY2027 we are no longer running with CoCoRaHs sensors, at least not automatically
         # _, model_wCCR = step("run_R_model_wCCR", "Running R model with CCR", run_R_model, date=date, isCCR=True, cfg=cfg)
+        model_wCCR = None
         # clear_arcpy_locks()
 
         # Run model without CCR
@@ -171,12 +172,13 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
 
         # Get zero sensors for all domains
         # TODO: why here instead of after sensor download
-        step(
-            "get_zero_sensors_all", "Getting zero CCR sensors for all domains",
-            get_zero_sensors,
-            date=date, domains=cfg.domain_list, model_wCCR=model_wCCR, cfg=cfg,
-        )
-        clear_arcpy_locks()
+        if model_wCCR:
+            step(
+                "get_zero_sensors_all", "Getting zero CCR sensors for all domains",
+                get_zero_sensors,
+                date=date, domains=cfg.domain_list, model_wCCR=model_wCCR, cfg=cfg,
+            )
+            clear_arcpy_locks()
 
         if "SNM" in cfg.domain_list:
             # Process and sort sensors and surveys for SNM
@@ -204,12 +206,13 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
             clear_arcpy_locks()
 
             # Get zero sensors for SNM
-            step(
-                "get_zero_sensors_SNM", "Getting zero CCR sensors for SNM",
-                get_zero_sensors,
-                date=date, domains=["SNM"], model_wCCR=model_wCCR, cfg=cfg,
-            )
-            clear_arcpy_locks()
+            if model_wCCR:
+                step(
+                    "get_zero_sensors_SNM", "Getting zero CCR sensors for SNM",
+                    get_zero_sensors,
+                    date=date, domains=["SNM"], model_wCCR=model_wCCR, cfg=cfg,
+                )
+                clear_arcpy_locks()
 
         # Mark UseThis and UseAvg directories
         step(
