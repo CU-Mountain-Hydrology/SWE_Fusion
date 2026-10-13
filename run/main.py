@@ -49,6 +49,9 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
     # Set up configuration object containing parameters from the .env
     cfg = Config()
 
+    # Set ArcPy environment variables
+    arcpy.env.overwriteOutput = True # Overwrite existing outputs instead of throwing ERROR 000725
+
     # Create checkpoint manager that saves the current state and variables to a JSON
     checkpoint_dir = cfg.checkpoint_path.format(water_year=get_water_year(date))
     ckpt = CheckpointManager(date, checkpoint_dir)
