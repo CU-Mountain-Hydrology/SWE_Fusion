@@ -24,23 +24,25 @@ def fsca_processing(date: int, cfg: Config):
     :param date: (YYYYMMDD) Date the model is to be run on. FSCA data will be downloaded up through this date
     :param cfg: Configuration object containing environment variables from the .env
     """
+    # Determine date of the newest fSCA image to process
+    end_date = dt.strptime(str(date), "%Y%m%d")
+
     # Determine date of oldest fSCA image that's not processed
     water_year_start = dt(get_water_year(date) - 1, 10, 1)
     last_processed = water_year_start - timedelta(days=1)
-    for file in os.listdir(cfg.processed_fsca_path):
-        if not file.endswith(".tif"):
-            continue
-        filename = file.split(".")[0]
-        try:
-            file_date = dt.strptime(filename, "%Y%m%d")
-        except ValueError:
-            continue
-        if file_date > last_processed:
-            last_processed = file_date
-    start_date = last_processed + timedelta(days=1)
 
-    # Determine date of the newest fSCA image to process
-    end_date = dt.strptime(str(date), "%Y%m%d")
+    for year in range(water_year_start.year, end_date.year+1):
+        for file in os.listdir(f"{cfg.processed_fsca_path}/{year}"):
+            if not file.endswith(".tif"):
+                continue
+            filename = file.split(".")[0]
+            try:
+                file_date = dt.strptime(filename, "%Y%m%d")
+            except ValueError:
+                continue
+            if file_date > last_processed:
+                last_processed = file_date
+        start_date = last_processed + timedelta(days=1)
 
     # One call per calendar year
     wy_start_int = int(water_year_start.strftime("%Y%m%d"))
@@ -51,17 +53,36 @@ def fsca_processing(date: int, cfg: Config):
     # Process fSCA Data
     print(f"Processing fSCA data from {start_date.strftime('%Y%m%d')} to {end_date.strftime('%Y%m%d')}...", end="")
     try:
-        fsca_processing_tif(
-            start_date=start_date,
-            end_date=end_date,
-            tile_list=cfg.fsca_tiles,
-            netCDF_WS=cfg.local_fsca_path,
-            output_fscaWS=cfg.processed_fsca_path,
-            proj_in=arcpy.SpatialReference(cfg.sin_modis_proj),
-            proj_out=arcpy.SpatialReference(4269),
-            snap_raster=cfg.fsca_snap_raster,
-            extent=cfg.fsca_extent
-        )
+        current_date = start_date
+        while current_date <= end_date:
+            year_dir = os.path.join(
+                cfg.processed_fsca_path,
+                str(current_date.year)
+            )
+            output_tif = os.path.join(
+                year_dir,
+                f"{current_date:%Y%m%d}.tif"
+            )
+
+            # Skip dates that already have processed files
+            if os.path.exists(output_tif):
+                current_date += timedelta(days=1)
+                continue
+
+            # Process this date only
+            fsca_processing_tif(
+                start_date=current_date,
+                end_date=current_date,
+                tile_list=cfg.fsca_tiles,
+                netCDF_WS=cfg.local_fsca_path,
+                output_fscaWS=cfg.processed_fsca_path,
+                proj_in=arcpy.SpatialReference(cfg.sin_modis_proj),
+                proj_out=arcpy.SpatialReference(4269),
+                snap_raster=cfg.fsca_snap_raster,
+                extent=cfg.fsca_extent
+            )
+
+            current_date += timedelta(days=1)
         print(". \033[32mDone.\033[0m")
     except Exception as e:
         print(f"\n {e}")
