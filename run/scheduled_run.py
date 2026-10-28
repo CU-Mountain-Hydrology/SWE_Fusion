@@ -14,6 +14,7 @@ import os
 import subprocess
 import sys
 import time
+import threading
 from datetime import timedelta
 from datetime import datetime as dt
 from pathlib import Path
@@ -130,23 +131,47 @@ def run_once(date_str: str, logger: logging.Logger, cfg: Config):
     env_prefix = Path(sys.executable).parent  # ...\anaconda3\envs\auto instead of the default ESRI\conda\envs
     conda_bat = env_prefix.parent.parent / "condabin" / "conda.bat"
 
-    cmd = [str(conda_bat), "run", "-p", str(env_prefix), "python", "-m", "run.main", "-d", date_str]
+    cmd = [str(conda_bat), "run", "--no-capture-output", "-p", str(env_prefix),
+           "python", "-u", "-m", "run.main", "-d", date_str]
+    child_env = {**os.environ, "PYTHONUNBUFFERED": "1", "PYTHONUTF8": "1"}
     logger.info(f"Running: {' '.join(cmd)} (cwd={PROJECT_ROOT})")
 
-    proc = subprocess.run(
+    proc = subprocess.Popen(
         cmd,
         cwd=PROJECT_ROOT,
-        capture_output=True,
+        env=child_env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         text=True,
+        encoding="utf-8",
+        errors="replace",
+        bufsize=1,
         shell=True,
     )
 
-    if proc.stdout:
-        logger.info(f"stdout:\n{proc.stdout.strip()}")
-    if proc.stderr:
-        logger.warning(f"stderr:\n{proc.stderr.strip()}")
-    return proc.returncode, proc.stderr
+    stderr_lines = []
 
+    def pump(stream, log_fn, sink=None):
+        for raw in iter(stream.readline, ""):
+            line = raw.rstrip("\r\n").split("\r")[-1]  # drop carriage-return redraws from progress bars
+            if not line.strip():
+                continue
+            log_fn(line)
+            if sink is not None:
+                sink.append(line)
+        stream.close()
+
+    threads = [
+        threading.Thread(target=pump, args=(proc.stdout, logger.info)),
+        threading.Thread(target=pump, args=(proc.stderr, logger.warning, stderr_lines)),
+    ]
+    for t in threads:
+        t.start()
+    proc.wait()
+    for t in threads:
+        t.join()
+
+    return proc.returncode, "\n".join(stderr_lines)
 
 def main():
     # Read config from .env
