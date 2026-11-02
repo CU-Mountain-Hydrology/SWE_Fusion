@@ -3419,11 +3419,13 @@ def merge_sort_sensors_surveys(report_date, results_workspace, surveys, differen
         snowPillow_proj = results_workspace + f"{report_date}_sensors_albn83.shp"
         IntersctLst = [snowPillow_proj, watershed_shapefile]
         IntersctLstBand = [snowPillow_proj, band_shapefile]
-        arcpy.Merge_management([results_workspace + f"{report_date}_sensors_{domainList[0]}.shp",
-                                results_workspace + f"{report_date}_sensors_{domainList[1]}.shp",
-                                results_workspace + f"{report_date}_sensors_{domainList[2]}.shp",
-                                results_workspace + f"{report_date}_sensors_{domainList[3]}.shp",
-                                results_workspace + f"{report_date}_sensors_{domainList[4]}.shp"], snowPillow_merge)
+        # arcpy.Merge_management([results_workspace + f"{report_date}_sensors_{domainList[0]}.shp",
+        #                         results_workspace + f"{report_date}_sensors_{domainList[1]}.shp",
+        #                         results_workspace + f"{report_date}_sensors_{domainList[2]}.shp",
+        #                         results_workspace + f"{report_date}_sensors_{domainList[3]}.shp",
+        #                         results_workspace + f"{report_date}_sensors_{domainList[4]}.shp"], snowPillow_merge)
+        arcpy.Merge_management([results_workspace + f"{report_date}_sensors_{domain}.shp" for domain in domainList],
+                               snowPillow_merge)
 
         # delete duplicates
         arcpy.DeleteIdentical_management(snowPillow_merge, "Site_ID")
