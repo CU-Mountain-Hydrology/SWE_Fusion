@@ -1515,7 +1515,7 @@ def get_points_within_raster(shapefile_path, raster_path, id_column="site_id"):
 
 def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_run, masking, watershed_zones,
                       band_zones, HUC6_zones, region_zones, case_field_wtrshd, case_field_band, watermask, glacierMask, snapRaster_geon83,
-                      snapRaster_albn83, projGEO, projALB, ProjOut_UTM, run_type="Normal", bias_model_run=None, prev_report_date=None, prev_model_run=None, domains):
+                      snapRaster_albn83, projGEO, projALB, ProjOut_UTM, domains, run_type="Normal", bias_model_run=None, prev_report_date=None, prev_model_run=None):
 
     # set code parameters
     where_clause = """"POLY_AREA" > 100"""
