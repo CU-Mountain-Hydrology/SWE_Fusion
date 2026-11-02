@@ -10,6 +10,7 @@ import re
 import csv
 from collections import Counter
 from pathlib import Path
+from run.utils import get_water_year
 
 
 from config import Config
@@ -132,7 +133,7 @@ DOMAIN_SENSOR_TOTALS = {"INMT": 225, "NOCN": 213, "PNW": 115, "SNM": 111, "SOCN"
 
 
 def get_domain_log_path(date: int, cfg: Config) -> Path:
-    return Path(cfg.model_run_log_dir) / f"domains_{date}.csv"
+    return Path(cfg.model_run_log_dir.format(water_year=get_water_year(date))) / f"domains_{date}.csv"
 
 
 def write_domain_log(r_output: str, date: int, cfg: Config) -> None:
