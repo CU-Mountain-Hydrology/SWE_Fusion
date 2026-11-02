@@ -20,7 +20,7 @@ from download.download_sensors import download_sensors
 from run.fsca_processing import fsca_processing
 from run.snodas_processing import snodas_processing
 from run.sensor_processing import sensor_survey_processing
-from run.run_R_model import write_simulation_date, run_R_model
+from run.run_R_model import write_simulation_date, run_R_model, apply_domain_log
 from run.utils import make_directories, get_zero_sensors, get_water_year, mark_usethis_useavg
 from run.tables_and_layers import ww_tables_and_layers, snm_tables_and_layers
 from vetting.sensor_plots import model_vs_sensor
@@ -118,6 +118,9 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         # Run model without CCR
         _, model_woCCR = step("run_R_model_woCCR", "Running R model without CCR", run_R_model, date=date, isCCR=False, cfg=cfg)
         clear_arcpy_locks()
+
+        # Update domain list. Not checkpointed so it happens every run.
+        apply_domain_log(date, cfg)
 
         # Disable arcpy parallel processing for SWE Fusion steps
         # TODO: learn why this caused crash and hopefully fix issue so it can run faster

@@ -7,6 +7,7 @@ import math
 import json
 import subprocess
 import re
+import csv
 from collections import Counter
 from pathlib import Path
 
@@ -127,6 +128,50 @@ def get_sensor_date(run_date: int, cfg: Config) -> str:
     return str(min(counts, key=lambda d: (-counts[d], d)))
 
 
+DOMAIN_SENSOR_TOTALS = {"INMT": 225, "NOCN": 213, "PNW": 115, "SNM": 111, "SOCN": 333}
+
+
+def get_domain_log_path(date: int, cfg: Config) -> Path:
+    return Path(cfg.model_run_log_dir) / f"domains_{date}.csv"
+
+
+def write_domain_log(r_output: str, date: int, cfg: Config) -> None:
+    """
+    Parses the R model output and writes domains_YYYYMMDD.csv with the number of sensors reporting > 0,
+    the % of the domain's total sensors, and whether the model ran for each domain.
+    """
+    skip_markers = ("Skip this day!", "Model run aborted", "No fSCA")
+    parts = re.split(r"Model Domain: (\w+)", r_output)
+    rows = []
+    for domain, block in zip(parts[1::2], parts[2::2]):
+        match = re.search(r"Num of pillows > 0: (\d+)", block)
+        sensors = int(match.group(1)) if match else ""
+        total = DOMAIN_SENSOR_TOTALS.get(domain)
+        pct = round(100 * sensors / total, 1) if match and total else ""
+        ran = not any(marker in block for marker in skip_markers)
+        rows.append([domain, sensors, pct, ran])
+
+    log_path = get_domain_log_path(date, cfg)
+    os.makedirs(log_path.parent, exist_ok=True)
+    with open(log_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["domain", "sensors_gt0", "pct_of_total", "ran"])
+        writer.writerows(rows)
+
+
+def apply_domain_log(date: int, cfg: Config) -> None:
+    """
+    Sets cfg.domain_list to the domains that ran, according to domains_YYYYMMDD.csv. Does nothing if the file
+    does not exist.
+    """
+    log_path = get_domain_log_path(date, cfg)
+    if not log_path.exists():
+        return
+    with open(log_path, newline="") as f:
+        ran = {row["domain"] for row in csv.DictReader(f) if row["ran"] == "True"}
+    cfg.domain_list = [d for d in cfg.domain_list if d in ran]
+
+
 def run_R_model(date: int, isCCR: bool, cfg: Config) -> tuple[int, str]:
     """
     Runs the R model given the parameters defined by date and isCCR, as well as all those set in the .env
@@ -177,6 +222,9 @@ def run_R_model(date: int, isCCR: bool, cfg: Config) -> tuple[int, str]:
             f"Config: {config_path}\n"
             f"{result.stderr}"
         )
+
+    write_domain_log(result.stdout, date, cfg)
+    apply_domain_log(date, cfg)
 
     return result.returncode, model_config.RUNNAME
 
