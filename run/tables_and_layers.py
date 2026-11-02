@@ -32,7 +32,7 @@ def ww_tables_and_layers(date: int, model_wCCR: str, model_woCCR: str, cfg: Conf
                       watermask=cfg.water_mask, glacierMask=cfg.glacier_mask,
                       snapRaster_geon83=cfg.ww_snap_raster_geon83, snapRaster_albn83=cfg.ww_snap_raster_albn83,
                       projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM,
-                      run_type="Normal")
+                      run_type="Normal", domains=cfg.domain_list)
 
     # Run tables and layers WW woCCR
     tables_and_layers(user=cfg.rmodel_username, year=year, report_date=str(date), mean_date=mean_date,
@@ -43,7 +43,7 @@ def ww_tables_and_layers(date: int, model_wCCR: str, model_woCCR: str, cfg: Conf
                       watermask=cfg.water_mask, glacierMask=cfg.glacier_mask,
                       snapRaster_geon83=cfg.ww_snap_raster_geon83, snapRaster_albn83=cfg.ww_snap_raster_albn83,
                       projGEO=projGEO, projALB=projALB, ProjOut_UTM=ProjOut_UTM,
-                      run_type="Normal")
+                      run_type="Normal", domains=cfg.domain_list)
 
 
 def snm_tables_and_layers(date: int, model_wCCR: str, model_woCCR: str, cfg: Config):

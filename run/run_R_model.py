@@ -168,9 +168,11 @@ def apply_domain_log(date: int, cfg: Config) -> None:
     log_path = get_domain_log_path(date, cfg)
     if not log_path.exists():
         return
+    print(f"Reading domain list from {log_path}...")
     with open(log_path, newline="") as f:
         ran = {row["domain"] for row in csv.DictReader(f) if row["ran"] == "True"}
     cfg.domain_list = [d for d in cfg.domain_list if d in ran]
+    print(f"Updated domain list to {cfg.domain_list}")
 
 
 def run_R_model(date: int, isCCR: bool, cfg: Config) -> tuple[int, str]:
