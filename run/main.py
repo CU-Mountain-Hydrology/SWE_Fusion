@@ -133,7 +133,9 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         # TODO: syrveys may come in throughout the week, only do this for first table of the month
         # TODO: function to download surveys and check if it is different than before in which case run with surveys again
         if dt.strptime(str(date), "%Y%m%d").day == 1:
-            surveys_use="Y"
+            # surveys_use="Y"
+            # TODO: remove this once surveys can be downloaded
+            surveys_use="N"
         else:
             surveys_use="N"
 
