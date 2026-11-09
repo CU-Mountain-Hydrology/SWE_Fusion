@@ -9,11 +9,16 @@ Functions to create the following Snotel and CDEC sensor plots:
 import os
 import csv
 import glob
+from datetime import timedelta
 from datetime import datetime as dt
 import numpy as np
+import pandas as pd
 import arcpy
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from arcpy.sa import ExtractMultiValuesToPoints, FocalStatistics, NbrRectangle
+
+from run.utils import get_water_year
 
 from config import Config
 
@@ -289,7 +294,83 @@ def sensor_error_trend(date: int, n_days: int, cfg: Config, focal_sampling: bool
     # TODO: Plot
     pass
 
+
+def percent_of_sensors_gt0(start_date: int, end_date: int, cfg: Config, out_path: str = None):
+    """
+    Plots the percentage of sensors with greater than 0 SWE in each domain, for each of the days between start_date and
+    end_date. A red X for that date indicates the model did not run (for any reason, not just because of sensor percentage).
+
+    All stats are pulled from {cfg.model_run_log_dir}/WY_{YYYY}/domains_{YYYYMMDD}.csv.
+
+    :param start_date: (YYYYMMDD) The start date of the plot
+    :param end_date: (YYYYMMDD) The end date of the plot
+    :param cfg: Configuration object containing environment variables set in the .env
+    """
+    print(f"Plotting the percentage of sensors with SWE > 0 between {start_date} and {end_date}...")
+
+    start = dt.strptime(str(start_date), "%Y%m%d").date()
+    end = dt.strptime(str(end_date), "%Y%m%d").date()
+
+    frames = []
+    date = start
+    # Get list of dates with valid data
+    while date <= end:
+        date_int = int(date.strftime("%Y%m%d"))  # recompute every iteration
+        csv_path = f"{cfg.model_run_log_dir.format(water_year=get_water_year(date_int))}/domains_{date_int}.csv"
+        if os.path.exists(csv_path):
+            df = pd.read_csv(csv_path)
+            df["date"] = date
+            frames.append(df)
+        else:
+            print(f"No csv found for {date_int}! Skipping.")
+        date += timedelta(days=1)
+
+    if not frames:
+        raise FileNotFoundError(
+            f"No domain CSVs found in {cfg.model_run_log_dir} between {start_date} and {end_date}"
+        )
+
+    data = pd.concat(frames, ignore_index=True)
+    data["ran"] = data["ran"].astype(str).str.strip().str.upper() == "TRUE"
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+
+    for domain, grp in data.groupby("domain"):
+        grp = grp.sort_values("date")
+        ax.axhline(30, color="black", linestyle="--", linewidth=1.5, zorder=1)
+        ax.plot(grp["date"], grp["pct_of_total"], marker="o", markersize=3, label=domain)
+        # Red X on days this domain's model did not run
+        failed = grp[~grp["ran"]]
+        ax.scatter(
+            failed["date"],
+            failed["pct_of_total"],
+            marker="x",
+            color="red",
+            s=70,
+            linewidths=2,
+            zorder=5,
+        )
+
+    # Single legend entry for the red X
+    ax.scatter([], [], marker="x", color="red", s=70, linewidths=2, label="Run failed")
+
+    ax.set_ylabel("% of Sensors with SWE > 0")
+    ax.set_title(f"Percent of sensors with SWE > 0 ({start_date}–{end_date})")
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+    fig.autofmt_xdate()
+    ax.grid(alpha=0.3)
+    ax.legend(title="Domain", loc="upper left", bbox_to_anchor=(1.01, 1.0), borderaxespad=0)
+    fig.tight_layout()
+    if out_path:
+        plt.savefig(out_path, bbox_inches="tight")
+        print(f"Saving to {out_path}")
+    else:
+        print("No output path specified for percent_of_sensors_gt0. Only showing...")
+        plt.show()
+
+
 if __name__ == "__main__":
     config = Config()
-    socn_extent = r"W:/data/hydro/SOCN_Region_albn83.shp"
-    model_vs_sensor(20260412, cfg=config, focal_sampling=True, extent_shapefile=None, out_path="./output/model_vs_sensor_20260412_focal_socn.png")
+    # socn_extent = r"W:/data/hydro/SOCN_Region_albn83.shp"
+    # model_vs_sensor(20260412, cfg=config, focal_sampling=True, extent_shapefile=None, out_path="./output/model_vs_sensor_20260412_focal_socn.png")
+    percent_of_sensors_gt0(20261101, 20261108, config, out_path="W:/Spatial_SWE/WW_regression/RT_report_data/20261108_results/pct_sensors_gt0.png")
