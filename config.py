@@ -116,6 +116,7 @@ class Config:
 
         ##### Vetting #####
         model_sensor_err_csv: str = None,
+        teams_webhook_url: str = None,
 
         ##### Automatic Daily Run Parameters #####
         conda_env: str = None,
@@ -231,6 +232,7 @@ class Config:
 
         ##### Vetting #####
         self.model_sensor_err_csv = model_sensor_err_csv or str(os.environ.get("MODEL_SENSOR_ERR_CSV"))
+        self.teams_webhook_url = teams_webhook_url or str(os.environ.get("TEAMS_WEBHOOK_URL"))
 
         ##### Automatic Daily Run Parameters #####
         self.conda_env = conda_env or str(os.environ.get("CONDA_ENV"))
@@ -238,5 +240,6 @@ class Config:
         self.max_retries = max_retries or int(os.environ.get("MAX_RETRIES"))
         self.retry_delay_s = retry_delay_s or int(os.environ.get("RETRY_DELAY_S"))
         self.stderr_tail_lines = stderr_tail_lines or int(os.environ.get("STDERR_TAIL_LINES"))
+
 if __name__ == "__main__":
     config = Config()
