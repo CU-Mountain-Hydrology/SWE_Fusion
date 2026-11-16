@@ -88,7 +88,13 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
             return callback
 
         # Download fSCA data
-        step("download_fsca", "Downloading fSCA data", download_fsca, date, cfg, prompt_user=prompt_user)
+        fsca_retval = step("download_fsca", "Downloading fSCA data", download_fsca, date, cfg, prompt_user=prompt_user)
+        if fsca_retval == -1:
+            # No fSCA data was found, try other method
+            if cfg.fsca_download_method == "ssh": cfg.fsca_download_method = "ftp"
+            else: cfg.fsca_download_method = "ssh"
+            print(f"Reattempting fSCA download using other method: {cfg.fsca_download_method}")
+            _ = step("download_fsca", "Downloading fSCA data", download_fsca, date, cfg, prompt_user=prompt_user)
 
         # Download SNODAS data
         step("download_snodas", "Downloading SNODAS data", download_snodas, date, cfg)

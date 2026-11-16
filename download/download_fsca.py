@@ -201,7 +201,7 @@ def download_fsca(date: int, cfg: Config, prompt_user: bool = False, start_date:
 
     if not to_download:
         print(f"No new fSCA files to download.")
-        return
+        return -1
 
     new_fsca_dates = sorted(set(_date_from_filename(file) for file in to_download))
     if prompt_user:
