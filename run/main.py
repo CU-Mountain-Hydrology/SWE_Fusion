@@ -3,6 +3,7 @@
 import argparse
 import logging
 import arcpy
+import os
 from datetime import timedelta
 from datetime import datetime as dt
 from rich.progress import (
@@ -89,8 +90,8 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
 
         # Download fSCA data
         fsca_retval = step("download_fsca", "Downloading fSCA data", download_fsca, date, cfg, prompt_user=prompt_user)
-        if fsca_retval == -1:
-            # No fSCA data was found, try other method
+        if fsca_retval == -1 and not os.path.exists(f"{cfg.processed_fsca_path}/{str(date)[:4]}/{date}.tif"):
+            # No fSCA data was found and this date does not exist, try other method
             if cfg.fsca_download_method == "ssh": cfg.fsca_download_method = "ftp"
             else: cfg.fsca_download_method = "ssh"
             print(f"Reattempting fSCA download using other method: {cfg.fsca_download_method}")
