@@ -60,9 +60,9 @@ def mark_usethis_useavg(date: int, cfg: Config):
     year = dt.strptime(str(date), "%Y%m%d").year
     directories = {
         "ww_results": f"{cfg.ww_results_workspace}/{date}_results",
-        "ww_report": f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report",
+        # "ww_report": f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report",
         "snm_results": f"{cfg.snm_results_workspace}/{date}_results",
-        "snm_report": f"{cfg.snm_reports_workspace.format(year=year)}/{date}_RT_report",
+        # "snm_report": f"{cfg.snm_reports_workspace.format(year=year)}/{date}_RT_report",
     }
 
     if not "SNM" in cfg.domain_list:
