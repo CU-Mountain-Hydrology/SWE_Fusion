@@ -39,6 +39,7 @@ class Config:
         curc_fsca_path: str = None,
         curc_host: str = None,
         curc_identikey: str = None,
+        curc_ssh_key: str = None,
         # Snow Today (ftp method)
         snow_today_fsca_path: str = None,
         snow_today_host: str = None,
@@ -155,6 +156,7 @@ class Config:
         self.curc_fsca_path = curc_fsca_path or str(os.environ.get("CURC_FSCA_PATH"))
         self.curc_host = curc_host or str(os.environ.get("CURC_HOST"))
         self.curc_identikey = curc_identikey or str(os.environ.get("CURC_IDENTIKEY"))
+        self.curc_ssh_key = curc_ssh_key or str(os.environ.get("CURC_SSH_KEY"))
         # Snow Today (ftp method)
         self.snow_today_fsca_path = snow_today_fsca_path or str(os.environ.get("SNOW_TODAY_FSCA_PATH"))
         self.snow_today_host = snow_today_host or str(os.environ.get("SNOW_TODAY_HOST"))

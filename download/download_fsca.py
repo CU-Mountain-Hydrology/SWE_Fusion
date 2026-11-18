@@ -71,7 +71,10 @@ def _list_remote_files(src_dir: str, method: str, cfg: Config) -> list[str]:
     """
     match method:
         case "ssh":
-            cmd = ["ssh", "-o", "StrictHostKeyChecking=no", f"{cfg.curc_identikey}@{cfg.curc_host}", f"ls -1 {src_dir}"]
+            if cfg.curc_ssh_key == "~/.ssh/privatekey": # No ssh key specified
+                cmd = ["ssh", "-o", "StrictHostKeyChecking=no", f"{cfg.curc_identikey}@{cfg.curc_host}", f"ls -1 {src_dir}"]
+            else: # Point at specific private key
+                cmd = ["ssh", "-i", cfg.curc_ssh_key, "-o", "StrictHostKeyChecking=no", f"{cfg.curc_identikey}@{cfg.curc_host}", f"ls -1 {src_dir}"]
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
             return [line.strip() for line in result.stdout.splitlines() if line.strip()]
         case "ftp":
