@@ -227,11 +227,11 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
                 clear_arcpy_locks()
 
         # Mark UseThis and UseAvg directories
-        step(
-            "mark_usethis_useavg", "Tagging directories with UseThis and UseAvg",
-            mark_usethis_useavg,
-            date=date, cfg=cfg,
-        )
+        # step(
+        #     "mark_usethis_useavg", "Tagging directories with UseThis and UseAvg",
+        #     mark_usethis_useavg,
+        #     date=date, cfg=cfg,
+        # )
 
         ######### Vetting Starts Now #######
         # domain_to_shapefile = {
