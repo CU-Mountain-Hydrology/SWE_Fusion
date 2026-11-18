@@ -70,29 +70,30 @@ def mark_usethis_useavg(date: int, cfg: Config):
         directories.pop("snm_report", None)
 
     for d in directories.keys():
-        # Remove any existing UseThis tags from previous runs (UseAvg never changes)
-        usethis_dirs = glob.glob(f"{directories[d]}/*UseThis*")
-        if usethis_dirs:
-            usethis_dir = usethis_dirs[0]
-            os.rename(usethis_dir, usethis_dir.replace(f"_UseThis", ""))
+        base = directories[d]
+
+        # Strip tags left over from any previous run so this function is safe to rerun.
+        # Only the directory name is modified (not the parent path), and _UseThis is removed first so that
+        # names like ..._UseAvg_UseThis are unwound in the right order.
+        for tag in ("_UseThis", "_UseAvg"):
+            for path in glob.glob(f"{base}/*{tag}*"):
+                parent, name = os.path.split(path)
+                os.rename(path, os.path.join(parent, name.replace(tag, "")))
+
+        # UseAvg dir always uses the same methods (and therefore same directory name)
+        useavg_dir = f"{base}/RT_CanAdj_rcn_woCCR_nofscamskSens"
+        if not os.path.exists(useavg_dir):
+            raise FileNotFoundError(f"No potential UseAvg directory found in {base}!")
+        os.rename(useavg_dir, useavg_dir + "_UseAvg")
 
         # Find all woCCR directories (currently only woCCR model runs are considered for UseThis, see the to-do above)
-        woCCR_dirs = glob.glob(f"{directories[d]}/*woCCR*")
+        woCCR_dirs = glob.glob(f"{base}/*woCCR*")
         if not woCCR_dirs:
-            raise FileNotFoundError(f"No woCCR directory found in {directories[d]}!")
+            raise FileNotFoundError(f"No woCCR directory found in {base}!")
 
         # Sort matches by time and use the most recent for UseThis
         usethis_dir = max(woCCR_dirs, key=os.path.getmtime)
-        os.rename(usethis_dir, usethis_dir+"_UseThis")
-
-        # UseAvg dir always uses the same methods (and therefore same directory name)
-        useavg_dir = f"{directories[d]}/RT_CanAdj_rcn_woCCR_nofscamskSens"
-        if not os.path.exists(useavg_dir):
-            # Check if the RT_CanAdj_rcn_woCCR_nofscamskSens directory has already been marked as UseThis
-            useavg_dir += "_UseThis"
-            if not os.path.exists(useavg_dir):
-                raise FileNotFoundError(f"No potential UseAvg directory found in {directories[d]}!")
-        os.rename(useavg_dir, useavg_dir+"_UseAvg")
+        os.rename(usethis_dir, usethis_dir + "_UseThis")
 
     print(". \033[32mDone.\033[0m")
 
@@ -188,6 +189,14 @@ def get_zero_sensors(date: int, domains: list[str], model_wCCR: str, cfg: Config
             sensors=sensors_path.format(results_workspace=results_workspace, date=date, domain=domain), zero_sensors=True,
             CCR=False, model_workspace_domain=f"{cfg.regress_path}/{domain}/{cfg.rmodel_username}/StationSWERegressionV2/data/outputs/{model_wCCR}/"
         )
+
+
+def get_usethis_dir(parent_dir: str):
+    import glob
+    matches = glob.glob(f"{parent_dir}/*UseThis*")
+    if not matches:
+        raise FileNotFoundError(f"Could not find a UseThis directory in {parent_dir}!")
+    return matches[0]
 
 
 if __name__ == "__main__":
