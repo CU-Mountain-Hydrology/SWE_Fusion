@@ -76,14 +76,18 @@ def parse_log(date: int, cfg: Config, notify: bool = True):
     med += m
     high += h
 
+    print(f"[DEBUG] Low: {low}, Med: {med}, High: {high}")
+
     # TODO: so many more checks
 
 
     # TODO: Send alert if low or med warnings exist (high severity already have alerts)
 
     if not low and not med and not high:
-        send_teams_alert(cfg, severity="ok", title="Run Succeeded", message="No warnings or issues detected.")
+        print("Run succeeded without warnings or issues.")
+        if notify:
+            send_teams_alert(cfg, severity="ok", title="Run Succeeded", message="No warnings or issues detected.")
 
 if __name__ == "__main__":
     cfg = Config()
-    parse_log(20261101, cfg, notify=False)
+    parse_log(20261115, cfg, notify=False)
