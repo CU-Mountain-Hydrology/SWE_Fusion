@@ -20,10 +20,12 @@ def sensor_survey_processing(date: int, domain: str, surveys_use: str, cfg: Conf
         # Get previous run date to know if differencing should be used
         prev_ww_rundate, _ = get_previous_model_run(date=date, domain="WW", cfg=cfg)
 
-        if get_water_year(prev_ww_rundate) == get_water_year(date):
-            difference = "Y"  # If the previous report date was from this water year, then difference="Y" (compare to last report)
-        else:
-            difference = "N"
+        # Now that we are running daily, do not include comparison to the previous report
+        difference = "N"
+        # if get_water_year(prev_ww_rundate) == get_water_year(date):
+        #     difference = "Y"  # If the previous report date was from this water year, then difference="Y" (compare to last report)
+        # else:
+        #     difference = "N"
 
         # Process & Sort WW sensors & surveys
         merge_sort_sensors_surveys(
@@ -39,10 +41,13 @@ def sensor_survey_processing(date: int, domain: str, surveys_use: str, cfg: Conf
         # Get previous run date to know if differencing should be used
         prev_snm_rundate, _ = get_previous_model_run(date=date, domain="SNM", cfg=cfg)
 
-        if get_water_year(prev_snm_rundate) == get_water_year(date):
-            difference = "Y"  # If the previous report date was from this water year, then difference="Y" (compare to last report)
-        else:
-            difference = "N"
+        # Now that we are running daily, do not include comparison to the previous report
+        difference = "N"
+        # if get_water_year(prev_snm_rundate) == get_water_year(date):
+        #     difference = "Y"  # If the previous report date was from this water year, then difference="Y" (compare to last report)
+        # else:
+        #     difference = "N"
+
 
         merge_sort_sensors_surveys(
             report_date=str(date), results_workspace=f"{cfg.snm_results_workspace}/{date}_results/",
