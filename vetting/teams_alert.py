@@ -14,7 +14,23 @@ SEVERITY = {
 
 def send_teams_alert(cfg: Config, severity: str, title: str, message: str = "", details: dict | None = None):
     """
-    TODO: docs
+    Send a model status alert to Microsoft Teams. To set this up, open Teams and go to the channel you want to receive
+    alerts in. Go to Channel > Workflows > "Send webhook alerts" > Copy URL. Then paste the url into the .env with
+    TEAMS_WEBHOOK_URL=https://...
+    Do not publish the link to GitHub or share it publicly as anyone with the link can send messages to the channel.
+
+    :param cfg: Configuration object containing environment variables set in the .env
+    :param severity: Alert severity ("ok", "low", "med", "high")
+    :param title: Alert title
+    :param message: Text body of the alert
+    :param details: Dictionary of tabulated details about the alert
+
+    Example:
+        send_teams_alert(cfg, "med", "2026-11-10 Run Succeeded with Issues",
+            "Max SWE value exceeds threshold",
+            details={"Domain": "PNW", "Max SWE (in)": 3280.04, "Mean SWE (in)": 5.4}
+        )
+
     """
     s = SEVERITY[severity]
 

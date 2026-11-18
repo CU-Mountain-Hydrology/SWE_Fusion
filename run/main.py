@@ -25,6 +25,7 @@ from run.run_R_model import write_simulation_date, run_R_model, apply_domain_log
 from run.utils import make_directories, get_zero_sensors, get_water_year, mark_usethis_useavg
 from run.tables_and_layers import ww_tables_and_layers, snm_tables_and_layers
 from vetting.sensor_plots import model_vs_sensor
+from vetting.parse_log import parse_log
 
 from SWE_Fusion_functions import geopackage_to_shapefile, clear_arcpy_locks
 
@@ -258,9 +259,18 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         # Download MODIS true color imagery for SNM report
         # TODO
 
+        # Parse log for errors
+        # This should always be the final step of the run
+        step(
+            "parse_output_log", "Parse output log to alert for errors and warnings",
+            parse_log,
+            date=date, cfg=cfg, notify=True
+        )
+
         # Run completed successfully. Archive the checkpoint so a future run for this same date starts fresh instead of
         # skipping every step. The checkpoint file is moved to {cfg.checkpoint_path}/completed
         ckpt.archive()
+        print(f"Run successfully completed for {date}.")
 
 
 if __name__ == "__main__":
