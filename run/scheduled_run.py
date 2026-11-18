@@ -131,6 +131,11 @@ def parse_args() -> argparse.Namespace:
         metavar="YYYYMMDD",
         help="Run date as YYYYMMDD. Defaults to yesterday.",
     )
+    parser.add_argument(
+        "-r", "--restart",
+        action="store_true",
+        help="Ignore any existing checkpoints and run from the start.",
+    )
     args = parser.parse_args()
 
     if args.date is not None:
@@ -142,7 +147,7 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
-def run_once(date_str: str, logger: logging.Logger, cfg: Config):
+def run_once(date_str: str, logger: logging.Logger, cfg: Config, extra_args: list[str] | None = None):
     """
     Runs main.py once as a module from PROJECT_ROOT. Returns (returncode, stderr_text).
     Uses subprocess rather than direct import so that this script continues running even if main hard crashes (eg. OOM)
@@ -151,7 +156,7 @@ def run_once(date_str: str, logger: logging.Logger, cfg: Config):
     conda_bat = env_prefix.parent.parent / "condabin" / "conda.bat"
 
     cmd = [str(conda_bat), "run", "--no-capture-output", "-p", str(env_prefix),
-           "python", "-u", "-m", "run.main", "-d", date_str]
+           "python", "-u", "-m", "run.main", "-d", date_str, *(extra_args or [])]
     child_env = {**os.environ, "PYTHONUNBUFFERED": "1", "PYTHONUTF8": "1"}
     logger.info(f"Running: {' '.join(cmd)} (cwd={PROJECT_ROOT})")
 
@@ -223,7 +228,11 @@ def main():
         if attempt > 0:
             logger.info(f"Retry attempt {attempt}/{cfg.max_retries}...")
 
-        returncode, stderr_text = run_once(date_str, logger, cfg)
+        # -r only applies to the first attempt; retries resume from the checkpoint it creates
+        extra = ["-r"] if (args.restart and attempt == 0) else []
+
+        # Run the pipeline once
+        returncode, stderr_text = run_once(date_str, logger, cfg, extra)
 
         # Success
         if returncode == 0:
