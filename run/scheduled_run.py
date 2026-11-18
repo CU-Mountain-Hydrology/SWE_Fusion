@@ -15,6 +15,7 @@ import subprocess
 import sys
 import time
 import threading
+import argparse
 from datetime import timedelta
 from datetime import datetime as dt
 from pathlib import Path
@@ -123,6 +124,24 @@ def flag_stuck(date_str: str, reason: str, logger: logging.Logger, cfg: Config):
     (log_dir / f"STUCK_{date_str}.flag").write_text(reason, encoding="utf-8")
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-d", "--date",
+        metavar="YYYYMMDD",
+        help="Run date as YYYYMMDD. Defaults to yesterday.",
+    )
+    args = parser.parse_args()
+
+    if args.date is not None:
+        try:
+            dt.strptime(args.date, "%Y%m%d")
+        except ValueError:
+            parser.error(f"invalid date '{args.date}': expected YYYYMMDD (e.g. 20261116)")
+
+    return args
+
+
 def run_once(date_str: str, logger: logging.Logger, cfg: Config):
     """
     Runs main.py once as a module from PROJECT_ROOT. Returns (returncode, stderr_text).
@@ -174,12 +193,16 @@ def run_once(date_str: str, logger: logging.Logger, cfg: Config):
     return proc.returncode, "\n".join(stderr_lines)
 
 def main():
+    args = parse_args()
+
     # Read config from .env
     cfg = Config()
 
-    # Get yesterday's date
-    run_date = dt.now() - timedelta(days=1)
-    date_str = run_date.strftime("%Y%m%d")
+    # Use the specified date, otherwise default to yesterday
+    if args.date:
+        date_str = args.date
+    else:
+        date_str = (dt.now() - timedelta(days=1)).strftime("%Y%m%d")
     date_int = int(date_str)
 
     # Set up logger
