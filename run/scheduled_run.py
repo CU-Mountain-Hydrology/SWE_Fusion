@@ -29,6 +29,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from config import Config
 from run.utils import get_water_year
+from vetting.parse_log import parse_log
 
 def unique_log_path(log_dir: Path, date_str: str) -> Path:
     """
@@ -197,22 +198,11 @@ def run_once(date_str: str, logger: logging.Logger, cfg: Config, extra_args: lis
 
     return proc.returncode, "\n".join(stderr_lines)
 
-def main():
-    args = parse_args()
-
-    # Read config from .env
-    cfg = Config()
-
-    # Use the specified date, otherwise default to yesterday
-    if args.date:
-        date_str = args.date
-    else:
-        date_str = (dt.now() - timedelta(days=1)).strftime("%Y%m%d")
+def run_pipeline(args, cfg, date_str, logger) -> int:
+    """
+    The git pull + retry loop. Returns 0 on success, 1 on failure (stuck).
+    """
     date_int = int(date_str)
-
-    # Set up logger
-    logger = setup_logging(date_str, cfg)
-    logger.info(f"=== Starting SWE_Fusion pipeline for {date_str} ===")
 
     # Pull latest code
     if not git_pull(logger):
@@ -284,6 +274,40 @@ def main():
         cfg=cfg,
     )
     return 1
+
+
+def main():
+    args = parse_args()
+
+    # Read config from .env
+    cfg = Config()
+
+    # Use the specified date, otherwise default to yesterday
+    if args.date:
+        date_str = args.date
+    else:
+        date_str = (dt.now() - timedelta(days=1)).strftime("%Y%m%d")
+    date_int = int(date_str)
+
+    # Set up logger
+    logger = setup_logging(date_str, cfg)
+    logger.info(f"=== Starting SWE_Fusion pipeline for {date_str} ===")
+
+    exit_code = 1  # Assume failure unless run_pipeline says otherwise
+    try:
+        exit_code = run_pipeline(args, cfg, date_str, logger)
+    except Exception:
+        # Anything unexpected in the wrapper itself still gets logged so parse_log can see it
+        logger.exception("Unhandled exception in scheduled_run")
+    finally:
+        # Always summarize the log and send the notification, regardless of outcome
+        try:
+            logger.info("Parsing log and sending status notification...")
+            parse_log(date_int, cfg, notify=True)
+        except Exception:
+            logger.exception("parse_log failed")
+
+    return exit_code
 
 
 if __name__ == "__main__":

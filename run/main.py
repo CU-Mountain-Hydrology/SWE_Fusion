@@ -25,7 +25,6 @@ from run.run_R_model import write_simulation_date, run_R_model, apply_domain_log
 from run.utils import make_directories, get_zero_sensors, get_water_year, mark_usethis_useavg
 from run.tables_and_layers import ww_tables_and_layers, snm_tables_and_layers
 from vetting.sensor_plots import model_vs_sensor
-from vetting.parse_log import parse_log
 
 from SWE_Fusion_functions import geopackage_to_shapefile, clear_arcpy_locks
 
@@ -235,37 +234,29 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         )
 
         ######### Vetting Starts Now #######
-        domain_to_shapefile = {
-            "SNM": r"W:/data/hydro/SNM_Region_albn83.shp",
-            "SOCN": r"W:/data/hydro/SOCN_Region_albn83.shp",
-            "NOCN": r"W:/data/hydro/NOCN_Region_albn83.shp",
-            "INMT": r"W:/data/hydro/INMT_Region_albn83_woTahoe.shp",
-            "PNW": r"W:/data/hydro/PNW_Region_albn83_v2.shp",
-        }
-        year = dt.strptime(str(date), "%Y%m%d").year
-        for domain in cfg.domain_list:
-            if domain == "SNM":
-                out_path = f"{cfg.snm_reports_workspace.format(year=year)}/{date}_RT_report/model_vs_sensor_{date}_{domain}.png"
-            else:
-                out_path = f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report/model_vs_sensor_{date}_{domain}.png"
-            step(
-                f"model_vs_sensor_{domain}", f"Plotting model vs sensors for {domain}",
-                model_vs_sensor,
-                date=date, cfg=cfg, focal_sampling=True, extent_shapefile=domain_to_shapefile[domain], out_path=out_path,
-                plot_title=f"Model vs Sensor SWE ({domain}) - {date}", save_stats=True
-            )
+        # domain_to_shapefile = {
+        #     "SNM": r"W:/data/hydro/SNM_Region_albn83.shp",
+        #     "SOCN": r"W:/data/hydro/SOCN_Region_albn83.shp",
+        #     "NOCN": r"W:/data/hydro/NOCN_Region_albn83.shp",
+        #     "INMT": r"W:/data/hydro/INMT_Region_albn83_woTahoe.shp",
+        #     "PNW": r"W:/data/hydro/PNW_Region_albn83_v2.shp",
+        # }
+        # year = dt.strptime(str(date), "%Y%m%d").year
+        # for domain in cfg.domain_list:
+        #     if domain == "SNM":
+        #         out_path = f"{cfg.snm_reports_workspace.format(year=year)}/{date}_RT_report/model_vs_sensor_{date}_{domain}.png"
+        #     else:
+        #         out_path = f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report/model_vs_sensor_{date}_{domain}.png"
+        #     step(
+        #         f"model_vs_sensor_{domain}", f"Plotting model vs sensors for {domain}",
+        #         model_vs_sensor,
+        #         date=date, cfg=cfg, focal_sampling=True, extent_shapefile=domain_to_shapefile[domain], out_path=out_path,
+        #         plot_title=f"Model vs Sensor SWE ({domain}) - {date}", save_stats=True
+        #     )
 
 
         # Download MODIS true color imagery for SNM report
         # TODO
-
-        # Parse log for errors
-        # This should always be the final step of the run
-        step(
-            "parse_output_log", "Parse output log to alert for errors and warnings",
-            parse_log,
-            date=date, cfg=cfg, notify=True
-        )
 
         # Run completed successfully. Archive the checkpoint so a future run for this same date starts fresh instead of
         # skipping every step. The checkpoint file is moved to {cfg.checkpoint_path}/completed
