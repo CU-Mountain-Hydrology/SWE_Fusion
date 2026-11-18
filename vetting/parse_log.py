@@ -27,7 +27,7 @@ def _notify(notify: bool, cfg: Config, severity: str, title: str, message: str =
         print(f"{details}")
 
 
-def _pipeline_stuck(log_file, notify, cfg):
+def _pipeline_stuck(date, log_file, notify, cfg):
     low = []
     med = []
     high = []
@@ -36,7 +36,7 @@ def _pipeline_stuck(log_file, notify, cfg):
             if "PIPELINE STUCK" in line:
                 _notify(notify, cfg,
                         severity="high",
-                        title="Model Stuck",
+                        title=f"{date} Model Stuck",
                         message=line)
                 high += [("Model Stuck", line)]
     return low, med, high
@@ -51,6 +51,8 @@ def parse_log(date: int, cfg: Config, notify: bool = True):
     :param notify: True to send teams notifications about errors or potential issues
 
     """
+    date_f = f"{str(date)[:4]}-{str(date)[4:6]}-{str(date)[6:]}"
+
     # Open output log
     log_dir = cfg.model_run_log_dir.format(water_year=get_water_year(date))
     logs = glob.glob(os.path.join(log_dir, f"run_{date}*"))
@@ -71,7 +73,7 @@ def parse_log(date: int, cfg: Config, notify: bool = True):
     high = []
 
     # Check if the pipeline is stuck
-    l, m, h = _pipeline_stuck(log_file, notify=notify, cfg=cfg)
+    l, m, h = _pipeline_stuck(date_f, log_file, notify=notify, cfg=cfg)
     low += l
     med += m
     high += h
@@ -86,7 +88,7 @@ def parse_log(date: int, cfg: Config, notify: bool = True):
     if not low and not med and not high:
         print("Run succeeded without warnings or issues.")
         if notify:
-            send_teams_alert(cfg, severity="ok", title="Run Succeeded", message="No warnings or issues detected.")
+            send_teams_alert(cfg, severity="ok", title=f"{date_f} Run Succeeded", message="No warnings or issues detected.")
 
 if __name__ == "__main__":
     cfg = Config()
