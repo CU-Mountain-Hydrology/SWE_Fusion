@@ -72,16 +72,16 @@ def parse_log(date: int, cfg: Config, notify: bool = True):
 
     # Check if the pipeline is stuck
     l, m, h = _pipeline_stuck(log_file, notify=notify, cfg=cfg)
-    low.append(_l for _l in l)
-    med.append(_m for _m in m)
-    high.append(_h for _h in h)
+    low += l
+    med += m
+    high += h
 
     # TODO: so many more checks
 
 
     # TODO: Send alert if low or med warnings exist (high severity already have alerts)
 
-    if len(low) == 0 and len(med) == 0 and len(high) == 0:
+    if not low and not med and not high:
         send_teams_alert(cfg, severity="ok", title="Run Succeeded", message="No warnings or issues detected.")
 
 if __name__ == "__main__":
