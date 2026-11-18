@@ -48,21 +48,29 @@ def mark_usethis_useavg(date: int, cfg: Config):
     that processing is complete.
 
     In the event there are multiple woCCR model runs with differing other parameters, the most recent will be used as
-    the UseThis directory. THe UseAvg directory will always use the same methods that have been used historically.
+    the UseThis directory. The UseAvg directory will always use the same methods that have been used historically.
+
+    This function is idempotent: any existing UseThis/UseAvg tags are stripped before the directories are re-tagged,
+    so it is safe to rerun for a date that has already been processed. If stripping a tag would collide with an
+    existing untagged directory (e.g. the model was rerun and regenerated it), the older of the two is moved to a
+    sibling "{directory}_stale" folder rather than deleted.
 
     TODO: decide between using an error metric for wCCR vs woCCR or just always using woCCR
 
     :param date: (YYYYMMDD) Date to rename the directories for.
     :param cfg: Configuration object containing environment variables from the .env.
     """
-    print(f"Marking directories with UseThis and UseAvg...",end="")
+    import shutil
+    import time
+
+    print(f"Marking directories with UseThis and UseAvg...", end="")
 
     year = dt.strptime(str(date), "%Y%m%d").year
     directories = {
         "ww_results": f"{cfg.ww_results_workspace}/{date}_results",
-        # "ww_report": f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report",
+        "ww_report": f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report",
         "snm_results": f"{cfg.snm_results_workspace}/{date}_results",
-        # "snm_report": f"{cfg.snm_reports_workspace.format(year=year)}/{date}_RT_report",
+        "snm_report": f"{cfg.snm_reports_workspace.format(year=year)}/{date}_RT_report",
     }
 
     if not "SNM" in cfg.domain_list:
@@ -78,7 +86,22 @@ def mark_usethis_useavg(date: int, cfg: Config):
         for tag in ("_UseThis", "_UseAvg"):
             for path in glob.glob(f"{base}/*{tag}*"):
                 parent, name = os.path.split(path)
-                os.rename(path, os.path.join(parent, name.replace(tag, "")))
+                clean = os.path.join(parent, name.replace(tag, ""))
+
+                if os.path.exists(clean):
+                    # Duplicate (e.g. the model was rerun and regenerated the untagged dir).
+                    # Keep the newer one, move the older one aside rather than deleting it.
+                    stale_root = f"{base}_stale"
+                    os.makedirs(stale_root, exist_ok=True)
+                    if os.path.getmtime(path) > os.path.getmtime(clean):
+                        # Tagged copy is newer: shelve the untagged one, then untag this one
+                        shutil.move(clean, os.path.join(stale_root, f"{os.path.basename(clean)}_{int(time.time())}"))
+                        os.rename(path, clean)
+                    else:
+                        # Untagged copy is newer: shelve the tagged one
+                        shutil.move(path, os.path.join(stale_root, f"{name}_{int(time.time())}"))
+                else:
+                    os.rename(path, clean)
 
         # UseAvg dir always uses the same methods (and therefore same directory name)
         useavg_dir = f"{base}/RT_CanAdj_rcn_woCCR_nofscamskSens"
