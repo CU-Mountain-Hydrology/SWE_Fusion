@@ -6,7 +6,7 @@ from datetime import datetime as dt
 
 from config import Config
 
-def make_directories(date: int, cfg: Config):
+def make_directories(date: int, cfg: Config, report_dirs: bool = True):
     """
     Makes the results and report directories, along with any necessary subdirectories.
     Unlike in the original SWE_FUSION.py, the MODIS directory does not need to be made here since it is now handled
@@ -26,17 +26,18 @@ def make_directories(date: int, cfg: Config):
         os.makedirs(f"{cfg.snm_results_workspace}/{date}_results", exist_ok=True)
 
     # Make report directories
-    year = dt.strptime(f"{date}", "%Y%m%d").year
-    ww_report_dir = f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report"
-    snm_report_dir = f"{cfg.snm_reports_workspace.format(year=year)}/{date}_RT_report"
-    os.makedirs(ww_report_dir, exist_ok=True)
-    if "SNM" in cfg.domain_list:
-        os.makedirs(snm_report_dir, exist_ok=True)
+    if report_dirs:
+        year = dt.strptime(f"{date}", "%Y%m%d").year
+        ww_report_dir = f"{cfg.ww_reports_workspace.format(year=get_water_year(year))}/{date}_RT_report"
+        snm_report_dir = f"{cfg.snm_reports_workspace.format(year=get_water_year(year))}/{date}_RT_report"
+        os.makedirs(ww_report_dir, exist_ok=True)
+        if "SNM" in cfg.domain_list:
+            os.makedirs(snm_report_dir, exist_ok=True)
 
-    # Make SNODAS directories
-    os.makedirs(f"{ww_report_dir}/SNODAS", exist_ok=True)
-    if "SNM" in cfg.domain_list:
-        os.makedirs(f"{snm_report_dir}/SNODAS", exist_ok=True)
+        # Make SNODAS directories
+        os.makedirs(f"{ww_report_dir}/SNODAS", exist_ok=True)
+        if "SNM" in cfg.domain_list:
+            os.makedirs(f"{snm_report_dir}/SNODAS", exist_ok=True)
 
     print(". \033[32mDone.\033[0m")
 
@@ -68,9 +69,9 @@ def mark_usethis_useavg(date: int, cfg: Config):
     year = dt.strptime(str(date), "%Y%m%d").year
     directories = {
         "ww_results": f"{cfg.ww_results_workspace}/{date}_results",
-        "ww_report": f"{cfg.ww_reports_workspace.format(year=year)}/{date}_RT_report",
+        "ww_report": f"{cfg.ww_reports_workspace.format(year=get_water_year(year))}/{date}_RT_report",
         "snm_results": f"{cfg.snm_results_workspace}/{date}_results",
-        "snm_report": f"{cfg.snm_reports_workspace.format(year=year)}/{date}_RT_report",
+        "snm_report": f"{cfg.snm_reports_workspace.format(year=get_water_year(year))}/{date}_RT_report",
     }
 
     if not "SNM" in cfg.domain_list:

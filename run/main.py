@@ -134,7 +134,7 @@ def run_model(date: int, prompt_user: bool=False, reset_checkpoints: bool=False)
         arcpy.env.parallelProcessingFactor = "0"
 
         # Create results and report directories
-        step("make_directories", "Making results and report directories", make_directories, date, cfg)
+        step("make_directories", "Making results and report directories", make_directories, date, cfg, report_dirs=False)
 
         # Download surveys on the first of the month
         # TODO: syrveys may come in throughout the week, only do this for first table of the month
