@@ -12,7 +12,12 @@ SEVERITY = {
     "high": {"style": "attention", "color": "Attention", "label": "HIGH SEVERITY"},
 }
 
-def send_teams_alert(cfg: Config, severity: str, title: str, message: str = "", details: dict | None = None):
+def _escape_md(s: str) -> str:
+    # Teams TextBlocks render a markdown subset; keep _ and * from italicizing/bolding
+    return s.replace("\\", "\\\\").replace("_", "\\_").replace("*", "\\*")
+
+
+def send_teams_alert(cfg: Config, severity: str, title: str, message: str = "", details: dict | None = None, code: str | None = None):
     """
     Send a model status alert to Microsoft Teams. To set this up, open Teams and go to the channel you want to receive
     alerts in. Go to Channel > Workflows > "Send webhook alerts" > Copy URL. Then paste the url into the .env with
@@ -60,6 +65,23 @@ def send_teams_alert(cfg: Config, severity: str, title: str, message: str = "", 
 
     if message:
         body.append({"type": "TextBlock", "text": message, "wrap": True})
+
+    if code:
+        body.append({
+            "type": "Container",
+            "style": "emphasis",
+            "items": [
+                {
+                    "type": "TextBlock",
+                    "text": _escape_md(line).replace("  ", "\u00a0\u00a0") or " ",  # preserve indentation
+                    "fontType": "Monospace",
+                    "size": "Small",
+                    "wrap": True,
+                    "spacing": "None",
+                }
+                for line in code.splitlines()
+            ],
+        })
 
     facts = {"Time": dt.now().strftime("%Y-%m-%d %H:%M:%S")}
     facts.update(details or {})

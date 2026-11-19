@@ -15,30 +15,50 @@ from config import Config
 from run.utils import get_water_year
 from vetting.teams_alert import send_teams_alert
 
-def _notify(notify: bool, cfg: Config, severity: str, title: str, message: str = "", details: dict | None = None):
+_TS_RE = re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} \[")
+
+
+def _notify(notify: bool, cfg: Config, severity: str, title: str, message: str = "",
+            details: dict | None = None, code: str | None = None):
     """
     Wrapper for send_teams_alert() to handle alternately printing to terminal only when notify = False
     """
     if notify:
-        send_teams_alert(cfg, severity, title, message, details)
+        send_teams_alert(cfg, severity, title, message, details, code=code)
     else:
         print(f"{severity} severity: {title}")
         print(f"{message}")
         print(f"{details}")
+        if code:
+            print(code)
 
 
 def _pipeline_stuck(date, log_file, notify, cfg):
-    low = []
-    med = []
-    high = []
-    with open(log_file, "r") as f:
-        for line in f:
-            if "PIPELINE STUCK" in line:
-                _notify(notify, cfg,
-                        severity="high",
-                        title=f"{date} Model Stuck",
-                        message=line)
-                high += [("Model Stuck", line)]
+    low, med, high = [], [], []
+    with open(log_file, "r", encoding="utf-8", errors="replace") as f:
+        lines = f.read().splitlines()
+
+    for i, line in enumerate(lines):
+        if "PIPELINE STUCK" not in line:
+            continue
+
+        # The stderr tail is the untimestamped continuation of this log record
+        tail = []
+        for nxt in lines[i + 1:]:
+            if _TS_RE.match(nxt):
+                break
+            tail.append(nxt)
+
+        tail = [l for l in tail if l.strip() and l.strip() != "stderr tail:"]
+        tail = tail[-cfg.std_err_tail_lines:]
+        code = "\n".join(tail)
+
+        _notify(notify, cfg,
+                severity="high",
+                title=f"{date} Model Stuck",
+                message=line,
+                code=code)
+        high += [("Model Stuck", line, code)]
     return low, med, high
 
 
@@ -78,8 +98,6 @@ def parse_log(date: int, cfg: Config, notify: bool = True):
     med += m
     high += h
 
-    print(f"[DEBUG] Low: {low}, Med: {med}, High: {high}")
-
     # TODO: so many more checks
 
 
@@ -91,5 +109,5 @@ def parse_log(date: int, cfg: Config, notify: bool = True):
             send_teams_alert(cfg, severity="ok", title=f"{date_f} Run Succeeded", message="No warnings or issues detected.")
 
 if __name__ == "__main__":
-    cfg = Config()
-    parse_log(20261115, cfg, notify=False)
+    config = Config()
+    parse_log(20261115, config, notify=False)
