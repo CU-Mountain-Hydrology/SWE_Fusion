@@ -3230,6 +3230,7 @@ def SNODAS_Processing(report_date, domain, RunName, NOHRSC_workspace, results_wo
 
     print("Creating SWE in meters ...")
     clear_arcpy_locks()
+    arcpy.env.overwriteOutput = True
     ## Divide by 1000 to get value in meters not mm
     SWEm = Raster(FloatSNODAS) / 1000
     SWEm.save(MeterSNODAS)
