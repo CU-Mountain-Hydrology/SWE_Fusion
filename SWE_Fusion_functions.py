@@ -1527,7 +1527,7 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
     # End of Setting Variables
     #######################################################################
     workspaceBase = fr"M:/SWE/WestWide/Spatial_SWE/WW_regression/"
-    resultsWorkspace = workspaceBase + f"RT_report_data/{report_date}_results/"
+    resultsWorkspace = workspaceBase + f"RT_report_data/1_provisional/{report_date}_results/"
 
     os.makedirs(resultsWorkspace, exist_ok=True)
 
@@ -1550,7 +1550,7 @@ def tables_and_layers(user, year, report_date, mean_date, meanWorkspace, model_r
         outWorkspace = resultsWorkspace + bias_model_run + "/"
 
     # meanWorkspace = workspaceBase + "mean_2001_2021_Nodmfsca/"
-    prevRepWorkspace = workspaceBase + f"RT_report_data/{prev_report_date}_results/{prev_model_run}/"
+    prevRepWorkspace = workspaceBase + f"RT_report_data/1_provisional/{prev_report_date}_results/{prev_model_run}/"
     meanMask = outWorkspace + f"{mean_date}_mean_msk.tif"
     MODSCAG_tif_plus = f"H:/WestUS_Data/Rittger_data/fsca_v2025.0.1_ops/NRT_FSCA_WW_N83/{year}/{report_date}.tif"
     MODSCAG_tif_plus_proj = outWorkspace + f"fSCA_{report_date}_albn83.tif"
