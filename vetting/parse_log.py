@@ -50,7 +50,7 @@ def _pipeline_stuck(date, log_file, notify, cfg):
             tail.append(nxt)
 
         tail = [l for l in tail if l.strip() and l.strip() != "stderr tail:"]
-        tail = tail[-cfg.std_err_tail_lines:]
+        tail = tail[-cfg.stderr_tail_lines:]
         code = "\n".join(tail)
 
         _notify(notify, cfg,
